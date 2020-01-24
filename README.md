@@ -89,6 +89,7 @@ optional arguments:
 ### Tier 1
  - [ ] demuxing-only options, including for subs2srs
  - [ ] make file extensions more flexible (for demuxing and outputs)
+    - [ ] for mp3, add bitrate/quality options
  - [ ] clean up dry-run, verbose options 
  - [ ] cleanup code for v0.1 release
 

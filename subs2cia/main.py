@@ -109,7 +109,10 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         # use start_pts for sample/millisecond level precision
         clips.append(stream.audio.filter('atrim', start_pts=start, end_pts=end).filter('asetpts', 'PTS-STARTPTS'))
     combined = ffmpeg.concat(*clips, a=1, v=0)
-    combined = ffmpeg.output(combined, outfile)
+    if os.path.splitext(outfile)[1] == ".mp3":
+        combined = ffmpeg.output(combined, outfile, audio_bitrate='320k')  # todo: make this user-settable
+    else:
+        combined = ffmpeg.output(combined, outfile)
     combined = ffmpeg.overwrite_output(combined)
     ffmpeg.run(combined, quiet=not verbose)
 
@@ -125,7 +128,6 @@ def probe_sources(subfile=None, audiofile=None, videofile=None):
     sources = dict(audio=[], subtitles=[])
 
     if subfile is not None:  # manually specified subtitle files come first
-        # todo: try reading in the subtitle file and make sure it's valid. don't want surprises later
         sources["subtitles"].append(subfile)
 
     if audiofile is not None:  # manually specified audio files come first
@@ -188,9 +190,6 @@ def pick_audio_source(sources,
                 print("using given audio file, ignoring video audio tracks")
                 audio_idx = idx
                 break
-    if len(sources["audio"]) == 0:  # todo: fix this
-        print("error: no audio found that matches target language")
-        exit()
     return audio_idx
 
 
@@ -238,9 +237,9 @@ def pick_sources(sources,  # dict of audio and subtitle sources that have been f
                  # if set, will choose these audio/subtitle streams regardless of language setting
                  ):
     sub_idx = pick_subtitle_source(sources, slang=slang, force_subtitles=force_subtitles)
-    print(f"using subtitle source {sub_idx} ({sources['subtitles'][sub_idx]})")
+    print(f"using subtitle source {sub_idx}")  # ({sources['subtitles'][sub_idx]})")
     audio_idx = pick_audio_source(sources, alang, force_audio=force_audio)
-    print(f"using audio source {audio_idx} ({sources['audio'][sub_idx]})")
+    print(f"using audio source {audio_idx}")  # ({sources['audio'][sub_idx]})")
     return sub_idx, audio_idx  # sources dict entires
 
 
@@ -522,7 +521,7 @@ presets = [
         'preset_description': "Padded and merged Japanese condensed audio",
         'output': '.mp3',
         'threshold': 1500,
-        'padding': 300,
+        'padding': 200,
         'partition_size': 1800,  # 30 minutes, for long movies
         'alang': 'ja',
     },

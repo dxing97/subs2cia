@@ -521,8 +521,8 @@ presets = [
     {  # preset 0
         'preset_description': "Padded and merged Japanese condensed audio",
         'output': '.mp3',
-        'threshold': 300,
-        'padding': 1500,
+        'threshold': 1500,
+        'padding': 300,
         'partition_size': 1800,  # 30 minutes, for long movies
         'alang': 'ja',
     },

@@ -80,7 +80,8 @@ optional arguments:
   -lp, --list-presets   If set, uses a given preset. Will override user
                         arguments.
 ```
-# Examples
+## Examples
+``subs2cia -i video.mkv``
 
 
 ## Todo

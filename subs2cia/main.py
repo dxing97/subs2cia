@@ -418,7 +418,7 @@ def print_compression_ratio(sub_times, audiofile):
 
 def test(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac", dry_run=False, threshold=0, padding=0,
          partition_size=0, split_size=0, alang=None, slang=None, force_audio=0, force_subtitles=0, no_retry=False,
-         absolute_numbering=False,):
+         absolute_numbering=False, **kwargs):
     sources = probe_sources(subfile=subfile, audiofile=audiofile, videofile=videofile)
     if sources is None:
         print("not enough sources")
@@ -562,5 +562,4 @@ if __name__ == "__main__":
         for key, val in presets[args['preset']].items():
             args[key] = val
     test(**args)
-    # main(**vars(args))
     print("done")

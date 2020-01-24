@@ -6,12 +6,13 @@ import argparse
 import os
 import pycountry
 from datetime import timedelta
+from pprint import pprint
 
 # also installed SoX, ffmpeg, libav (for pydub)
 
 
-
 verbose = False
+
 
 # given raw subtitle timing data, merge overlaps and perform padding and merging
 def merge_times(times, threshold=0, padding=0):
@@ -94,16 +95,17 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         outfile = "condensed.flac"
     print("saving audio to", outfile)
 
-    #get samples in audio file
+    # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
-    sps = int(audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
-    samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
+    sps = int(
+        audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+    # samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
 
     stream = ffmpeg.input(audiofile)
     clips = list()
     for time in sub_times:  # times are in milliseconds
         start = int(time[0] * sps / 1000)  # convert to sample index
-        end = int(time[1] * sps / 1000 )
+        end = int(time[1] * sps / 1000)
         # use start_pts for sample/millisecond level precision
         clips.append(stream.audio.filter('atrim', start_pts=start, end_pts=end).filter('asetpts', 'PTS-STARTPTS'))
     combined = ffmpeg.concat(*clips, a=1, v=0)
@@ -114,7 +116,7 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
 
 # figure out what files we were given to work with
 def probe_sources(subfile=None, audiofile=None, videofile=None):
-    if ((audiofile or videofile) is None):
+    if (audiofile or videofile) is None:
         print("missing audio")
         return None
     if (subfile or videofile) is None:
@@ -132,7 +134,9 @@ def probe_sources(subfile=None, audiofile=None, videofile=None):
         if audio_info['streams'][0]['codec_type'] == 'audio':  # make sure it's an audio file
             sources["audio"].append(audiofile)
         else:
-            print(f"WARNING: {audiofile} doesn't contain any ffmpeg-readable audio. Will try to fall back to video source.")
+            print(
+                f"WARNING: {audiofile} doesn't contain any ffmpeg-readable audio. "
+                f"Will try to fall back to video source.")
 
     if videofile is not None:
         video_info = ffmpeg.probe(videofile, cmd='ffprobe')
@@ -163,7 +167,9 @@ def pick_audio_source(sources,
         if isinstance(sources['audio'][0], str):
             print(f"ignoring force_audio, using {sources['audio'][0]}")
         elif force_audio > len(sources['audio']):
-            print(f"WARNING: can't force audio stream #{force_audio}, there are only {len(sources['audio'])} audio streams")
+            print(
+                f"WARNING: can't force audio stream #{force_audio}, "
+                f"there are only {len(sources['audio'])} audio streams")
         else:
             audio_idx = force_audio - 1
             return audio_idx
@@ -197,7 +203,9 @@ def pick_subtitle_source(sources,
         if isinstance(sources['subtitles'][0], str):
             print(f"ignoring force_subtitles, using {sources['subtitles'][0]}")
         elif force_subtitles > len(sources['subtitles']):
-            print(f"WARNING: can't force subtitle stream #{force_subtitles}, there are only {len(sources['subtitles'])} subtitle streams")
+            print(
+                f"WARNING: can't force subtitle stream #{force_subtitles}, "
+                f"there are only {len(sources['subtitles'])} subtitle streams")
         else:
             sub_idx = force_subtitles - 1
             return sub_idx
@@ -205,7 +213,7 @@ def pick_subtitle_source(sources,
     if slang is not None:
         for idx, item in enumerate(sources["subtitles"]):
             if not isinstance(item,
-                              str):  # raw audio/subtitle files don't contain language information that mediainfo can read afaict
+                              str):
                 (parent, stream) = item
                 if pycountry.languages.lookup(stream['tags']['language']) == pycountry.languages.lookup(slang):
                     # found a match
@@ -222,30 +230,33 @@ def pick_subtitle_source(sources,
             sub_idx = 0
     return sub_idx
 
+
 # pick subtitles, audio to condense based on language or stream options
 def pick_sources(sources,  # dict of audio and subtitle sources that have been found
                  alang=None, slang=None,  # languages to prefer as ISO language codes (NOT country codes)
-                 force_audio=0, force_subtitles=0  # if set, will choose these audio/subtitle streams regardless of language setting
+                 force_audio=0, force_subtitles=0
+                 # if set, will choose these audio/subtitle streams regardless of language setting
                  ):
     sub_idx = pick_subtitle_source(sources, slang=slang, force_subtitles=force_subtitles)
     print(f"using subtitle source {sub_idx} ({sources['subtitles'][sub_idx]})")
     audio_idx = pick_audio_source(sources, alang, force_audio=force_audio)
     print(f"using audio source {audio_idx} ({sources['audio'][sub_idx]})")
-    return (sub_idx, audio_idx)  # sources dict entires
+    return sub_idx, audio_idx  # sources dict entires
+
 
 # given a stream in the input file, demux the stream and save it into the outfile with some type
-def demux(infile, stream_idx, outfile,
-          format=None  # mp3, flac, ass, etc
-          ):
+def demux(infile, stream_idx, outfile):
+    # output format is specified via extention on outfile
     video = ffmpeg.input(infile)
     stream = video[str(stream_idx)]  # don't need 0
     stream = ffmpeg.output(stream, outfile)
     stream = ffmpeg.overwrite_output(stream)  # todo: add option to not force overwrite
-    (stdout, stderr) = ffmpeg.run(stream, quiet=not verbose)
+    ffmpeg.run(stream, quiet=not verbose)
     return outfile
 
+
 def demux_audio(videofile, sources, audio_idx):
-    if not isinstance(sources["audio"][audio_idx], str):  #if not manually specified audio file
+    if not isinstance(sources["audio"][audio_idx], str):  # if not manually specified audio file
         # input file: /original/path/video.file.mkv
         # output file: /original/path/video.file.languagecode.flac
         language = sources['audio'][audio_idx][1]['tags']['language']
@@ -257,12 +268,14 @@ def demux_audio(videofile, sources, audio_idx):
         return audiofile
     return sources['audio'][0]
 
+
 def demux_subtitles(videofile, sources, sub_idx):
     if not isinstance(sources["subtitles"][sub_idx], str):  # if subtitle file not specified
         # demux subtitles from video file
         language = sources['subtitles'][sub_idx][1]['tags']['language']
         stream_idx = sources['subtitles'][sub_idx][1]['index']
-        subfile = os.path.splitext(videofile)[0] + f".subtitle{sub_idx + 1}.{language}.ass"  # todo: probe subtitle type and save to the appropriate extension
+        subfile = os.path.splitext(videofile)[
+                      0] + f".subtitle{sub_idx + 1}.{language}.ass"  # todo: probe subtitle type and save to the appropriate extension
         if not os.path.exists(subfile):  # don't overwrite existing file
             subfile = demux(infile=videofile, stream_idx=stream_idx, outfile=subfile)
         print(f"demuxed stream {stream_idx} ({language}) subtitle track to {subfile}")
@@ -277,7 +290,7 @@ def decide_partitions(sub_times, partition=0):
     partitions = list()
     current_partition = 0
     start = 0
-    end = 1
+    idx = 0
     for idx, t in enumerate(sub_times):
         current_partition_boundary = (current_partition + 1) * partition
         if t[1] > current_partition_boundary:
@@ -293,7 +306,6 @@ def decide_partitions(sub_times, partition=0):
     return partitions
 
 
-
 def split_times(sub_times, partition_indicies, splitsize=0):
     partition_times = sub_times[partition_indicies[0]:partition_indicies[1]]
     if splitsize == 0:
@@ -305,7 +317,7 @@ def split_times(sub_times, partition_indicies, splitsize=0):
         prev = time[2]
 
     start = 0
-    end = 1
+    idx = 0
     splits = list()
     current_split = 0
     for idx, t in enumerate(partition_times):
@@ -320,12 +332,13 @@ def split_times(sub_times, partition_indicies, splitsize=0):
             start = end
     end = idx + 1
     splits.append((start, end))
-    split_times = list()
+    splittimes = list()
     for split in splits:
         tmp = partition_times[split[0]:split[1]]
         tmp = [[x[0], x[1]] for x in tmp]
-        split_times.append(tmp)
-    return split_times
+        splittimes.append(tmp)
+    return splittimes
+
 
 # todo: remove ffmpeg_condense_audio from this part
 def partition_and_split(sub_times, partition_size=0, split_size=0):
@@ -359,7 +372,6 @@ def partition_and_split(sub_times, partition_size=0, split_size=0):
     return divided_times
 
 
-
 def export_condensed_audio(divided_times, audiofile, outfile, use_absolute_numbering=False):
     # outfile is full path with extension
     if outfile is None:  # no output path given, use audiofile path
@@ -386,35 +398,35 @@ def export_condensed_audio(divided_times, audiofile, outfile, use_absolute_numbe
                 outfile = os.path.splitext(outfile)[0] + \
                           (f".p{p + 1}" if len(divided_times) != 1 else "") + \
                           (f".s{s + 1}" if len(partition) != 1 else "") + \
-                    ".condensed" + \
-                    os.path.splitext(outfile)[1]
+                          ".condensed" + \
+                          os.path.splitext(outfile)[1]
 
             ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfile)
 
+
 def print_compression_ratio(sub_times, audiofile):
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
-    sps = int(audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+    sps = int(
+        audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
     samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
 
     audio_total = samples / sps * 1000
     subs_total = sum([x2 - x1 for x1, x2 in sub_times])  # in ms
     print(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio into "
-          f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total/audio_total * 100, 1)}% compression ratio))")
+          f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total / audio_total * 100, 1)}% compression ratio))")
+
 
 def test(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac", dry_run=False, threshold=0, padding=0,
          partition_size=0, split_size=0, alang=None, slang=None, force_audio=0, force_subtitles=0, no_retry=False,
-         absolute_numbering=False,
-         **kwargs):
-
+         absolute_numbering=False,):
     sources = probe_sources(subfile=subfile, audiofile=audiofile, videofile=videofile)
     if sources is None:
         print("not enough sources")
         return
 
-
-    (sub_idx, audio_idx)  = pick_sources(sources=sources, alang=alang, slang=slang, force_audio=force_audio, force_subtitles=force_subtitles)
+    (sub_idx, audio_idx) = pick_sources(sources=sources, alang=alang, slang=slang, force_audio=force_audio,
+                                        force_subtitles=force_subtitles)
     # if needed, demux audio/subtitles from video
-
 
     valid = False
     tries = 0
@@ -448,28 +460,29 @@ def test(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac",
 
     print_compression_ratio(sub_times=sub_times, audiofile=audiofile)
 
-    divided_times = partition_and_split(sub_times=sub_times, partition_size=partition_size*1000, split_size=split_size*1000)
+    divided_times = partition_and_split(sub_times=sub_times, partition_size=partition_size * 1000,
+                                        split_size=split_size * 1000)
 
-    export_condensed_audio(divided_times=divided_times, audiofile=audiofile, outfile=outfile, use_absolute_numbering=absolute_numbering)
-
+    export_condensed_audio(divided_times=divided_times, audiofile=audiofile, outfile=outfile,
+                           use_absolute_numbering=absolute_numbering)
 
 
 def get_args():
     parser = argparse.ArgumentParser(description='subs2cia: subtitle-based condensed audio')
     parser.add_argument('-a', '--audio', metavar='path/to/audio', dest='audiofile', required=False, type=str,
-                        help='Path to audio file')  # todo: automagically find audio files in wd
+                        help='Path to audio file. Supported types: any type ffmpeg supports.')  # todo: automagically find audio files in wd
     parser.add_argument('-s', '--subtitles', metavar='path/to/subtitles', dest='subfile', required=False, type=str,
                         help='Path to subtitle file. Supported types: .ass, .srt. Unsupported types: .sup, PGS')  # todo: automagically find subtitles in wd
     parser.add_argument('-i', '--video', metavar='path/to/video', dest='videofile', required=False, type=str,
-                        help='Path to video file. Supported containers: everything ffmpeg supports.')
+                        help='Path to video file containing audio and subtitles that can be demuxed. Tracks from video sources are ignored if -a or -s is present. . Supported containers: any type ffmpeg supports.')
     parser.add_argument('-o', '--output', metavar='path/to/outputfile.flac', dest='outfile', type=str,
-                        help='Path to output condensed audio to (audio codec assumed from extension). Default is to use the audio file name and extension. '
-                             'If you only want a certain extension, such as .mp3, use -o ".extension"')
+                        help='Path to output condensed audio to (audio codec assumed from extension). Default is to use the audio or video file name and extension (usually flac). '
+                             'You can also specify just the output file type by using an extension, e.g. for .mp3, use -o ".mp3"')
 
     parser.add_argument('-d', '--dry-run', action='store_true', dest='dry_run', default=False,
-                        help='If nonzero, reads inputs, processes them, but does not write to disk')
+                        help='If nonzero, reads inputs, processes them, but does not demux or write output(s) to disk')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False,
-                        help='If set, prints verbose output')
+                        help='Verbose output if set.')
 
     parser.add_argument('-t', '--threshold', metavar='msecs', dest='threshold', type=int, default=0,
                         help='maximum distance between subtitles before splitting the audio snippet')
@@ -488,30 +501,33 @@ def get_args():
     parser.add_argument('-sl', '--subtitle-language', metavar='ISO_code', dest='slang', type=str,
                         help='If set, and given a video file, attempts to use subtitles from the video that is in this language. Expects ISO language code.')
 
-    parser.add_argument('-fs', '--force-subtitle-stream', metavar='stream#', dest='force_subtitles', type=int, default=0,
-                        help='If set, and given a video file, attempts to use the stream# subtitle stream from the video file for subtitles. Ignored if -s is present. 1-indexed.')
+    parser.add_argument('-fs', '--force-subtitle-stream', metavar='stream#', dest='force_subtitles', type=int,
+                        default=0,
+                        help='If set, and given a video file, attempts to use the stream# subtitle stream from the video file for subtitles. Default is to use the first subtitle track. Ignored if -s is present. 1-indexed.')
     parser.add_argument('-fa', '--force-audio-stream', metavar='stream#', dest='force_audio', type=int, default=0,
-                        help='If set, and given a video file, attempts to use the stream# audio stream from the video file for audio. Ignored if -a is present. 1-indexed')
+                        help='If set, and given a video file, attempts to use the stream# audio stream from the video file for audio. Default is to use the first audio track. Ignored if -a is present. 1-indexed')
     parser.add_argument('-N', '--no-retry', dest='no_retry', action='store_true', default=False,
                         help='If set, makes no attempt to retry different audio/subtitle tracks if anything is wrong with an audio/subtitle file.')
 
     parser.add_argument('--preset', metavar='preset#', dest='preset', type=int, default=None,
                         help='If set, uses a given preset. Will override user arguments.')
-
+    parser.add_argument('-lp', '--list-presets', dest='list_presets', action='store_true', default=False,
+                        help='If set, uses a given preset. Will override user arguments.')
     args = parser.parse_args()
     return args
 
+
 presets = [
-    {
-        'preset_name': "Preset 0: Padded and merged Japanese condensed audio",
+    {  # preset 0
+        'preset_description': "Padded and merged Japanese condensed audio",
         'output': '.mp3',
         'threshold': 300,
         'padding': 1500,
         'partition_size': 1800,  # 30 minutes, for long movies
         'alang': 'ja',
     },
-    {
-        'preset_name': "Preset 1: Unpadded Japanese condensed audio",
+    {  # preset 1
+        'preset_description': "Unpadded Japanese condensed audio",
         'output': '.mp3',
         'threshold': 0,  # note: default is 0
         'padding': 0,  # note: default is 0
@@ -520,8 +536,18 @@ presets = [
     },
 ]
 
+
+def list_presets():
+    for idx, preset in enumerate(presets):
+        print(f"Preset {idx}")
+        pprint(preset)
+
+
 if __name__ == "__main__":
     args = get_args()
+
+    if args.list_presets:
+        list_presets()
 
     verbose = args.verbose
     if verbose:
@@ -530,11 +556,11 @@ if __name__ == "__main__":
     args = vars(args)
     if args['preset'] is not None:
         if abs(args['preset']) >= len(presets):
-            print(f"{args['preset']} is not a preset")
+            print(f"Preset {args['preset']} does not exist")
             exit(0)
+        print(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
             args[key] = val
     test(**args)
     # main(**vars(args))
     print("done")
-

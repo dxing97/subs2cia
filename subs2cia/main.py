@@ -412,7 +412,7 @@ def print_compression_ratio(sub_times, audiofile):
     audio_total = samples / sps * 1000
     subs_total = sum([x2 - x1 for x1, x2 in sub_times])  # in ms
     print(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio into "
-          f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total / audio_total * 100, 1)}% compression ratio))")
+          f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total / audio_total * 100, 1)}% compression ratio)")
 
 
 def test(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac", dry_run=False, threshold=0, padding=0,

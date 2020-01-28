@@ -92,6 +92,7 @@ optional arguments:
     - [ ] for mp3, add bitrate/quality options
  - [ ] clean up dry-run, verbose options 
  - [ ] cleanup code for v0.1 release
+ - [ ] option to clean up intermediate files that get demuxed from any video files
 
 ### Tier 2
  - [ ] add more documentation, quick start guide

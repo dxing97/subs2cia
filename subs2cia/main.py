@@ -519,7 +519,7 @@ def get_args():
 presets = [
     {  # preset 0
         'preset_description': "Padded and merged Japanese condensed audio",
-        'output': '.mp3',
+        'outfile': '.mp3',
         'threshold': 1500,
         'padding': 200,
         'partition_size': 1800,  # 30 minutes, for long movies
@@ -527,7 +527,7 @@ presets = [
     },
     {  # preset 1
         'preset_description': "Unpadded Japanese condensed audio",
-        'output': '.mp3',
+        'outfile': '.mp3',
         'threshold': 0,  # note: default is 0
         'padding': 0,  # note: default is 0
         'partition_size': 1800,  # 30 minutes, for long movies

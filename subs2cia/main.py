@@ -567,18 +567,17 @@ def start():
         print(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
             args[key] = val
-
-    if len(args['videofile']) == 1:
-        args['videofile'] = args['videofile'][0]
-        subs2cia(**args)
-    else:
-        print("multiple video files given")
-        videos = args['videofile']
-        for video in videos:
-            print(f"condensing {video}")
-            args['videofile'] = video
+    if args['videofile'] is not None:  # video batching
+        if len(args['videofile']) == 1:
+            args['videofile'] = args['videofile'][0]
             subs2cia(**args)
-    print("done")
+        else:
+            print("multiple video files given")
+            videos = args['videofile']
+            for video in videos:
+                print(f"condensing {video}")
+                args['videofile'] = video
+                subs2cia(**args)
 
 
 if __name__ == "__main__":

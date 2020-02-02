@@ -471,14 +471,19 @@ def subs2cia(audiofile=None, subfile=None, videofile=None, outfile="condensed.fl
 def get_args():
     parser = argparse.ArgumentParser(description='subs2cia: subtitle-based condensed audio generator')
     parser.add_argument('-a', '--audio', metavar='path/to/audio', dest='audiofile', required=False, type=str,
-                        help='Path to audio file. Supported types: any type ffmpeg supports.')  # todo: automagically find audio files in wd
+                        help='Path to audio file. Supported types: any type ffmpeg supports.')  # todo: automagically find audio files in working directory
     parser.add_argument('-s', '--subtitles', metavar='path/to/subtitles', dest='subfile', required=False, type=str,
                         help='Path to subtitle file. Supported types: .ass, .srt. Unsupported types: .sup, PGS')  # todo: automagically find subtitles in wd
-    parser.add_argument('-i', '--video', metavar='path/to/video', dest='videofile', required=False, type=str,
-                        help='Path to video file containing audio and subtitles that can be demuxed. Tracks from video sources are ignored if -a or -s is present. . Supported containers: any type ffmpeg supports.')
+    parser.add_argument('-i', '--video', metavar='path/to/video', dest='videofile', required=False, type=str, nargs='+',
+                        help='Path to video file containing audio and subtitles that can be demuxed. '
+                             'Tracks from video sources are ignored if -a or -s is present. '
+                             'If multiple video files are specified, it will apply all options to each video file.'
+                             'Supported containers: any type ffmpeg supports.')
     parser.add_argument('-o', '--output', metavar='path/to/outputfile.flac', dest='outfile', type=str,
-                        help='Path to output condensed audio to (audio codec assumed from extension). Default is to use the audio or video file name and extension (usually flac). '
-                             'You can also specify just the output file type by using an extension, e.g. for .mp3, use -o ".mp3"')
+                        help='Path to output condensed audio to (audio codec assumed from extension). '
+                             'Default is to use the audio or video file name and extension (usually flac). '
+                             'You can also specify just the output file type by using an extension, '
+                             'e.g. for .mp3, use -o ".mp3"')
 
     parser.add_argument('-d', '--dry-run', action='store_true', dest='dry_run', default=False,
                         help='If nonzero, reads inputs, processes them, but does not demux or write output(s) to disk')
@@ -562,7 +567,17 @@ def start():
         print(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
             args[key] = val
-    subs2cia(**args)
+
+    if len(args['videofile']) == 1:
+        args['videofile'] = args['videofile'][0]
+        subs2cia(**args)
+    else:
+        print("multiple video files given")
+        videos = args['videofile']
+        for video in videos:
+            print(f"condensing {video}")
+            args['videofile'] = video
+            subs2cia(**args)
     print("done")
 
 

@@ -5,11 +5,12 @@
  - [ ] make file extensions more flexible (for demuxing and outputs)
     - [ ] for mp3, add user-settable bitrate/quality options (right now if it outputs to mp3, defaults to 320k CBR)
  - [ ] clean up dry-run, verbose options 
+    - [ ] clean up all the print statements
  - [X] cleanup code for v0.1 release
  - [ ] option to clean up intermediate files that get demuxed from any video files
 
 ### Tier 2
-- [ ] limited batching support for ``-i``
+- [X] limited batching support for ``-i``
  - [ ] add more documentation, quick start guide
     - [ ] document presets
  - [X] add requirements.txt, more prep for packaging for v0.2 release

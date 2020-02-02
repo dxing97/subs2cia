@@ -417,9 +417,9 @@ def print_compression_ratio(sub_times, audiofile):
           f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total / audio_total * 100, 1)}% compression ratio)")
 
 
-def test(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac", dry_run=False, threshold=0, padding=0,
-         partition_size=0, split_size=0, alang=None, slang=None, force_audio=0, force_subtitles=0, no_retry=False,
-         absolute_numbering=False, **kwargs):
+def subs2cia(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac", dry_run=False, threshold=0, padding=0,
+             partition_size=0, split_size=0, alang=None, slang=None, force_audio=0, force_subtitles=0, no_retry=False,
+             absolute_numbering=False, **kwargs):
     sources = probe_sources(subfile=subfile, audiofile=audiofile, videofile=videofile)
     if sources is None:
         print("not enough sources")
@@ -544,7 +544,7 @@ def list_presets():
         pprint(preset)
 
 
-if __name__ == "__main__":
+def start():
     args = get_args()
 
     if args.list_presets:
@@ -562,5 +562,9 @@ if __name__ == "__main__":
         print(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
             args[key] = val
-    test(**args)
+    subs2cia(**args)
     print("done")
+
+
+if __name__ == "__main__":
+    start()

@@ -1,0 +1,1 @@
+from subs2cia import main

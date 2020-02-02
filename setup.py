@@ -4,9 +4,9 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="subs2cia", # Replace with your own username
-    version="0.1.1",
-    scripts=['subs2cia/main.py'],
+    name="subs2cia",
+    version="0.1.1-1",
+    license='MIT',
     author="Daniel Xing",
     author_email="danielxing97@gmail.com",
     description="A condensed immersion audio generator",
@@ -20,4 +20,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
+    entry_points = {
+        'console_scripts': ['subs2cia=subs2cia.cli:main']
+    }
 )

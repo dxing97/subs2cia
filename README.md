@@ -14,10 +14,11 @@ This script aims to fix these issues, as well as allow users the flexibility to 
 ```
 $ main.py -h
 usage: main.py [-h] [-a path/to/audio] [-s path/to/subtitles]
-               [-i path/to/video] [-o path/to/outputfile.flac] [-d] [-v]
-               [-t msecs] [-p msecs] [-P secs] [-S secs]
-               [--use-absolute-numbering] [-al ISO_code] [-sl ISO_code]
-               [-fs stream#] [-fa stream#] [-N] [--preset preset#] [-lp]
+               [-i path/to/video [path/to/video ...]]
+               [-o path/to/outputfile.flac] [-d] [-v] [-t msecs] [-p msecs]
+               [-P secs] [-S secs] [--use-absolute-numbering] [-al ISO_code]
+               [-sl ISO_code] [-fs stream#] [-fa stream#] [-N]
+               [--preset preset#] [-lp]
 
 subs2cia: subtitle-based condensed audio generator
 
@@ -29,11 +30,12 @@ optional arguments:
   -s path/to/subtitles, --subtitles path/to/subtitles
                         Path to subtitle file. Supported types: .ass, .srt.
                         Unsupported types: .sup, PGS
-  -i path/to/video, --video path/to/video
+  -i path/to/video [path/to/video ...], --video path/to/video [path/to/video ...]
                         Path to video file containing audio and subtitles that
                         can be demuxed. Tracks from video sources are ignored
-                        if -a or -s is present. . Supported containers: any
-                        type ffmpeg supports.
+                        if -a or -s is present. If multiple video files are
+                        specified, it will apply all options to each video
+                        file.Supported containers: any type ffmpeg supports.
   -o path/to/outputfile.flac, --output path/to/outputfile.flac
                         Path to output condensed audio to (audio codec assumed
                         from extension). Default is to use the audio or video

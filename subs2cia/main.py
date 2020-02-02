@@ -559,6 +559,9 @@ def start():
     if verbose:
         print("running in verbose mode")
 
+    # if args.videofile is None and args.audiofile is None and args.subfile is None:
+    #     print("not enough input files")
+
     args = vars(args)
     if args['preset'] is not None:
         if abs(args['preset']) >= len(presets):
@@ -567,6 +570,8 @@ def start():
         print(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
             args[key] = val
+
+
     if args['videofile'] is not None:  # video batching
         if len(args['videofile']) == 1:
             args['videofile'] = args['videofile'][0]

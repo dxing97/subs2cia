@@ -467,7 +467,7 @@ def test(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac",
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='subs2cia: subtitle-based condensed audio')
+    parser = argparse.ArgumentParser(description='subs2cia: subtitle-based condensed audio generator')
     parser.add_argument('-a', '--audio', metavar='path/to/audio', dest='audiofile', required=False, type=str,
                         help='Path to audio file. Supported types: any type ffmpeg supports.')  # todo: automagically find audio files in wd
     parser.add_argument('-s', '--subtitles', metavar='path/to/subtitles', dest='subfile', required=False, type=str,

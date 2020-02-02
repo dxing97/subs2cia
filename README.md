@@ -1,19 +1,25 @@
 # subs2cia
 
-A subtitle and audio track to condensed immersion audio converter.
+A subtitled media to condensed immersion audio converter.
 
-Inspired by a script that takes subs2srs audio snippets and concatenates them together to achieve a similar effect. 
-However, I didn't like the quality of the output files, so I decided to make a custom cross-platform tool.
+Inspired by a script demoed [here](https://www.youtube.com/watch?v=QOLTeO-uCYU) that takes audio snippets played during 
+subtitles and concatenates them together to make one large audio file that should contain just spoken audio. 
+However, the quality of the snippets you use directly influences the quality of the final condensed audio, and subtitle 
+timing information isn't taken into account when generating the final condensed audio, potentially resulting in 
+stutters, repeated audio, and dialogue with little to no space between each sentence.
+
+This script aims to fix these issues, as well as allow users the flexibility to choose how the audio is generated. 
 
 ## Usage
 ```
+$ main.py -h
 usage: main.py [-h] [-a path/to/audio] [-s path/to/subtitles]
                [-i path/to/video] [-o path/to/outputfile.flac] [-d] [-v]
                [-t msecs] [-p msecs] [-P secs] [-S secs]
                [--use-absolute-numbering] [-al ISO_code] [-sl ISO_code]
                [-fs stream#] [-fa stream#] [-N] [--preset preset#] [-lp]
 
-subs2cia: subtitle-based condensed audio
+subs2cia: subtitle-based condensed audio generator
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -89,17 +95,19 @@ optional arguments:
 ### Tier 1
  - [ ] demuxing-only options, including for subs2srs
  - [ ] make file extensions more flexible (for demuxing and outputs)
-    - [ ] for mp3, add bitrate/quality options
+    - [ ] for mp3, add user-settable bitrate/quality options (right now if it outputs to mp3, defaults to 320k CBR)
  - [ ] clean up dry-run, verbose options 
  - [ ] cleanup code for v0.1 release
  - [ ] option to clean up intermediate files that get demuxed from any video files
 
 ### Tier 2
+- [ ] limited batching support for ``-i``
  - [ ] add more documentation, quick start guide
+    - [ ] document presets
  - [ ] add requirements.txt, more prep for packaging for v0.2 release
  - [ ] more testing
 
 ### Tier 3
- - [ ] batching support (directory of similarly named sources to process)
+ - [ ] full batching support (directory of similarly named sources to process)
  - [ ] make a C parser for PGS subtitle files and extract timings from there (the only python library on github doesn't have a license)
  - [ ] performance tuning

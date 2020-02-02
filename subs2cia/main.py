@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Condensed Immersion Audio Generator
 
 import pysubs2 as ps2  # for reading in subtitles

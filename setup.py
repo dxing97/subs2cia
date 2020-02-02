@@ -5,7 +5,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="subs2cia", # Replace with your own username
-    version="0.1.0",
+    version="0.1.1",
+    scripts=['subs2cia/main.py'],
     author="Daniel Xing",
     author_email="danielxing97@gmail.com",
     description="A condensed immersion audio generator",

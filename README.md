@@ -10,9 +10,16 @@ stutters, repeated audio, and dialogue with little to no space between each sent
 
 This script aims to fix these issues, as well as allow users the flexibility to choose how the audio is generated. 
 
+## Installation
+Clone the repository, and run 
+
+```pip3 install .```
+
+in the subs2cia root folder. A PyPi package is in the works. If you prefer, you can also run ``main.py`` directly.
+
 ## Usage
 ```
-$ main.py -h
+$ sub2cia -h
 usage: main.py [-h] [-a path/to/audio] [-s path/to/subtitles]
                [-i path/to/video [path/to/video ...]]
                [-o path/to/outputfile.flac] [-d] [-v] [-t msecs] [-p msecs]
@@ -89,7 +96,13 @@ optional arguments:
                         arguments.
 ```
 ## Examples
-``subs2cia -i video.mkv``
+* Extract the first audio and subtitle track from ``video.mkv`` file and condense it
+  * ``subs2cia -i video.mkv``
+* Condense ``audio.mp3`` using ``subtitles.srt`` and save it to ``condensed.flac``
+  * ``subs2cia -a "./audio.mp3" -s "./subtitles.srt" -o "./condensed.flac"
+* Extract the second subtitle track and the first Japanese audio track from ``myvideo.mkv`` and save it to ``myvideo.mp3``
+  * ``subs2cia -i video.mkv -o .mp3 -fs 1 -sl ja``
+    
 
 
 

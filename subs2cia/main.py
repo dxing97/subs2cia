@@ -14,6 +14,7 @@ from pprint import pprint
 
 
 verbose = False
+verboseprint = print if verbose else lambda *a, **k: None
 
 
 # given raw subtitle timing data, merge overlaps and perform padding and merging
@@ -21,7 +22,7 @@ def merge_times(times, threshold=0, padding=0):
     # padding: time to add to the beginning and end of each subtitle. Resulting overlaps are removed.
     # threshold: if two subtitles are within this distance apart, they will be merged in the audio track
 
-    print("merging times")
+    verboseprint("merging times")
     times.sort(key=lambda x: x[0])  # sort by first value in tuple
 
     initial = len(times)
@@ -67,10 +68,10 @@ def is_spoken_dialogue(line, include_all=False):
 # given a path to a subtitle file, load it in and strip it of non-dialogue text
 # keyword arguments are filter options that are passed to is_spoken_dialogue for filtering configuration
 def load_subtitle_times(subfile, **kwargs):
-    print("loading", subfile)
+    verboseprint("loading", subfile)
     subs = ps2.load(subfile)
-    print(subs)
-    print("loaded subtitles\n")
+    verboseprint(subs)
+    verboseprint("loaded subtitles\n")
 
     times = list()
     count = 0
@@ -83,7 +84,7 @@ def load_subtitle_times(subfile, **kwargs):
             # print(f"ignoring {line.text}, probably not spoken dialogue")
             count += 1
             pass
-    print(f"ignored {count} lines")  # number of subtitles that looked like they didn't contain dialogue
+    verboseprint(f"ignored {count} lines")  # number of subtitles that looked like they didn't contain dialogue
 
     # print(times)
     if len(times) == 0:
@@ -95,7 +96,7 @@ def load_subtitle_times(subfile, **kwargs):
 def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     if outfile is None:
         outfile = "condensed.flac"
-    print("saving audio to", outfile)
+    print("saving audio to", outfile)  # todo: print input/output files at top of start()
 
     # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
@@ -122,11 +123,11 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
 # figure out what files we were given to work with
 def probe_sources(subfile=None, audiofile=None, videofile=None):
     if (audiofile or videofile) is None:
-        print("missing audio")
-        return None
+        print("missing audio, exiting")
+        exit(0)  # todo: define some exit codes
     if (subfile or videofile) is None:
-        print("missing subtitles")
-        return None
+        print("missing subtitles, exiting")
+        exit(0)
     sources = dict(audio=[], subtitles=[])
 
     if subfile is not None:  # manually specified subtitle files come first
@@ -157,8 +158,8 @@ def probe_sources(subfile=None, audiofile=None, videofile=None):
         print("no audio found, exiting")
         exit()
     if len(sources['subtitles']) == 0:
-        print("WARNING: no subtitles found, can't condense audio. will attempt to demux.")
-    print(f"found {len(sources['audio'])} audio source(s) and {len(sources['subtitles'])} subtitle source(s)")
+        print("WARNING: no subtitles found, can't condense audio. will attempt to demux only.")  # todo: need to add tests for demux-only
+    verboseprint(f"found {len(sources['audio'])} audio source(s) and {len(sources['subtitles'])} subtitle source(s)")
     return sources
 
 
@@ -169,7 +170,7 @@ def pick_audio_source(sources,
     if force_audio != 0:
         # get ffmpeg stream with force_audio index and save its sources idx to audio_idx
         if isinstance(sources['audio'][0], str):
-            print(f"ignoring force_audio, using {sources['audio'][0]}")
+            verboseprint(f"ignoring force_audio, using {sources['audio'][0]}")
         elif force_audio > len(sources['audio']):
             print(
                 f"WARNING: can't force audio stream #{force_audio}, "
@@ -189,7 +190,7 @@ def pick_audio_source(sources,
                     audio_idx = idx
                     break
             else:
-                print("using given audio file, ignoring video audio tracks")
+                verboseprint("using given audio file, ignoring video audio tracks")
                 audio_idx = idx
                 break
     return audio_idx
@@ -202,9 +203,9 @@ def pick_subtitle_source(sources,
     if force_subtitles != 0:
         # get ffmpeg stream with force_subtitle index and save its sources idx to audio_idx
         if isinstance(sources['subtitles'][0], str):
-            print(f"ignoring force_subtitles, using {sources['subtitles'][0]}")
+            verboseprint(f"ignoring force_subtitles, using {sources['subtitles'][0]}")
         elif force_subtitles > len(sources['subtitles']):
-            print(
+            verboseprint(
                 f"WARNING: can't force subtitle stream #{force_subtitles}, "
                 f"there are only {len(sources['subtitles'])} subtitle streams")
         else:
@@ -218,11 +219,11 @@ def pick_subtitle_source(sources,
                 (parent, stream) = item
                 if pycountry.languages.lookup(stream['tags']['language']) == pycountry.languages.lookup(slang):
                     # found a match
-                    print(f"found {stream['tags']['language']} subtitles in video file")
+                    verboseprint(f"found {stream['tags']['language']} subtitles in video file")
                     sub_idx = idx
                     break
             else:
-                print("using given subtitle file, ignoring video subtitles")
+                verboseprint("using given subtitle file, ignoring video subtitles")
                 sub_idx = idx
                 break
         if sub_idx == -1:
@@ -239,9 +240,9 @@ def pick_sources(sources,  # dict of audio and subtitle sources that have been f
                  # if set, will choose these audio/subtitle streams regardless of language setting
                  ):
     sub_idx = pick_subtitle_source(sources, slang=slang, force_subtitles=force_subtitles)
-    print(f"using subtitle source {sub_idx}")  # ({sources['subtitles'][sub_idx]})")
+    verboseprint(f"using subtitle source {sub_idx}")  # ({sources['subtitles'][sub_idx]})")
     audio_idx = pick_audio_source(sources, alang, force_audio=force_audio)
-    print(f"using audio source {audio_idx}")  # ({sources['audio'][sub_idx]})")
+    verboseprint(f"using audio source {audio_idx}")  # ({sources['audio'][sub_idx]})")
     return sub_idx, audio_idx  # sources dict entires
 
 
@@ -413,8 +414,8 @@ def print_compression_ratio(sub_times, audiofile):
 
     audio_total = samples / sps * 1000
     subs_total = sum([x2 - x1 for x1, x2 in sub_times])  # in ms
-    print(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio into "
-          f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total / audio_total * 100, 1)}% compression ratio)")
+    print(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio to "
+          f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} ({round(subs_total / audio_total * 100, 1)}% compression ratio) of condensed audio")
 
 
 def subs2cia(audiofile=None, subfile=None, videofile=None, outfile="condensed.flac", dry_run=False, threshold=0, padding=0,
@@ -444,7 +445,7 @@ def subs2cia(audiofile=None, subfile=None, videofile=None, outfile="condensed.fl
                 exit(1)
             elif tries < len(sources['subtitles']):
                 sub_idx += 1 % len(sources['subtitles'])
-                print(f"trying subtitle track {sub_idx}")
+                verboseprint(f"trying subtitle track {sub_idx}")
             else:
                 print("no subtitle files contain valid dialogue lines")
                 sub_idx = -1
@@ -555,9 +556,9 @@ def start():
     if args.list_presets:
         list_presets()
 
+    global verbose
     verbose = args.verbose
-    if verbose:
-        print("running in verbose mode")
+    verboseprint("running in verbose mode")
 
     # if args.videofile is None and args.audiofile is None and args.subfile is None:
     #     print("not enough input files")
@@ -572,17 +573,19 @@ def start():
             args[key] = val
 
 
-    if args['videofile'] is not None:  # video batching
-        if len(args['videofile']) == 1:
-            args['videofile'] = args['videofile'][0]
+    # if args['videofile'] is not None:  # video batching
+    if args['videofile'] is None:
+        subs2cia(**args)
+    elif len(args['videofile']) == 1:
+        args['videofile'] = args['videofile'][0]
+        subs2cia(**args)
+    else:
+        verboseprint(f"{len(args['videofile'])} video files given")
+        videos = args['videofile']
+        for video in videos:
+            print(f"condensing {video}")
+            args['videofile'] = video
             subs2cia(**args)
-        else:
-            print("multiple video files given")
-            videos = args['videofile']
-            for video in videos:
-                print(f"condensing {video}")
-                args['videofile'] = video
-                subs2cia(**args)
 
 
 if __name__ == "__main__":

@@ -129,13 +129,13 @@ def probe_sources(subfile=None, audiofile=None, videofile=None):
         print("missing subtitles, exiting")
         exit(0)
 
-    if (audiofile is not None) and (os.path.isfile(audiofile) is False) :
+    if (audiofile is not None) and (os.path.isfile(audiofile) is False):
         print(f"ERROR: \"{audiofile}\" doesn't exist")
         exit(1)
-    if (subfile is not None) and (os.path.isfile(audiofile) is False) :
+    if (subfile is not None) and (os.path.isfile(subfile) is False):
         print(f"ERROR: \"{subfile}\" doesn't exist")
         exit(1)
-    if (subfile is not None) and (os.path.isfile(audiofile) is False) :
+    if (videofile is not None) and (os.path.isfile(videofile) is False):
         print(f"ERROR: \"{videofile}\" doesn't exist")
         exit(1)
 

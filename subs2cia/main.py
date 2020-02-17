@@ -403,18 +403,18 @@ def export_condensed_audio(divided_times, audiofile, outfile, use_absolute_numbe
                 continue
             idx += 1
             if use_absolute_numbering:
-                outfile = os.path.splitext(outfile)[0] + \
+                outfilesplit = os.path.splitext(outfile)[0] + \
                           f".pt{idx}" + \
                           ".condensed" + \
                           os.path.splitext(outfile)[1]
             else:
-                outfile = os.path.splitext(outfile)[0] + \
+                outfilesplit = os.path.splitext(outfile)[0] + \
                           (f".p{p + 1}" if len(divided_times) != 1 else "") + \
                           (f".s{s + 1}" if len(partition) != 1 else "") + \
                           ".condensed" + \
                           os.path.splitext(outfile)[1]
 
-            ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfile)
+            ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit)
 
 
 def print_compression_ratio(sub_times, audiofile):

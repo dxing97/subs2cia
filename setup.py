@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="subs2cia",
-    version="0.1.3",
+    version="0.1.4",
     license='MIT',
     author="Daniel Xing",
     author_email="danielxing97@gmail.com",

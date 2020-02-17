@@ -128,6 +128,17 @@ def probe_sources(subfile=None, audiofile=None, videofile=None):
     if (subfile or videofile) is None:
         print("missing subtitles, exiting")
         exit(0)
+
+    if (os.path.isfile(audiofile) is False) and audiofile is not None:
+        print(f"ERROR: \"{audiofile}\" doesn't exist")
+        exit(1)
+    if (os.path.isfile(subfile) is False) and subfile is not None:
+        print(f"ERROR: \"{subfile}\" doesn't exist")
+        exit(1)
+    if (os.path.isfile(videofile) is False) and videofile is not None:
+        print(f"ERROR: \"{videofile}\" doesn't exist")
+        exit(1)
+
     sources = dict(audio=[], subtitles=[])
 
     if subfile is not None:  # manually specified subtitle files come first
@@ -407,6 +418,7 @@ def export_condensed_audio(divided_times, audiofile, outfile, use_absolute_numbe
 
 
 def print_compression_ratio(sub_times, audiofile):
+
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
     sps = int(
         audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency

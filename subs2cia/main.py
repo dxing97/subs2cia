@@ -120,6 +120,12 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     ffmpeg.run(combined, quiet=not verbose)
 
 
+# need: video stream, audio stream(s), sub file
+def ffmpeg_condense_video(videofile, sub_times, outfile=None):
+
+    pass
+
+
 # figure out what files we were given to work with
 def probe_sources(subfile=None, audiofile=None, videofile=None):
     if (audiofile or videofile) is None:

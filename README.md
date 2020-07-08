@@ -20,13 +20,6 @@ in the subs2cia root folder. A PyPi package is in the works. If you prefer, you 
 ## Usage
 ```
 $ sub2cia -h
-usage: main.py [-h] [-a path/to/audio] [-s path/to/subtitles]
-               [-i path/to/video [path/to/video ...]]
-               [-o path/to/outputfile.flac] [-d] [-v] [-t msecs] [-p msecs]
-               [-P secs] [-S secs] [--use-absolute-numbering] [-al ISO_code]
-               [-sl ISO_code] [-fs stream#] [-fa stream#] [-N]
-               [--preset preset#] [-lp]
-
 subs2cia: subtitle-based condensed audio generator
 
 optional arguments:
@@ -51,7 +44,8 @@ optional arguments:
                         extension, e.g. for .mp3, use -o ".mp3"
   -d, --dry-run         If nonzero, reads inputs, processes them, but does not
                         demux or write output(s) to disk
-  -v, --verbose         Verbose output if set.
+  -v, --verbose         Print verbose output if set.
+  -vv, --debug          Print debug output if set.
   -t msecs, --threshold msecs
                         maximum distance between subtitles before splitting
                         the audio snippet

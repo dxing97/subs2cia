@@ -6,6 +6,9 @@ import logging
 import ffmpeg
 from collections import defaultdict
 
+
+
+
 class AVSFile:
     def __init__(self, filepath: Path):
         self.filepath = filepath
@@ -18,7 +21,7 @@ class AVSFile:
         try:
             self.info = ffmpeg.probe(self.filepath, cmd='ffprobe')
         except ffmpeg.Error as e:
-            logging.warning(f"Couldn't probe file, skipping {str(f)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))
+            logging.warning(f"Couldn't probe file, skipping {str(self.filepath)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))
 
         logging.debug(f"ffmpeg probe results: {self.info}")
 
@@ -37,47 +40,57 @@ class AVSFile:
         self.type = stream['codec_type']
 
 
+# single ffmpeg stream
+class Stream:
+    index = None
 
-class SourceFiles:
-    def __init__(self, infiles: [Path]):
+    def __init__(self, file: AVSFile, index=None):
+        self.file = file
+        self.index = index
+        # index of None indicates that demuxing with ffmpeg is not nessecary to extract data
+
+    def is_standalone(self):
+        if self.index is None:
+            return True
+        return False
+
+    def get_language(self):  # TODO
+        pass
+
+def common_count(t0, t1):
+    # returns the length of the longest common prefix
+    i = 0
+    for i, pair in enumerate(zip(t0, t1)):
+        if pair[0] != pair[1]:
+            return i
+    return i
 
 
-        for f in infiles:
-            if f.is_dir():
-                # todo: batchng with directories
-                logging.debug("is dir")
+def group_by_longest_prefix(sources: [AVSFile]):
+    files = sources
+    out = []
+    longest = 0
+    for f in files:
+        splits = str(f.filepath.name).split('.')
+        if out:
+            common = common_count(splits, str(out[-1].filepath.name).split('.'))
+            if common <= longest:
+                yield out
+                longest = 0
+                out = []
+                # otherwise, just update the target prefix length
+            else:
+                longest = common
 
-        for f in infiles:
-            if not f.exists():
-                raise AssertionError(f"File {str(f)} doesn't exist")
+                # add the current entry to the group
+        out.append(f)
 
-        infiles.sort()
-
-        pretty = ['\n'] + ['\t' + str(file) + '\n' for file in infiles]
-        logging.info(f"Input files: {''.join(pretty)}")
-
-        self.infiles = [AVSFile(f) for f in infiles]
+    # return remaining entries as the last group
+    if out:
+        yield out
 
 
-    # for each input file, determine if its a video, subtitle, or audio file by reading their info
-    def probe_files(self):
-        for f in self.infiles:
-            f.probe()
-
-    def determine_types(self):
-        for f in self.infiles:
-            f.get_type()
-
-    def bin_by_type(self):
-        ret = defaultdict(list)
-        for f in self.infiles:
-            if f.type is not None:
-                ret[f.type].append(f)
-        return ret
-"""
-for each input file, determine their type
-figure out how many output files to write (may need to be interactive)
-    what inputs get mapped to which outputs?
-    
-do output files
-"""
+def group_files(sources: [AVSFile]):
+    file_groups = list(group_by_longest_prefix(sources))
+    logging.debug(f"groups: {[[f.filepath for f in g] for g in file_groups]}")
+    return file_groups

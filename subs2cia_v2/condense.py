@@ -1,55 +1,24 @@
-from subs2cia_v2.sources import SourceFiles, AVSFile
-from subs2cia_v2.pickers import pick_audio, pick_subtitle
+from subs2cia_v2.sources import AVSFile
+from subs2cia_v2.pickers import picker
 from subs2cia_v2.streams import Stream
 
 import subs2cia_v2.subtools as subtools
+from subs2cia_v2.sources import common_count
 
 import logging
 from collections import defaultdict
 
 
-def common_count(t0, t1):
-    # returns the length of the longest common prefix
-    i = 0
-    for i, pair in enumerate(zip(t0, t1)):
-        if pair[0] != pair[1]:
-            return i
-    return i
-
-
-def group_by_longest_prefix(sources: SourceFiles):
-    files = sources.infiles
-    out = []
-    longest = 0
-    for f in files:
-        splits = str(f.filepath.name).split('.')
-        if out:
-            common = common_count(splits, str(out[-1].filepath.name).split('.'))
-            if common <= longest:
-                yield out
-                longest = 0
-                out = []
-                # otherwise, just update the target prefix length
-            else:
-                longest = common
-
-                # add the current entry to the group
-        out.append(f)
-
-    # return remaining entries as the last group
-    if out:
-        yield out
-
-
-def group_files(sources: SourceFiles):
-    file_groups = list(group_by_longest_prefix(sources))
-    logging.debug(f"groups: {[[f.filepath for f in g] for g in file_groups]}")
-    return file_groups
-
+def dict_has_none(d: dict):
+    for k in d:
+        if d[k] is None:
+            return True
+    return False
 
 
 class Condensed:
-    def __init__(self, sources: [AVSFile], outdir=None, condensed_video=False, threshold=0, padding=0):
+    def __init__(self, sources: [AVSFile], outdir=None, condensed_video=False, threshold=0, padding=0,
+                 target_lang=None):
         if len(sources) == 1:
             outstem = sources[0].filepath.stem
         else:
@@ -65,23 +34,23 @@ class Condensed:
         logging.debug(f'Will save a file with stem "{self.outstem}" to directory "{self.outdir}"')
 
         self.partitioned_streams = defaultdict(list)
-        # note: the only dict keys we'll use are "video", "audio", and "subtitle".
-        # Other types like "attachment" are ignored
-        self.audio_stream_idx_picker = None
-        self.subtitle_stream_idx_picker = None
-        self.video_stream_idx_picker = None
 
-        self.audio_stream_idx = None
-        self.subtitle_stream_idx = None
-        self.video_stream_idx = None
+        self.picked_streams = {
+            'audio': None,
+            'subtitle': None,
+            'video': None
+        }
 
-        self.subtitles = None
+        self.pickers = {
+            'audio': None,
+            'subtitle': None,
+            'video': None
+        }
 
-        self.threshold = threshold
-        self.padding = padding
+        self.target_lang = target_lang
 
     # go through source files and count how many subtitle and audio streams we have
-    def partition_sources(self):
+    def get_and_partition_streams(self):
         for sourcefile in self.sources:
             if sourcefile.type == 'video':
                 # dig into streams
@@ -92,27 +61,16 @@ class Condensed:
             self.partitioned_streams[sourcefile.type].append(Stream(sourcefile, None))
             # for stream in sourcefile
 
-    # default behaviour is to pick the first Stream with a None index
-    def pick_audio(self):
-        if self.audio_stream_idx_picker is None:
-            self.audio_stream_idx_picker = pick_audio(self.partitioned_streams['audio'])
-        self.audio_stream_idx = next(self.audio_stream_idx_picker)
+    def initialize_pickers(self):
+        for k in self.pickers:
+            self.pickers[k] = picker(self.partitioned_streams[k], target_lang=self.target_lang)
 
-    def pick_subtitle(self):
-        if self.subtitle_stream_idx_picker is None:
-            self.subtitle_stream_idx_picker = pick_subtitle(self.partitioned_streams['subtitle'])
+    def choose_streams(self):
+        while dict_has_none(self.picked_streams):
+            for k in self.picked_streams:
+                if self.picked_streams[k] is None:
+                    self.picked_streams[k] = next(self.pickers[k])
 
-        while self.subtitles is None:
-            self.subtitle_stream_idx = next(self.subtitle_stream_idx_picker)
-            substream = self.partitioned_streams['subtitle'][self.subtitle_stream_idx]
-            subs = subtools.Subtitle(stream=substream, threshold=self.threshold, padding=self.padding)
-            subs.load_subs()
-
-
-    def pick_video(self):
-        if self.video_stream_idx_picker is None:
-            self.video_stream_idx_picker = pick_subtitle(self.partitioned_streams['video'])
-        self.video_stream_idx = next(self.video_stream_idx_picker)
 
 
 

@@ -5,11 +5,11 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="subs2cia",
-    version="0.1.4",
+    version="0.2",
     license='MIT',
     author="Daniel Xing",
     author_email="danielxing97@gmail.com",
-    description="A condensed immersion audio generator",
+    description="A audio condensation program",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/dxing97/subs2cia",
@@ -20,7 +20,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
-    entry_points = {
-        'console_scripts': ['subs2cia=subs2cia.cli:main']
+    entry_points={
+        # create a cli command called 'subs2cia' which runs the main() function in subs2cia.cli
+        'console_scripts': ['subs2cia=subs2cia_v2.cli:main']
     }
 )

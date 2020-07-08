@@ -42,10 +42,10 @@ given:
 
 
 chosen_audio = chosen subtitle = chosen video = empty set
-while(any of the chosen streams is the empty set):
+while(set of chosen streams is insufficient):
     # pick a stream candidate for each chosen stream set that is an empty set
-    if chosen audio is emoty
-        audio_picker()  
+    if chosen audio is empty
+        audio_picker()
     repeat for subtitle, video
     
     read chosen stream data 

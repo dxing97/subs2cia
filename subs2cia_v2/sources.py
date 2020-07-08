@@ -5,12 +5,14 @@ from pathlib import Path
 import logging
 import ffmpeg
 from collections import defaultdict
-
+from subs2cia_v2.ffmpeg_tools import ffmpeg_demux
 
 
 
 class AVSFile:
     def __init__(self, filepath: Path):
+        if not filepath.exists():
+            raise AssertionError(f"File {filepath} does not exist")
         self.filepath = filepath
         self.info = None
         self.type = None
@@ -44,18 +46,56 @@ class AVSFile:
 class Stream:
     index = None
 
-    def __init__(self, file: AVSFile, index=None):
+    def __init__(self, file: AVSFile, type, index=None):
         self.file = file
         self.index = index
+        self.type = type
         # index of None indicates that demuxing with ffmpeg is not nessecary to extract data
-
+        self.demux_file = None
     def is_standalone(self):
         if self.index is None:
             return True
         return False
 
     def get_language(self):  # TODO
-        pass
+        return 'unknownlang'
+
+    def demux(self, overwrite_existing: bool):
+        demux_path = self.file.filepath
+        if not self.is_standalone():
+            if self.type == 'subtitle':
+                # demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.srt')
+                # todo: bitmap subtitles
+                extension = 'srt'
+
+
+            if self.type == 'audio':
+                # todo: demux file type picker
+                extension = 'flac'
+            demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')
+
+            # todo: better naming scheme for demuxed files
+            if overwrite_existing or not demux_path.exists():
+                demux_path = ffmpeg_demux(self.file.filepath, self.index, demux_path)
+                if demux_path is None:
+                    logging.error(f"Couldn't demux stream {self.index} from {str(self.file.filepath)} (type={self.type})")
+                    return
+        self.demux_file = AVSFile(demux_path)
+        self.demux_file.probe()
+        self.demux_file.get_type()
+        return self.demux_file
+
+    def cleanup_demux(self):
+        if self.demux_file is not None and self.index is not None:
+            logging.info(f"Deleting temporary file {str(self.demux_file.filepath)}")
+            self.demux_file.filepath.unlink()
+
+    # return a readable path to the data
+    def get_data_path(self) -> Path:
+        if self.is_standalone():
+            return self.file.filepath
+        else:
+            return self.demux_file.filepath
 
 def common_count(t0, t1):
     # returns the length of the longest common prefix

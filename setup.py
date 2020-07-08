@@ -1,11 +1,12 @@
 import setuptools
+from subs2cia_v2 import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="subs2cia",
-    version="0.2",
+    version=__version__,
     license='MIT',
     author="Daniel Xing",
     author_email="danielxing97@gmail.com",

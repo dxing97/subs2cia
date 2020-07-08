@@ -6,7 +6,7 @@ def get_args():
     parser = argparse.ArgumentParser(description='subs2cia: subtitle-based condensed audio generator')
 
     parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=True,
-                        type=lambda p: Path(p).absolute(), nargs='+',
+                        type=str, nargs='+',
                         help='Paths to input files or a single path to a directory of input files')
 
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False,

@@ -1,6 +1,8 @@
 from subs2cia_v2.argparser import get_args
 from subs2cia_v2.sources import AVSFile, group_files
-from subs2cia_v2.condense import Condensed
+from subs2cia_v2.condense import SubCondensed
+
+from pathlib import Path
 import logging
 
 
@@ -10,13 +12,14 @@ def start():
     args = vars(args)
 
     if args['verbose']:
+        if args['debug']:
+            logging.basicConfig(level=logging.DEBUG)
         logging.basicConfig(level=logging.INFO)
-    if args['debug']:
-        logging.basicConfig(level=logging.DEBUG)
+
 
     logging.debug(f"Start arguments: {args}")
 
-    sources = [AVSFile(file) for file in args['infiles']]
+    sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]
 
     for s in sources:
         s.probe()
@@ -26,12 +29,15 @@ def start():
     # condensed_files = []
     # for g in groups:
     #     condensed_files.append(Condensed(g))
-    condensed_files = [Condensed(g) for g in groups]
+    condensed_files = [SubCondensed(g) for g in groups]
 
     for c in condensed_files:
         c.get_and_partition_streams()
         c.initialize_pickers()
         c.choose_streams()
+        c.process_subtitles()
+        c.export()
+        c.cleanup()
 
 
 

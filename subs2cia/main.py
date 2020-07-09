@@ -74,6 +74,7 @@ def start():
         s.get_type()
 
     groups = list(group_files(sources))
+    logging.debug(f"got {len(groups)} group(s) to process.")
 
     condensed_files = [SubCondensed(g, **SubC_args) for g in groups]
     for c in condensed_files:

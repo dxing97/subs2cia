@@ -137,7 +137,7 @@ class SubCondensed:
             logging.error(f'No audio stream to process for output stem {self.outstem}')
             return
         outfile = self.outdir / (self.outstem + f'.{self.out_audioext}')
-        logging.info(f"exporting condensed audio to {outfile}")
+        # logging.info(f"exporting condensed audio to {outfile}")  # todo: fix output naming
         if outfile.exists() and not self.overwrite_existing_generated:
             logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
             return

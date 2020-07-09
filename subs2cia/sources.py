@@ -72,6 +72,8 @@ class Stream:
                     self.lang = suffixes[-3]
             return self.lang
         # look at metadata for language codes
+        if 'tags' not in self.file.info['streams'][self.index]:
+            return self.lang
         if 'language' not in self.file.info['streams'][self.index]['tags']:
             return self.lang
         self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
@@ -131,7 +133,7 @@ def group_by_longest_prefix(sources: [AVSFile]):
         splits = str(f.filepath.name).split('.')
         if out:
             common = common_count(splits, str(out[-1].filepath.name).split('.'))
-            if common <= longest:
+            if common < longest:
                 yield out
                 longest = 0
                 out = []

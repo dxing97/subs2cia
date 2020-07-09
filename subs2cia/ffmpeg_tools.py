@@ -46,7 +46,7 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     else:
         combined = ffmpeg.output(combined, outfile)
     combined = ffmpeg.overwrite_output(combined)
-    logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(combined)}")
+    logging.debug(f"ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
     ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
 
 
@@ -71,7 +71,7 @@ def export_condensed_audio(divided_times, audiofile: Path, outfile=None, use_abs
             if len(split) == 0:
                 continue
             idx += 1
-            if use_absolute_numbering:
+            if use_absolute_numbering:  # todo: remove outfile naming from this function
                 outfilesplit = os.path.splitext(outfile)[0] + \
                                f".pt{idx}" + \
                                ".condensed" + \

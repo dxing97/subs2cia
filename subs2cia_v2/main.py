@@ -63,6 +63,10 @@ def start():
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext']}
 
+    if args['infiles'] is None:
+        logging.info("No input files given, nothing to do.")
+        exit(0)
+
     sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]
 
     for s in sources:

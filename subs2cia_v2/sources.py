@@ -111,7 +111,7 @@ class Stream:
 
     # return a readable path to the data
     def get_data_path(self) -> Path:
-        if self.is_standalone():
+        if self.is_standalone() or self.type == 'video':
             return self.file.filepath
         else:
             return self.demux_file.filepath

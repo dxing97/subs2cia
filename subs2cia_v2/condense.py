@@ -3,7 +3,7 @@ from subs2cia_v2.pickers import picker
 from subs2cia_v2.sources import Stream
 import subs2cia_v2.subtools as subtools
 from subs2cia_v2.sources import common_count
-from subs2cia_v2.ffmpeg_tools import export_condensed_audio
+from subs2cia_v2.ffmpeg_tools import export_condensed_audio, export_condensed_video
 
 import logging
 from collections import defaultdict
@@ -75,6 +75,8 @@ class SubCondensed:
         self.overwrite_existing_generated = overwrite_existing_generated
         self.keep_temporaries = keep_temporaries
 
+        self.condensed_video = condensed_video
+
     # go through source files and count how many subtitle and audio streams we have
     def get_and_partition_streams(self):
         for sourcefile in self.sources:
@@ -130,17 +132,38 @@ class SubCondensed:
         self.dialogue_times = subtools.partition_and_split(sub_times=times, partition_size=1000*self.partition,
                                                            split_size=1000*self.split)
 
-    def export(self):
-        subtools.print_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
+    def export_audio(self):
+
+
         if self.picked_streams['audio'] is None:
             logging.error(f'No audio stream to process for output stem {self.outstem}')
             return
-        outfile = self.outdir / (self.outstem + '.mp3')
+        outfile = self.outdir / (self.outstem + f'.{self.out_audioext}')
+        logging.info(f"exporting condensed audio to {outfile}")
         if outfile.exists() and not self.overwrite_existing_generated:
             logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
             return
         export_condensed_audio(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
-                               outfile=self.outdir / (self.outstem + f'.{self.out_audioext}'))
+                               outfile=outfile)
+
+    def export_video(self):
+        outfile = self.outdir / (self.outstem + '.mkv')
+        logging.info(f"exporting condensed video to {outfile}")
+        if outfile.exists() and not self.overwrite_existing_generated:
+            logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
+            return
+        export_condensed_video(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
+                               subfile=self.picked_streams['subtitle'].get_data_path(),
+                               videofile=self.picked_streams['video'].get_data_path(),
+                               outfile=outfile)
+        return
+
+    def export(self):
+        subtools.print_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
+        if self.condensed_video:
+            self.export_video()
+            return
+        self.export_audio()
 
     def cleanup(self):
         if self.keep_temporaries:

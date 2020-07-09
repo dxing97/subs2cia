@@ -5,7 +5,7 @@ from pathlib import Path
 def get_args():
     parser = argparse.ArgumentParser(description='subs2cia: subtitle-based condensed audio generator')
 
-    parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=True,
+    parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=False,
                         type=str, nargs='+',
                         help='Paths to input files or a single path to a directory of input files')
 

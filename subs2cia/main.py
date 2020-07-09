@@ -66,7 +66,7 @@ def is_spoken_dialogue(line, include_all=False):
 # given a path to a subtitle file, load it in and strip it of non-dialogue text
 # keyword arguments are filter options that are passed to is_spoken_dialogue for filtering configuration
 def load_subtitle_times(subfile, **kwargs):
-    logging.info("loading", subfile)
+    logging.info(f"loading subtitle file {subfile}")
     subs = ps2.load(subfile)
     logging.debug(subs)
     logging.info("loaded subtitles\n")
@@ -577,9 +577,13 @@ def start():
     #     print("not enough input files")
 
     args = vars(args)
+
     if args['verbose']:
-        logging.basicConfig(level=logging.INFO)
-    if args['debug']:
+        if args['debug']:
+            logging.basicConfig(level=logging.DEBUG)
+        else:
+            logging.basicConfig(level=logging.INFO)
+    elif args['verbose']:
         logging.basicConfig(level=logging.DEBUG)
 
     logging.debug(f"Given arguments: {args}")

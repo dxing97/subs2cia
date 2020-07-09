@@ -133,8 +133,6 @@ class SubCondensed:
                                                            split_size=1000*self.split)
 
     def export_audio(self):
-
-
         if self.picked_streams['audio'] is None:
             logging.error(f'No audio stream to process for output stem {self.outstem}')
             return
@@ -162,7 +160,6 @@ class SubCondensed:
         subtools.print_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
         if self.condensed_video:
             self.export_video()
-            return
         self.export_audio()
 
     def cleanup(self):

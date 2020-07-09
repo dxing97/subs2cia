@@ -1,9 +1,9 @@
-from subs2cia_v2.sources import AVSFile
-from subs2cia_v2.pickers import picker
-from subs2cia_v2.sources import Stream
-import subs2cia_v2.subtools as subtools
-from subs2cia_v2.sources import common_count
-from subs2cia_v2.ffmpeg_tools import export_condensed_audio, export_condensed_video
+from subs2cia.sources import AVSFile
+from subs2cia.pickers import picker
+from subs2cia.sources import Stream
+import subs2cia.subtools as subtools
+from subs2cia.sources import common_count
+from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 
 import logging
 from collections import defaultdict

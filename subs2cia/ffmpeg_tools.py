@@ -11,7 +11,7 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
     video = ffmpeg.input(infile)
     stream = video[str(stream_idx)]  # don't need 0
     stream = ffmpeg.output(stream, str(outfile))
-    stream = ffmpeg.overwrite_output(stream)  # todo: add option to not force overwrite
+    stream = ffmpeg.overwrite_output(stream)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(stream)}")
     try:
         ffmpeg.run(stream, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)  # verbose only
@@ -25,7 +25,7 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
 def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     if outfile is None:
         outfile = "condensed.flac"
-    logging.info(f"saving condensed audio to {outfile}")  # todo: print input/output files at top of start()
+    logging.info(f"saving condensed audio to {outfile}")
 
     # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
@@ -144,7 +144,7 @@ def trim(input_path, output_path, start=30, end=60):
 
 
 def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
-    logging.info(f"saving condensed video to {outfile}")  # todo: print input/output files at top of start()
+    logging.info(f"saving condensed video to {outfile}")
 
     # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
@@ -180,17 +180,3 @@ def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
     out = ffmpeg.overwrite_output(out)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(out)}")
     ffmpeg.run(out, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
-    # break
-
-    # clips = list()
-    # for time in sub_times:  # times are in milliseconds
-    #     start = int(time[0] * sps / 1000)  # convert to sample index
-    #     end = int(time[1] * sps / 1000)
-    #     # use start_pts for sample/millisecond level precision
-    #     clips.append(audiostream.audio.filter('trim', start_pts=start, end_pts=end).filter('asetpts', 'PTS-STARTPTS'))
-    # combinedaudio = ffmpeg.concat(*clips, a=1, v=0)
-
-    # combined = ffmpeg.output(combined, outfile, audio_bitrate='320k')  # todo: make this user-settable
-    # combined = ffmpeg.overwrite_output(combined)
-    # logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(combined)}")
-    # ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)

@@ -1,4 +1,4 @@
-from subs2cia_v2.sources import Stream
+from subs2cia.sources import Stream
 import pycountry
 
 def picker(streams: [Stream], target_lang=None):

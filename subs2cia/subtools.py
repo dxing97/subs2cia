@@ -1,11 +1,18 @@
-from subs2cia_v2.sources import Stream
-from subs2cia_v2.ffmpeg_tools import ffmpeg_demux
+from subs2cia.sources import Stream
+from subs2cia.ffmpeg_tools import ffmpeg_demux
 
 import logging
 import pysubs2 as ps2  # for reading in subtitles
 from pathlib import Path
 from datetime import timedelta
 import ffmpeg
+import re
+
+# TODO
+# take a subfile (or SSAFile) and concatenate times down such that it can be muxed into condensed video
+# good opportunity to add crude shifts/retiming here
+def condense_subtitle():
+    pass
 
 
 def decide_partitions(sub_times, partition=0):
@@ -126,6 +133,14 @@ def merge_times(times: [], threshold=0, padding=0):
 # examine a subtitle's text and determine if it contains text or just signs/song styling
 # could be much more robust, by including regexes
 def is_dialogue(line, include_all=False, regex=None):
+    if regex is not None:
+        p = re.compile(regex)
+        logging.debug(f"using regex {regex} for subtitle search")
+        m = p.findall(line.text)
+        if len(m) >= 1:
+            logging.debug(f'Regex {regex} found match(s) in "{line.text}": {m}')
+            return False
+        return True
     if include_all:  # ignore filtering
         return True
     if line.type != "Dialogue":
@@ -144,7 +159,6 @@ def is_dialogue(line, include_all=False, regex=None):
 
 # given a path to a subtitle file, load it in and strip it of non-dialogue text
 # keyword arguments are filter options that are passed to is_spoken_dialogue for filtering configuration
-# todo: rewrite this to keep text information while merging, so subs can be loaded for condensed video
 def load_subtitle_times(subfile: Path, include_all_lines=False):
     # if dry_run:
     #     print("dry_run: will load", subfile)

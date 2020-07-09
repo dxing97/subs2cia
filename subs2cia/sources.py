@@ -5,7 +5,7 @@ from pathlib import Path
 import logging
 import ffmpeg
 from collections import defaultdict
-from subs2cia_v2.ffmpeg_tools import ffmpeg_demux
+from subs2cia.ffmpeg_tools import ffmpeg_demux
 import pycountry
 
 
@@ -59,23 +59,23 @@ class Stream:
             return True
         return False
 
-    def get_language(self):  # TODO
+    def get_language(self):
         if self.lang != 'unknownlang':
             return self.lang
         if self.is_standalone():
-            # look in suffixes for language codes
+            # no metadata to analyze, look in suffixes for language codes
             suffixes = self.file.filepath.suffixes
             if len(suffixes) >= 2:
                 if suffixes[-2] != 'forced':
-                    lcode = suffixes[-2]
+                    self.lang = suffixes[-2]
                 elif len(suffixes) != 2:
-                    lcode = suffixes[-3]
-            self.lang = lcode
+                    self.lang = suffixes[-3]
             return self.lang
         # look at metadata for language codes
         if 'language' not in self.file.info['streams'][self.index]['tags']:
             return self.lang
         self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
+        # todo: catch exceptions here
         return self.lang
 
 
@@ -87,13 +87,11 @@ class Stream:
                 # todo: bitmap subtitles
                 extension = 'ass'
 
-
             if self.type == 'audio':
                 # todo: demux file type picker
                 extension = 'flac'
             demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language().alpha_2}.{extension}')
 
-            # todo: better naming scheme for demuxed files
             if overwrite_existing or not demux_path.exists():
                 demux_path = ffmpeg_demux(self.file.filepath, self.index, demux_path)
                 if demux_path is None:

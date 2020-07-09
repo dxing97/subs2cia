@@ -1,12 +1,13 @@
 from subs2cia_v2.sources import AVSFile
 from subs2cia_v2.pickers import picker
 from subs2cia_v2.sources import Stream
-
 import subs2cia_v2.subtools as subtools
 from subs2cia_v2.sources import common_count
 from subs2cia_v2.ffmpeg_tools import export_condensed_audio
+
 import logging
 from collections import defaultdict
+from pathlib import Path
 
 
 def picked_sources_are_insufficient(d: dict):
@@ -19,9 +20,19 @@ def picked_sources_are_insufficient(d: dict):
         return True
     return False
 
+
+def insufficient_source_streams(d: dict):
+    if len(d['subtitle']) == 0:
+        return True
+    if len(d['audio']) == 0:
+        return True
+    return False
+
+
 class SubCondensed:
-    def __init__(self, sources: [AVSFile], outdir=None, condensed_video=False, threshold=0, padding=0,
-                 partition=0, split=0, demux_overwrite_existing=False, target_lang=None):
+    def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
+                 partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
+                 keep_temporaries: bool, target_lang: str, out_audioext: str):
         if len(sources) == 1:
             outstem = sources[0].filepath.stem
         else:
@@ -33,6 +44,7 @@ class SubCondensed:
             self.outdir = outdir
         self.outstem = outstem
         self.sources = sources
+        self.out_audioext = out_audioext
 
         logging.debug(f'Will save a file with stem "{self.outstem}" to directory "{self.outdir}"')
 
@@ -60,6 +72,8 @@ class SubCondensed:
         self.dialogue_times = None
 
         self.demux_overwrite_existing = demux_overwrite_existing
+        self.overwrite_existing_generated = overwrite_existing_generated
+        self.keep_temporaries = keep_temporaries
 
     # go through source files and count how many subtitle and audio streams we have
     def get_and_partition_streams(self):
@@ -78,10 +92,13 @@ class SubCondensed:
             self.pickers[k] = picker(self.partitioned_streams[k], target_lang=self.target_lang)
 
     def choose_streams(self):
+        if insufficient_source_streams(self.partitioned_streams):
+            logging.error(f"Not enough input sources to generate condensed output for output stem {self.outstem}")
+            return
         while picked_sources_are_insufficient(self.picked_streams):
             for k in self.picked_streams:
                 if len(self.partitioned_streams[k]) == 0:
-                    # list is empty, nothing to pick
+                    logging.debug("no input streams of type {k}")
                     continue
                 if self.picked_streams[k] is None:
                     self.picked_streams[k] = next(self.pickers[k])
@@ -91,18 +108,22 @@ class SubCondensed:
                     subfile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)  # type AVSFile
                     times = subtools.load_subtitle_times(subfile.filepath)
                     if times is None:
-                        self.picked_streams[k] = 'retry'
+                        self.picked_streams[k] = None
 
                 if k == 'audio':
                     afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
                     if afile is None:
-                        self.picked_streams[k] = 'retry'
+                        self.picked_streams[k] = None
 
 
                 if k == 'video':
                     pass
 
+
     def process_subtitles(self):
+        if self.picked_streams['subtitle'] is None:
+            logging.error(f'No subtitle stream to process for output stem {self.outstem}')
+            return
         subfile = self.picked_streams['subtitle'].demux(overwrite_existing=self.demux_overwrite_existing)
         times = subtools.load_subtitle_times(subfile.filepath)
         times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
@@ -110,11 +131,19 @@ class SubCondensed:
                                                            split_size=1000*self.split)
 
     def export(self):
+        subtools.print_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
+        if self.picked_streams['audio'] is None:
+            logging.error(f'No audio stream to process for output stem {self.outstem}')
+            return
+        outfile = self.outdir / (self.outstem + '.mp3')
+        if outfile.exists() and not self.overwrite_existing_generated:
+            logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
+            return
         export_condensed_audio(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
-                               outfile=self.outdir / (self.outstem + '.mp3'))
+                               outfile=self.outdir / (self.outstem + f'.{self.out_audioext}'))
 
-    def cleanup(self, keep_demux=False):
-        if keep_demux == True:
+    def cleanup(self):
+        if self.keep_temporaries:
             return
         for k in ['audio', 'video', 'subtitle']:
             if len(self.partitioned_streams) == 0:

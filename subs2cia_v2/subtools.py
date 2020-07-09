@@ -125,15 +125,15 @@ def merge_times(times: [], threshold=0, padding=0):
 
 # examine a subtitle's text and determine if it contains text or just signs/song styling
 # could be much more robust, by including regexes
-def is_not_dialogue(line, include_all=False, regex=None):
+def is_dialogue(line, include_all=False, regex=None):
     if include_all:  # ignore filtering
         return True
     if line.type != "Dialogue":
         return False
     if len(line.text) == 0:
         return False
-    # if line.text[0] == '{':
-    #     return False
+    if '{' == line.text[0]:
+        return False
 
     # list of characters that, if present anywhere in the subtitle text, means that the subtitle is not dialogue
     globally_invalid = ["♪", "♪"]
@@ -159,7 +159,7 @@ def load_subtitle_times(subfile: Path, include_all_lines=False):
     count = 0
     for idx, line in enumerate(subs):
         # print(line)
-        if is_not_dialogue(line, include_all=include_all_lines):
+        if is_dialogue(line, include_all=include_all_lines):
             # print(line)
             times.append([line.start, line.end])
         else:
@@ -170,19 +170,26 @@ def load_subtitle_times(subfile: Path, include_all_lines=False):
 
     # print(times)
     if len(times) == 0:
-        logging.warning("warning: got 0 dialogue lines from subtitle")
+        logging.warning(f"warning: got 0 dialogue lines from subtitle file {subfile}")
         return None
     return times
 
 
-def print_compression_ratio(sub_times, audiofile):
-    audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
+def print_compression_ratio(sub_times, audiofile: Path):
+    audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
     sps = int(
         audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
     samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
 
     audio_total = samples / sps * 1000
-    subs_total = sum([x2 - x1 for x1, x2 in sub_times])  # in ms
+
+    total = list()
+    for split in sub_times:
+        for partition in split:
+            for x1, x2 in partition:
+                total.append(x2-x1)
+    subs_total = sum(total)
+    # subs_total = sum([x2 - x1 for x1, x2 in sub_times])  # in ms
     logging.info(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio to "
                  f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} "
                  f"({round(subs_total / audio_total * 100, 1)}% compression ratio) of condensed audio")

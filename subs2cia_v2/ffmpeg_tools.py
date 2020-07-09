@@ -46,6 +46,7 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     else:
         combined = ffmpeg.output(combined, outfile)
     combined = ffmpeg.overwrite_output(combined)
+    logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(combined)}")
     ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
 
 

@@ -6,6 +6,7 @@ import logging
 import ffmpeg
 from collections import defaultdict
 from subs2cia_v2.ffmpeg_tools import ffmpeg_demux
+import pycountry
 
 
 
@@ -52,13 +53,31 @@ class Stream:
         self.type = type
         # index of None indicates that demuxing with ffmpeg is not nessecary to extract data
         self.demux_file = None
+        self.lang = 'unknownlang'
     def is_standalone(self):
         if self.index is None:
             return True
         return False
 
     def get_language(self):  # TODO
-        return 'unknownlang'
+        if self.lang != 'unknownlang':
+            return self.lang
+        if self.is_standalone():
+            # look in suffixes for language codes
+            suffixes = self.file.filepath.suffixes
+            if len(suffixes) >= 2:
+                if suffixes[-2] != 'forced':
+                    lcode = suffixes[-2]
+                elif len(suffixes) != 2:
+                    lcode = suffixes[-3]
+            self.lang = lcode
+            return self.lang
+        # look at metadata for language codes
+        if 'language' not in self.file.info['streams'][self.index]['tags']:
+            return self.lang
+        self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
+        return self.lang
+
 
     def demux(self, overwrite_existing: bool):
         demux_path = self.file.filepath
@@ -66,13 +85,13 @@ class Stream:
             if self.type == 'subtitle':
                 # demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.srt')
                 # todo: bitmap subtitles
-                extension = 'srt'
+                extension = 'ass'
 
 
             if self.type == 'audio':
                 # todo: demux file type picker
                 extension = 'flac'
-            demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')
+            demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language().alpha_2}.{extension}')
 
             # todo: better naming scheme for demuxed files
             if overwrite_existing or not demux_path.exists():

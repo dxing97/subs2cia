@@ -61,7 +61,7 @@ class Stream:
 
     def get_language(self):
         if self.lang != 'unknownlang':
-            return self.lang
+            return self.lang.alpha_2
         if self.is_standalone():
             # no metadata to analyze, look in suffixes for language codes
             suffixes = self.file.filepath.suffixes
@@ -70,7 +70,16 @@ class Stream:
                     self.lang = suffixes[-2]
                 elif len(suffixes) != 2:
                     self.lang = suffixes[-3]
-            return self.lang
+            if self.lang == 'unknownlang':
+                return self.lang
+            try:
+                lang = pycountry.languages.lookup(self.lang)
+            except:
+                logging.warning(f"{self.lang} is not a language, treating {self.file.filepath} as unknown language")
+                self.lang = 'unknownlang'
+                return self.lang
+            self.lang = lang
+            return self.lang.alpha_2
         # look at metadata for language codes
         if 'tags' not in self.file.info['streams'][self.index]:
             return self.lang
@@ -78,7 +87,7 @@ class Stream:
             return self.lang
         self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
         # todo: catch exceptions here
-        return self.lang
+        return self.lang.alpha_2
 
 
     def demux(self, overwrite_existing: bool):
@@ -92,7 +101,7 @@ class Stream:
             if self.type == 'audio':
                 # todo: demux file type picker
                 extension = 'flac'
-            demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language().alpha_2}.{extension}')
+            demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')
 
             if overwrite_existing or not demux_path.exists():
                 demux_path = ffmpeg_demux(self.file.filepath, self.index, demux_path)

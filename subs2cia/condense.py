@@ -33,7 +33,7 @@ class SubCondensed:
     def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str):
-        if len(sources) == 1:
+        if len(sources) == 1:  # todo: rework for batching
             outstem = sources[0].filepath.stem
         else:
             outstem = sources[0].filepath.name[0:1+common_count(sources[0].filepath.stem, sources[1].filepath.stem)]
@@ -46,7 +46,8 @@ class SubCondensed:
         self.sources = sources
         self.out_audioext = out_audioext
 
-        logging.debug(f'Will save a file with stem "{self.outstem}" to directory "{self.outdir}"')
+        # logging.debug(f'Will save a file with stem "{self.outstem}" to directory "{self.outdir}"')
+        logging.info(f"Mapping input file(s) {sources} to one output file")
 
         self.partitioned_streams = defaultdict(list)
 
@@ -88,7 +89,9 @@ class SubCondensed:
                 continue
             self.partitioned_streams[sourcefile.type].append(Stream(sourcefile, sourcefile.type, None))
             # for stream in sourcefile
-
+        for k in self.partitioned_streams:
+            logging.info(f"Found {len(self.partitioned_streams[k])} {k} input streams")
+            logging.debug(f"Streams found: {self.partitioned_streams[k]}")
     def initialize_pickers(self):
         for k in self.pickers:
             self.pickers[k] = picker(self.partitioned_streams[k], target_lang=self.target_lang)
@@ -120,7 +123,9 @@ class SubCondensed:
 
                 if k == 'video':
                     pass
-
+        logging.info(f"Picked {self.picked_streams['audio']} to use for condensing")
+        logging.info(f"Picked {self.picked_streams['video']} to use for condensing")
+        logging.info(f"Picked {self.picked_streams['subtitle']} to use for condensing")
 
     def process_subtitles(self):
         if self.picked_streams['subtitle'] is None:

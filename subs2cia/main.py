@@ -73,13 +73,23 @@ def start():
         s.probe()
         s.get_type()
 
-    groups = list(group_files(sources))
-    logging.debug(f"got {len(groups)} group(s) to process.")
+    if args['batch']:
+        logging.info(f"Running in batch mode, attempting to group input files together.")
+        groups = list(group_files(sources))
+    else:
+        if len(sources) > 2:
+            logging.warning(f"Redundant input files detected. Got {len(sources)} input files to process and not running "
+                            f"in batch mode. Only one output "
+                            f"will be generated. ")
+        groups = [list(sources)]
+    logging.info(f"Have {len(groups)} group(s) to process.")
 
     condensed_files = [SubCondensed(g, **SubC_args) for g in groups]
     for c in condensed_files:
         c.get_and_partition_streams()
         c.initialize_pickers()
+        if args['dry_run']:
+            continue
         c.choose_streams()
         c.process_subtitles()
         c.export()

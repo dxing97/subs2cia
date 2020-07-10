@@ -25,7 +25,7 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
 def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     if outfile is None:
         outfile = "condensed.flac"
-    logging.info(f"saving condensed audio to {outfile}")
+    # logging.info(f"saving condensed audio to {outfile}")
 
     # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')

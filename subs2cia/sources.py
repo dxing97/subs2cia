@@ -140,7 +140,7 @@ def common_count(t0, t1):
     for i, pair in enumerate(zip(t0, t1)):
         if pair[0] != pair[1]:
             return i
-    return i
+    return i + 1
 
 
 # todo: needs work for batching to work
@@ -213,8 +213,8 @@ def group_names(sources: [AVSFile]):
             # else:
             #     longest = common
             #     # add the current entry to the group
-            print(splits[0:common])
-            print(strip_extensions(out[0].filepath).name)
+            # print(splits[0:common])
+            # print(strip_extensions(out[0].filepath).name)
             if common == 0 or \
                     strip_extensions(out[0].filepath).name != splits[0:common] or \
                     (len(splits) > common and splits[common] != '.'):

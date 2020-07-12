@@ -24,9 +24,11 @@ def start():
     reffiles = args['reffiles']
 
     if len(subfiles) != len(reffiles):
-        logging.critical(f"Mismatched number of subtitle and reference files! Got {len(subfiles)} subtitle files and "
+        logging.warning(f"Mismatched number of subtitle and reference files! Got {len(subfiles)} subtitle files and "
                         f"{len(reffiles)} reference files.")
-        exit(1)
+        logging.warning(f"Will only process the first "
+                        f"{len(subfiles) if len(subfiles) < len(reffiles) else len(reffiles)} reference-subtitle pairs.")
+        # exit(1)
 
     subfiles = [Path(s).absolute() for s in subfiles]
     reffiles = [Path(r).absolute() for r in reffiles]

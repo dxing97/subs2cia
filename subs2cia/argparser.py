@@ -12,7 +12,7 @@ def get_args_subzipper():
     parser.add_argument('-r', '--reference', metavar='<input files>', dest='reffiles', default=None, required=True,
                         type=str, nargs='+',
                         help='List of reference files, typically video files. '
-                             'Number of subtitle files must equal number of reference files. ')
+                             'Number of subtitle files should equal number of reference files. ')
 
     parser.add_argument('-l', '--language', metavar='ISO_LANG_CODE', dest='lang', default=None, required=False,
                         type=str,

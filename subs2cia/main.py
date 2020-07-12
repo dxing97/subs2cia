@@ -1,4 +1,4 @@
-from subs2cia.argparser import get_args
+from subs2cia.argparser import get_args_subs2cia
 from subs2cia.sources import AVSFile, group_files
 from subs2cia.condense import SubCondensed
 
@@ -31,7 +31,7 @@ def list_presets():
 
 
 def start():
-    args = get_args()
+    args = get_args_subs2cia()
     args = vars(args)
 
 

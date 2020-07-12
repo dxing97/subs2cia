@@ -2,7 +2,40 @@ import argparse
 from pathlib import Path
 
 
-def get_args():
+def get_args_subzipper():
+    parser = argparse.ArgumentParser(description=f'SubZipper: Map video files to subtitle files')
+
+    parser.add_argument('-s', '--subtitle', metavar='<input files>', dest='subfiles', default=None, required=True,
+                        type=str, nargs='+',
+                        help='List of subtitle files. Number of subtitle files should equal number of reference files. ')
+
+    parser.add_argument('-r', '--reference', metavar='<input files>', dest='reffiles', default=None, required=True,
+                        type=str, nargs='+',
+                        help='List of reference files, typically video files. '
+                             'Number of subtitle files must equal number of reference files. ')
+
+    parser.add_argument('-l', '--language', metavar='ISO_LANG_CODE', dest='lang', default=None, required=False,
+                        type=str,
+                        help='Language code to append to end of subtitle file. Optional. '
+                             'If set, will be checked for validity.')
+
+    parser.add_argument('-ns', '--no-sort', action='store_true', dest='no_sort', default=False,
+                        help="If set, will not sort input files alphabetically.")
+
+    parser.add_argument('-d', '--dry-run', action='store_true', dest='dry_run', default=False,
+                        help="If set, will print out mappings but will not write any changes to disk.")
+
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False,
+                        help='Verbose output if set.')
+
+    # parser.add_argument('-vv', '--debug', action='store_true', dest='debug', default=False,
+    #                     help='Verbose and debug output if set')
+
+    args = parser.parse_args()
+    return args
+
+
+def get_args_subs2cia():
     parser = argparse.ArgumentParser(description=f'subs2cia: subtitle-based condensed audio generator')
 
     parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=False,

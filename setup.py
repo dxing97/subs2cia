@@ -23,6 +23,6 @@ setuptools.setup(
     python_requires='>=3.7',
     entry_points={
         # create a cli command called 'subs2cia' which runs the main() function in subs2cia.cli
-        'console_scripts': ['subs2cia=subs2cia.cli:main']
+        'console_scripts': ['subs2cia=subs2cia.cli:main', 'subzipper=subs2cia.cli:subzipper_main']
     }
 )

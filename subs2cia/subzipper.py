@@ -30,9 +30,10 @@ def start():
                         f"{len(subfiles) if len(subfiles) < len(reffiles) else len(reffiles)} reference-subtitle pairs.")
         # exit(1)
 
-    subfiles = [Path(s).absolute() for s in subfiles]
-    reffiles = [Path(r).absolute() for r in reffiles]
-
+    # subfiles = [Path(s).absolute() for s in subfiles]
+    # reffiles = [Path(r).absolute() for r in reffiles]
+    subfiles = [Path(s) for s in subfiles]
+    reffiles = [Path(r) for r in reffiles]
 
 
 

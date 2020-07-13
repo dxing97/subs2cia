@@ -78,6 +78,8 @@ class SubCondensed:
 
         self.condensed_video = condensed_video
 
+        self.insufficient = False
+
     # go through source files and count how many subtitle and audio streams we have
     def get_and_partition_streams(self):
         for sourcefile in self.sources:
@@ -99,6 +101,7 @@ class SubCondensed:
     def choose_streams(self):
         if insufficient_source_streams(self.partitioned_streams):
             logging.error(f"Not enough input sources to generate condensed output for output stem {self.outstem}")
+            self.insufficient = True
             return
         while picked_sources_are_insufficient(self.picked_streams):
             for k in self.picked_streams:
@@ -131,6 +134,8 @@ class SubCondensed:
         if self.picked_streams['subtitle'] is None:
             logging.error(f'No subtitle stream to process for output stem {self.outstem}')
             return
+        if self.insufficient:
+            return
         subfile = self.picked_streams['subtitle'].demux(overwrite_existing=self.demux_overwrite_existing)
         times = subtools.load_subtitle_times(subfile.filepath)
         times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
@@ -141,6 +146,8 @@ class SubCondensed:
         if self.picked_streams['audio'] is None:
             logging.error(f'No audio stream to process for output stem {self.outstem}')
             return
+        if self.insufficient:
+            return
         outfile = self.outdir / (self.outstem + f'.{self.out_audioext}')
         # logging.info(f"exporting condensed audio to {outfile}")  # todo: fix output naming
         if outfile.exists() and not self.overwrite_existing_generated:
@@ -150,6 +157,11 @@ class SubCondensed:
                                outfile=outfile)
 
     def export_video(self):
+        if self.picked_streams['video'] is None:
+            logging.error(f'No video stream to process for output stem {self.outstem}')
+            return
+        if self.insufficient:
+            return
         outfile = self.outdir / (self.outstem + '.mkv')
         logging.info(f"exporting condensed video to {outfile}")
         if outfile.exists() and not self.overwrite_existing_generated:

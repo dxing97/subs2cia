@@ -146,8 +146,6 @@ class SubCondensed:
         if self.picked_streams['audio'] is None:
             logging.error(f'No audio stream to process for output stem {self.outstem}')
             return
-        if self.insufficient:
-            return
         outfile = self.outdir / (self.outstem + f'.{self.out_audioext}')
         # logging.info(f"exporting condensed audio to {outfile}")  # todo: fix output naming
         if outfile.exists() and not self.overwrite_existing_generated:
@@ -160,8 +158,7 @@ class SubCondensed:
         if self.picked_streams['video'] is None:
             logging.error(f'No video stream to process for output stem {self.outstem}')
             return
-        if self.insufficient:
-            return
+
         outfile = self.outdir / (self.outstem + '.mkv')
         logging.info(f"exporting condensed video to {outfile}")
         if outfile.exists() and not self.overwrite_existing_generated:
@@ -174,6 +171,8 @@ class SubCondensed:
         return
 
     def export(self):
+        if self.insufficient:
+            return
         subtools.print_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
         if self.condensed_video:
             self.export_video()

@@ -67,7 +67,10 @@ def start():
         logging.info("No input files given, nothing to do.")
         exit(0)
 
-    sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]
+    if args['absolute_paths']:
+        sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]
+    else:
+        sources = [AVSFile(Path(file)) for file in args['infiles']]
 
     for s in sources:
         s.probe()

@@ -118,6 +118,9 @@ def get_args_subs2cia():
                         help='If set, attempts to use audio and subtitle files that are in this language first. '
                              'Should follow ISO language codes. ')
 
+    parser.add_argument('-a', '--absolute-paths', action='store_true', dest='absolute_paths', default=False,
+                        help='Prints absolute paths from the root directory instead of given paths.')
+
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False,
                         help='Verbose output if set.')
 

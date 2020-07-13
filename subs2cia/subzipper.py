@@ -54,7 +54,7 @@ def start():
 
     for s, r in zip(subfiles, reffiles):
         newpath = r.parent / (r.stem + ('' if lang is None else f'.{lang}') + s.suffix)
-        logging.info(f"Got pair ({s}, {r}). Will rename {s} to {newpath}")
+        logging.info(f"Got pair ({s}, {r}). \nWill rename {s} to {newpath}")
 
         if not s.exists():
             logging.critical(f"Subtitle file doesn't exist: {s}")

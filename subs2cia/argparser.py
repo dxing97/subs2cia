@@ -93,7 +93,7 @@ def get_args_subs2cia():
 
     parser.add_argument('-r', '--partition', metavar='secs', dest='partition', default=0,
                         type=int,
-                        help="If set, attempts to partition the input audio into"
+                        help="If set, attempts to partition the input audio into "
                              "seperate blocks of this size seconds BEFORE condensing. Partitions and splits respect "
                              "subtitle boundaries and will not split a single subtitle across two output files."
                              " 0 partition length is ignored. For example, if the partition size is 60 seconds and the "
@@ -103,8 +103,8 @@ def get_args_subs2cia():
 
     parser.add_argument('-s', '--split', metavar='secs', dest='split', default=0,
                         type=int,
-                        help="If set, attempts to split the condensed audio into"
-                             "seperate blocks of this size AFTER condensing. 0"
+                        help="If set, attempts to split the condensed audio into "
+                             "seperate blocks of this size AFTER condensing. 0 "
                              "split length is ignored. "
                              "Partitions and splits respect subtitle boundaries and will not split a single subtitle "
                              "across two output files. "

@@ -81,7 +81,8 @@ def start():
         groups = list(group_files(sources))
     else:
         if len(sources) > 2:
-            logging.warning(f"Redundant input files detected. Got {len(sources)} input files to process and not running "
+            logging.warning(f"Redundant input files detected. Got {len(sources)} "
+                            f"input files to process and not running "
                             f"in batch mode. Only one output "
                             f"will be generated. ")
         groups = [list(sources)]

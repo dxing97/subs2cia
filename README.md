@@ -1,14 +1,26 @@
 # subs2cia
 
-A subtitled media to condensed immersion audio converter.
+A subtitled media to condensed immersion media converter.
 
 Inspired by a script demoed [here](https://www.youtube.com/watch?v=QOLTeO-uCYU) that takes audio snippets played during 
 subtitles and concatenates them together to make one large audio file that should contain just spoken audio. 
 However, the quality of the snippets you use directly influences the quality of the final condensed audio, and subtitle 
 timing information isn't taken into account when generating the final condensed audio, potentially resulting in 
-stutters, repeated audio, and dialogue with little to no space between each sentence.
+stutters, repeated audio, and dialogue with unnatural spacing between each sentence.
 
 This script aims to fix these issues, as well as allow users the flexibility to choose how the audio is generated. 
+
+Currently only tested on *nix operating systems. 
+
+## Features
+ * Removes overlaps between subtitle timings
+ * Generate condensed video
+ * Automagically prefer desired language audio and subtitles from multiple inputs
+ * Filter out subtitles that don't contain text (WIP) 
+ * Re-adds natural spacing between sentences that start and end close together (disabled by default)
+ * Pads subtitles with audio (disabled by default)
+ * Process multiple files at once in batch mode (disabled by default)
+  
 
 ## Installation
 Clone the repository, and run 
@@ -19,12 +31,12 @@ in the subs2cia root folder. A PyPi package is in the works. If you prefer, you 
 
 ## Usage
 ```
-$ sub2cia -h
 usage: main.py [-h] [-i <input files> [<input files> ...]] [-b] [-u]
                [-o <name>] [-d /path/to/directory] [-ae <audio extension>]
                [-m] [--overwrite-on-demux] [--keep-temporaries]
                [--no-overwrite-on-generation] [-p msecs] [-t msecs] [-r secs]
-               [-s secs] [-tl ISO_code] [-v] [-vv] [--preset preset#] [-lp]
+               [-s secs] [-tl ISO_code] [-a] [-v] [-vv] [--preset preset#]
+               [-lp]
 
 subs2cia: subtitle-based condensed audio generator
 
@@ -69,8 +81,8 @@ optional arguments:
                         away, adds the intervening audio into the condensed
                         audio.
   -r secs, --partition secs
-                        If set, attempts to partition the input audio
-                        intoseperate blocks of this size seconds BEFORE
+                        If set, attempts to partition the input audio into
+                        seperate blocks of this size seconds BEFORE
                         condensing. Partitions and splits respect subtitle
                         boundaries and will not split a single subtitle across
                         two output files. 0 partition length is ignored. For
@@ -81,11 +93,11 @@ optional arguments:
                         source material, the second output file will contain
                         the next 60 seconds of input media, and so on.
   -s secs, --split secs
-                        If set, attempts to split the condensed audio
-                        intoseperate blocks of this size AFTER condensing.
-                        0split length is ignored. Partitions and splits
-                        respect subtitle boundaries and will not split a
-                        single subtitle across two output files. Done within a
+                        If set, attempts to split the condensed audio into
+                        seperate blocks of this size AFTER condensing. 0 split
+                        length is ignored. Partitions and splits respect
+                        subtitle boundaries and will not split a single
+                        subtitle across two output files. Done within a
                         partition. For example, say the split length is 60
                         seconds and the condensed audio length of a input
                         partition is 150 seconds. The output file will be
@@ -95,6 +107,8 @@ optional arguments:
                         If set, attempts to use audio and subtitle files that
                         are in this language first. Should follow ISO language
                         codes.
+  -a, --absolute-paths  Prints absolute paths from the root directory instead
+                        of given paths.
   -v, --verbose         Verbose output if set.
   -vv, --debug          Verbose and debug output if set
   --preset preset#      If set, uses a given preset. User arguments will
@@ -102,13 +116,49 @@ optional arguments:
   -lp, --list-presets   Lists all available built-in presets.
 ```
 ## Examples
-* Extract the first audio and subtitle track from ``video.mkv`` file and condense it
+* Extract the first audio and subtitle track from ``video.mkv`` file and generate the condensed file ``video.condensed.mp3``
   * ``subs2cia -i video.mkv``
-* Condense ``audio.mp3`` using ``subtitles.srt`` and save it to ``condensed.flac``
-  * ``subs2cia -a "./audio.mp3" -s "./subtitles.srt" -o "./condensed.flac"
-* Extract the second subtitle track and the first Japanese audio track from ``myvideo.mkv`` and save it to ``myvideo.mp3``
-  * ``subs2cia -i video.mkv -o .mp3 -fs 1 -sl ja``
+* Condense ``audio.mp3`` using ``subtitles.srt`` and save it to ``audio.condensed.flac``
+  * ``subs2cia -i "./audio.mp3" "./subtitles.srt" -ae flac``
+* Condense all files ending in ``.mkv`` in a directory (*nix only). Automatically pick English subtitle/audio tracks if 
+present. Don't delete extracted subtitle and audio files. Pad subtitles with 300 ms on each side and group subtitles within 
+1500 ms of each other together to keep short silences. 
+  * ``subs2cia -i *.mkv --batch --tl en --keep-temporaries -p 300 -t 1500``
     
+# subzipper
+Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, 
+optionally adding language information. 
 
+## Usage
+```
+$ subzipper -h
+usage: subzipper.py [-h] -s <input files> [<input files> ...] -r <input files>
+                    [<input files> ...] [-l ISO_LANG_CODE] [-ns] [-d] [-v]
+
+SubZipper: Map video files to subtitle files
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s <input files> [<input files> ...], --subtitle <input files> [<input files> ...]
+                        List of subtitle files. Number of subtitle files
+                        should equal number of reference files.
+  -r <input files> [<input files> ...], --reference <input files> [<input files> ...]
+                        List of reference files, typically video files. Number
+                        of subtitle files should equal number of reference
+                        files.
+  -l ISO_LANG_CODE, --language ISO_LANG_CODE
+                        Language code to append to end of subtitle file.
+                        Optional. If set, will be checked for validity.
+  -ns, --no-sort        If set, will not sort input files alphabetically.
+  -d, --dry-run         If set, will print out mappings but will not write any
+                        changes to disk.
+  -v, --verbose         Verbose output if set.
+```
+
+## Examples
+Rename ``episode01.ass`` to ``MyShow_S01E01.ja.ass`` and ``episode02.ass`` to ``MyShow_S01E02.ja.ass``, 
+```
+subzipper -s "episode01.ass" "episode02.ass" -r "MyShow_S01E01.mkv" "MyShow_S01E02.mkv" -l ja
+```
 
 

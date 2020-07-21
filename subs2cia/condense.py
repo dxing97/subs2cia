@@ -33,10 +33,10 @@ class SubCondensed:
     def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str):
-        if len(sources) == 1:  # todo: rework for batching
-            outstem = sources[0].filepath.stem
-        else:
-            outstem = sources[0].filepath.name[0:1+common_count(sources[0].filepath.stem, sources[1].filepath.stem)]
+        # if len(sources) == 1:  # todo: rework for batching
+        outstem = sources[0].filepath.stem
+        # else:
+        #     outstem = sources[0].filepath.name[0:1+common_count(sources[0].filepath.stem, sources[1].filepath.stem)]
 
         if outdir is None:
             self.outdir = sources[0].filepath.parent

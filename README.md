@@ -21,6 +21,12 @@ Currently only tested on *nix operating systems.
  * Pads subtitles with audio (disabled by default)
  * Process multiple files at once in batch mode (disabled by default)
   
+## Dependencies
+Built and tested on Python 3. Packages that this script depends on are listed in ``requirements.txt``. You can use pip to automatically install them
+like so:
+```pip3 install -r requirements.txt```
+
+You'll also need to install ffmpeg.
 
 ## Installation
 Clone the repository, and run 
@@ -28,6 +34,7 @@ Clone the repository, and run
 ```pip3 install .```
 
 in the subs2cia root folder. A PyPi package is in the works. If you prefer, you can also run ``subs2cia/main.py`` directly.
+
 
 ## Usage
 ```
@@ -124,7 +131,10 @@ optional arguments:
 present. Don't delete extracted subtitle and audio files. Pad subtitles with 300 ms on each side and group subtitles within 
 1500 ms of each other together to keep short silences. 
   * ``subs2cia -i *.mkv --batch --tl en --keep-temporaries -p 300 -t 1500``
-    
+
+## Known Issues
+* [Windows] On input files that result in hundreds of audio snippets to condense, the arguments passed to ffmpeg can exceed Windows cmd.exe argument limits. 
+
 # subzipper
 Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, 
 optionally adding language information. 

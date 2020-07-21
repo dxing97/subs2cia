@@ -106,7 +106,7 @@ class SubCondensed:
         while picked_sources_are_insufficient(self.picked_streams):
             for k in self.picked_streams:
                 if len(self.partitioned_streams[k]) == 0:
-                    logging.debug("no input streams of type {k}")
+                    logging.debug(f"no input streams of type {k}")
                     continue
                 if self.picked_streams[k] is None:
                     self.picked_streams[k] = next(self.pickers[k])

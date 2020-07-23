@@ -12,14 +12,14 @@ presets = [
         'threshold': 1500,
         'padding': 200,
         'partition_size': 1800,  # 30 minutes, for long movies
-        'target-lang': 'ja',
+        'target_lang': 'ja',
     },
     {  # preset 1
         'preset_description': "Unpadded Japanese condensed audio",
         'threshold': 0,  # note: default is 0
         'padding': 0,  # note: default is 0
         'partition': 1800,  # 30 minutes, for long movies
-        'target-lang': 'ja',
+        'target_lang': 'ja',
     },
 ]
 

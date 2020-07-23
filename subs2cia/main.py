@@ -67,6 +67,8 @@ def start():
         logging.info("No input files given, nothing to do.")
         exit(0)
 
+    args['infiles'].sort()
+
     if args['absolute_paths']:
         sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]
     else:

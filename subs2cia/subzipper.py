@@ -41,7 +41,7 @@ def start():
     if args['lang'] is not None:
         if is_language(args['lang']):
             lang = pycountry.languages.lookup(args['lang'])
-            lang = lang.alpha_2
+            lang = lang.alpha_3
             logging.info(f'Appending language code {lang}')
         else:
             logging.error(f"Language lookup failure: {args['lang']} is not a ISO recognized language")

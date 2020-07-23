@@ -70,7 +70,7 @@ class Stream:
 
     def get_language(self):
         if self.lang != 'unknownlang':
-            return self.lang.alpha_2
+            return self.lang.alpha_3
         if self.is_standalone():
             # no metadata to analyze, look in suffixes for language codes
             suffixes = self.file.filepath.suffixes
@@ -88,7 +88,7 @@ class Stream:
                 self.lang = 'unknownlang'
                 return self.lang
             self.lang = lang
-            return self.lang.alpha_2
+            return self.lang.alpha_3
         # look at metadata for language codes
         if 'tags' not in self.file.info['streams'][self.index]:
             return self.lang
@@ -96,7 +96,7 @@ class Stream:
             return self.lang
         self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
         # todo: catch exceptions here
-        return self.lang.alpha_2
+        return self.lang.alpha_3
 
 
     def demux(self, overwrite_existing: bool):

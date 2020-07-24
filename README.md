@@ -38,12 +38,13 @@ in the subs2cia root folder. A PyPi package is in the works. If you prefer, you 
 
 ## Usage
 ```
+$ subs2cia -h
 usage: main.py [-h] [-i <input files> [<input files> ...]] [-b] [-u]
                [-o <name>] [-d /path/to/directory] [-ae <audio extension>]
                [-m] [--overwrite-on-demux] [--keep-temporaries]
                [--no-overwrite-on-generation] [-p msecs] [-t msecs] [-r secs]
-               [-s secs] [-tl ISO_code] [-a] [-v] [-vv] [--preset preset#]
-               [-lp]
+               [-s secs] [-c <ratio>] [-tl ISO_code] [-a] [-v] [-vv]
+               [--preset preset#] [-lp]
 
 subs2cia: subtitle-based condensed audio generator
 
@@ -110,6 +111,28 @@ optional arguments:
                         partition is 150 seconds. The output file will be
                         split into three files, the first two ~60 seconds long
                         and the last ~30 seconds long.
+  -c <ratio>, --minimum-out-length <ratio>
+                        Will only generate from subtitle files that are this
+                        fraction long of the selected audio file. Default is
+                        0.3, meaning the output condensed file must be at
+                        least 30{'option_strings': ['-c', '--minimum-out-
+                        length'], 'dest': 'minimum_compression_ratio',
+                        'nargs': None, 'const': None, 'default': 0.3, 'type':
+                        'float', 'choices': None, 'required': False, 'help':
+                        "Will only generate from subtitle files that are this
+                        fraction long of the selected audio file. Default is
+                        0.3, meaning the output condensed file must be at
+                        least 30% as long as the chosen audio stream. If the
+                        output doesn't reach this minimum, then a different
+                        subtitle file will be chosen, if available. Used to
+                        ignore subtitles that contain onlysigns and songs.",
+                        'metavar': '<ratio>', 'container':
+                        <argparse._ArgumentGroup object at 0x7faa2bcf7790>,
+                        'prog': 'main.py'}s long as the chosen audio stream.
+                        If the output doesn't reach this minimum, then a
+                        different subtitle file will be chosen, if available.
+                        Used to ignore subtitles that contain onlysigns and
+                        songs.
   -tl ISO_code, --target-language ISO_code
                         If set, attempts to use audio and subtitle files that
                         are in this language first. Should follow ISO language
@@ -121,6 +144,9 @@ optional arguments:
   --preset preset#      If set, uses a given preset. User arguments will
                         override presets.
   -lp, --list-presets   Lists all available built-in presets.
+
+Process finished with exit code 0
+
 ```
 ## Examples
 * Extract the first audio and subtitle track from ``video.mkv`` file and generate the condensed file ``video.condensed.mp3``

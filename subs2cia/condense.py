@@ -32,17 +32,29 @@ def insufficient_source_streams(d: dict):
 class SubCondensed:
     def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
-                 keep_temporaries: bool, target_lang: str, out_audioext: str):
-        # if len(sources) == 1:  # todo: rework for batching
-        outstem = sources[0].filepath.stem
-        # else:
-        #     outstem = sources[0].filepath.name[0:1+common_count(sources[0].filepath.stem, sources[1].filepath.stem)]
+                 keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio):
+        r"""
+
+        :param sources: List of AVSFile objects, each representing one input file
+        :param outdir: Output directory to save to. Default is the directory of the first source file in *sources*
+        :param condensed_video: If set, generates condensed video as well
+        :param threshold:
+        :param padding:
+        :param partition:
+        :param split:
+        :param demux_overwrite_existing: If set, demuxing operations will overwrite existing files on disk
+        :param overwrite_existing_generated: If set, generation operations will overwrite existing files on disk
+        :param keep_temporaries: If set, will not delete demuxed files on cleanup
+        :param target_lang: Target language for audio AND subtitles
+        :param out_audioext: Output audio extension
+        :param minimum_compression_ratio: Chosen subtitle stream must yield generated audio at least this percent long of audio file
+        """
 
         if outdir is None:
             self.outdir = sources[0].filepath.parent
         else:
             self.outdir = outdir
-        self.outstem = outstem
+        self.outstem = sources[0].filepath.stem
         self.sources = sources
         self.out_audioext = out_audioext
 
@@ -71,6 +83,7 @@ class SubCondensed:
         self.split = split
 
         self.dialogue_times = None
+        self.minimum_compression_ratio = minimum_compression_ratio
 
         self.demux_overwrite_existing = demux_overwrite_existing
         self.overwrite_existing_generated = overwrite_existing_generated
@@ -104,25 +117,39 @@ class SubCondensed:
             self.insufficient = True
             return
         while picked_sources_are_insufficient(self.picked_streams):
-            for k in self.picked_streams:
+            for k in ['audio', 'video', 'subtitle']:
                 if len(self.partitioned_streams[k]) == 0:
                     logging.debug(f"no input streams of type {k}")
                     continue
                 if self.picked_streams[k] is None:
                     self.picked_streams[k] = next(self.pickers[k])
-
+            for k in ['audio', 'video', 'subtitle']:
                 # validate picked stream
                 if k == 'subtitle':
                     subfile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)  # type AVSFile
                     times = subtools.load_subtitle_times(subfile.filepath)
                     if times is None:
                         self.picked_streams[k] = None
+                        continue
+                    times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
+                    ps_times = subtools.partition_and_split(times, self.partition, self.split)
 
+                    sublength = subtools.get_partitioned_and_split_times_duration(ps_times)
+                    audiolength = subtools.get_audiostream_duration(
+                        self.picked_streams[k].file.info['streams'][self.picked_streams[k].index])
+                    compression_ratio = sublength / audiolength
+                    if compression_ratio < self.minimum_compression_ratio:
+                        logging.info(f"got compression ratio of {compression_ratio}, which is smaller than the minimum"
+                                     f" ratio of {self.minimum_compression_ratio}, retrying wth different subtitle file")
+                        self.picked_streams[k] = None
+                        continue
+                    self.dialogue_times = subtools.partition_and_split(sub_times=times, partition_size=1000*self.partition,
+                                                                       split_size=1000*self.split)
+                # todo: spin off into its own function at a later step
                 if k == 'audio':
                     afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
                     if afile is None:
                         self.picked_streams[k] = None
-
 
                 if k == 'video':
                     pass
@@ -136,11 +163,12 @@ class SubCondensed:
             return
         if self.insufficient:
             return
-        subfile = self.picked_streams['subtitle'].demux(overwrite_existing=self.demux_overwrite_existing)
-        times = subtools.load_subtitle_times(subfile.filepath)
-        times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
-        self.dialogue_times = subtools.partition_and_split(sub_times=times, partition_size=1000*self.partition,
-                                                           split_size=1000*self.split)
+        logging.debug("process_subtitles merged into choose_streams")
+        # subfile = self.picked_streams['subtitle'].demux(overwrite_existing=self.demux_overwrite_existing)
+        # times = subtools.load_subtitle_times(subfile.filepath)
+        # times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
+        # self.dialogue_times = subtools.partition_and_split(sub_times=times, partition_size=1000*self.partition,
+        #                                                    split_size=1000*self.split)
 
     def export_audio(self):
         if self.picked_streams['audio'] is None:
@@ -173,7 +201,7 @@ class SubCondensed:
     def export(self):
         if self.insufficient:
             return
-        subtools.print_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
+        subtools.get_compression_ratio(self.dialogue_times, self.picked_streams['audio'].demux_file.filepath)
         if self.condensed_video:
             self.export_video()
         self.export_audio()

@@ -29,6 +29,9 @@ class AVSFile:
         logging.debug(f"ffmpeg probe results: {self.info}")
 
     def get_type(self):
+        if self.info is None:
+            self.type = 'unknown'
+            return
         if 'streams' not in self.info:
             logging.warning(f"Unexpected ffmpeg.probe output, ignoring file {str(self.filepath)}")
             logging.debug(self.info)
@@ -100,6 +103,8 @@ class Stream:
 
 
     def demux(self, overwrite_existing: bool):
+        if self.demux_file is not None:
+            return self.demux_file
         demux_path = self.file.filepath
         if not self.is_standalone():
             if self.type == 'subtitle':
@@ -112,7 +117,7 @@ class Stream:
                 extension = 'flac'
             demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')
 
-            if overwrite_existing or not demux_path.exists():
+            if overwrite_existing or not demux_path.exists() or demux_path.stat().st_size == 0:
                 demux_path = ffmpeg_demux(self.file.filepath, self.index, demux_path)
                 if demux_path is None:
                     logging.error(f"Couldn't demux stream {self.index} from {str(self.file.filepath)} (type={self.type})")

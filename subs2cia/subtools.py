@@ -204,15 +204,17 @@ def get_partitioned_and_split_times_duration(sub_times):
     return subs_total
 
 
-def get_audiostream_duration(stream_info):
-    sps = int(
-        stream_info['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
-    samples = stream_info['duration_ts']  # total samples in audio track
-    audio_total = samples / sps * 1000
-    return audio_total
+# don't use: not reliable
+# def get_audiostream_duration(stream_info):
+#     sps = int(
+#         stream_info['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+#     samples = stream_info['duration_ts']  # total samples in audio track
+#     audio_total = samples / sps * 1000
+#     return audio_total
 
 
-def get_audiofile_duration(audio_info):
+def get_audiofile_duration(audiofile: Path):
+    audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
     sps = int(
         audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
     samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
@@ -221,12 +223,12 @@ def get_audiofile_duration(audio_info):
 
 
 def get_compression_ratio(sub_times, audiofile: Path, print=True):
-    audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
+    # audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
     # sps = int(
     #     audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
     # samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
     # audio_total = samples / sps * 1000
-    audio_total = get_audiofile_duration(audio_info)
+    audio_total = get_audiofile_duration(audiofile)
     # total = list()
     # for split in sub_times:
     #     for partition in split:

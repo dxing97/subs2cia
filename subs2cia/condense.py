@@ -122,21 +122,39 @@ class SubCondensed:
                     logging.debug(f"no input streams of type {k}")
                     continue
                 if self.picked_streams[k] is None:
-                    self.picked_streams[k] = next(self.pickers[k])
-            for k in ['audio', 'video', 'subtitle']:
-                # validate picked stream
+                    try:
+                        self.picked_streams[k] = next(self.pickers[k])
+                    except StopIteration as s:
+                        logging.critical("Input streams for this group are invalid for condensing")
+                        self.insufficient = True
+                        return
+            for k in ['audio', 'subtitle', 'video']:
+                # validate picked streams
+
+                # todo: spin off into its own function at a later step
+                if k == 'audio':
+                    afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
+                    if afile is None:
+                        self.picked_streams[k] = None
+
                 if k == 'subtitle':
                     subfile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)  # type AVSFile
+                    if subfile is None:
+                        self.picked_streams[k] = None
+                        continue
                     times = subtools.load_subtitle_times(subfile.filepath)
                     if times is None:
                         self.picked_streams[k] = None
+                        continue
+                    if self.picked_streams['audio'] is None:
+                        # can't verify subtitle validity until audio candidate is found
                         continue
                     times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
                     ps_times = subtools.partition_and_split(times, self.partition, self.split)
 
                     sublength = subtools.get_partitioned_and_split_times_duration(ps_times)
-                    audiolength = subtools.get_audiostream_duration(
-                        self.picked_streams[k].file.info['streams'][self.picked_streams[k].index])
+                    audiolength = subtools.get_audiofile_duration(
+                        self.picked_streams['audio'].demux_file.filepath)
                     compression_ratio = sublength / audiolength
                     if compression_ratio < self.minimum_compression_ratio:
                         logging.info(f"got compression ratio of {compression_ratio}, which is smaller than the minimum"
@@ -145,12 +163,6 @@ class SubCondensed:
                         continue
                     self.dialogue_times = subtools.partition_and_split(sub_times=times, partition_size=1000*self.partition,
                                                                        split_size=1000*self.split)
-                # todo: spin off into its own function at a later step
-                if k == 'audio':
-                    afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
-                    if afile is None:
-                        self.picked_streams[k] = None
-
                 if k == 'video':
                     pass
         logging.info(f"Picked {self.picked_streams['audio']} to use for condensing")

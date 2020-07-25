@@ -189,25 +189,58 @@ def load_subtitle_times(subfile: Path, include_all_lines=False):
     return times
 
 
-def print_compression_ratio(sub_times, audiofile: Path):
-    audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
-    sps = int(
-        audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
-    samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
-
-    audio_total = samples / sps * 1000
-
+def get_partitioned_and_split_times_duration(sub_times):
+    r"""
+    Calculates the total amount of condensed audio to be generated from the subtitle times, in milliseconds
+    :param sub_times:
+    :return: time in milliseconds
+    """
     total = list()
     for split in sub_times:
         for partition in split:
             for x1, x2 in partition:
-                total.append(x2-x1)
+                total.append(x2 - x1)
     subs_total = sum(total)
-    # subs_total = sum([x2 - x1 for x1, x2 in sub_times])  # in ms
-    logging.info(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio to "
-                 f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} "
-                 f"({round(subs_total / audio_total * 100, 1)}% compression ratio) of condensed audio")
+    return subs_total
 
+
+# don't use: not reliable
+# def get_audiostream_duration(stream_info):
+#     sps = int(
+#         stream_info['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+#     samples = stream_info['duration_ts']  # total samples in audio track
+#     audio_total = samples / sps * 1000
+#     return audio_total
+
+
+def get_audiofile_duration(audiofile: Path):
+    audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
+    sps = int(
+        audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+    samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
+    audio_total = samples / sps * 1000
+    return audio_total
+
+
+def get_compression_ratio(sub_times, audiofile: Path, print=True):
+    # audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
+    # sps = int(
+    #     audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+    # samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
+    # audio_total = samples / sps * 1000
+    audio_total = get_audiofile_duration(audiofile)
+    # total = list()
+    # for split in sub_times:
+    #     for partition in split:
+    #         for x1, x2 in partition:
+    #             total.append(x2-x1)
+    # subs_total = sum(total)
+    subs_total = get_partitioned_and_split_times_duration(sub_times)
+    if print:
+        logging.info(f"will condense {str(timedelta(milliseconds=audio_total)).split('.')[0]} of source audio to "
+                     f"{str(timedelta(milliseconds=subs_total)).split('.')[0]} "
+                     f"({round(subs_total / audio_total * 100, 1)}% compression ratio) of condensed audio")
+    return subs_total / audio_total
 
 class Subtitle:
     def __init__(self, stream: Stream, threshold=0, padding=0, include_all_lines=False):

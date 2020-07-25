@@ -113,6 +113,14 @@ def get_args_subs2cia():
                              "The output file will be split into three files, the first two ~60 seconds long and the "
                              "last ~30 seconds long.")
 
+    parser.add_argument('-c', '--minimum-out-length', metavar='<ratio>', dest='minimum_compression_ratio', default=0.3,
+                        type=float,
+                        help="Will only generate from subtitle files that are this fraction long of the selected audio "
+                             "file. Default is 0.3, meaning the output condensed file must be at least 30% as long as "
+                             "the chosen audio stream. If the output doesn't reach this minimum, then a different "
+                             "subtitle file will be chosen, if available. Used to ignore subtitles that contain only"
+                             "signs and songs.")
+
     parser.add_argument('-tl', '--target-language', metavar='ISO_code', dest='target_lang', default=None,
                         type=str,
                         help='If set, attempts to use audio and subtitle files that are in this language first. '

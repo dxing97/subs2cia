@@ -16,8 +16,12 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
     try:
         ffmpeg.run(stream, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)  # verbose only
     except ffmpeg.Error as e:
+        if e.stderr is None:
+            logging.warning(
+                f"Couldn't demux stream {stream_idx} from {infile}, skipping.")
+            return None
         logging.warning(
-            f"Couldn't demux file, skipping. ffmpeg output: \n" + e.stderr.decode("utf-8"))
+            f"Couldn't demux stream {stream_idx} from {infile}, skipping. ffmpeg output: \n" + e.stderr.decode("utf-8"))
         return None
     return outfile
 

@@ -34,7 +34,7 @@ Clone the repository, and run
 ```pip3 install .```
 
 in the subs2cia root folder. A PyPi package is in the works. 
-~~If you prefer, you can also run ``subs2cia/main.py`` directly.~~ See issue #2, fix Coming Soon. 
+~~If you prefer, you can also run ``subs2cia/main.py`` directly.~~ See [#2](https://github.com/dxing97/subs2cia/issues/2), fix Coming Soon. 
 
 
 ## Usage

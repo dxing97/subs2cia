@@ -32,7 +32,8 @@ def insufficient_source_streams(d: dict):
 class SubCondensed:
     def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
-                 keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio):
+                 keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio: float,
+                 use_all_subs: bool):
         r"""
 
         :param sources: List of AVSFile objects, each representing one input file
@@ -91,6 +92,8 @@ class SubCondensed:
 
         self.condensed_video = condensed_video
 
+        self.use_all_subs = use_all_subs
+
         self.insufficient = False
 
     # go through source files and count how many subtitle and audio streams we have
@@ -142,7 +145,7 @@ class SubCondensed:
                     if subfile is None:
                         self.picked_streams[k] = None
                         continue
-                    times = subtools.load_subtitle_times(subfile.filepath)
+                    times = subtools.load_subtitle_times(subfile.filepath, include_all_lines=self.use_all_subs)
                     if times is None:
                         self.picked_streams[k] = None
                         continue

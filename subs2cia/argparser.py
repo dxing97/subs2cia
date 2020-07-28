@@ -66,7 +66,7 @@ def get_args_subs2cia():
                         type=str,
                         help='Condensed audio extension to save as (without the dot). '
                              'Default is mp3, flac has been tested to work.')
-    # todo: dot stripper
+    # todo: dot stripper, output naming
     parser.add_argument('-m', '--gen-video', action='store_true', dest='condensed_video', default=False,
                         help='If set, generates condensed video along with condensed audio. '
                              'WARNING: VERY CPU INTENSIVE).')
@@ -80,6 +80,10 @@ def get_args_subs2cia():
     parser.add_argument('--no-overwrite-on-generation', action='store_false', dest='overwrite_existing_generated',
                         default=True,
                         help='If set, will not overwrite existing files when generating condensed media.')
+
+    parser.add_argument('-ni', '--ignore-none', action='store_true', dest='use_all_subs',
+                        default=False,
+                        help='If set, will not try to remove non-dialogue lines from the subtitle. ')
 
     parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                         type=int,

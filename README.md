@@ -33,7 +33,8 @@ Clone the repository, and run
 
 ```pip3 install .```
 
-in the subs2cia root folder. A PyPi package is in the works. If you prefer, you can also run ``subs2cia/main.py`` directly.
+in the subs2cia root folder. A PyPi package is in the works. 
+~~If you prefer, you can also run ``subs2cia/main.py`` directly.~~ See issue #2, fix Coming Soon. 
 
 
 ## Usage
@@ -42,8 +43,8 @@ $ subs2cia -h
 usage: main.py [-h] [-i <input files> [<input files> ...]] [-b] [-u]
                [-o <name>] [-d /path/to/directory] [-ae <audio extension>]
                [-m] [--overwrite-on-demux] [--keep-temporaries]
-               [--no-overwrite-on-generation] [-p msecs] [-t msecs] [-r secs]
-               [-s secs] [-c <ratio>] [-tl ISO_code] [-a] [-v] [-vv]
+               [--no-overwrite-on-generation] [-ni] [-p msecs] [-t msecs]
+               [-r secs] [-s secs] [-c <ratio>] [-tl ISO_code] [-a] [-v] [-vv]
                [--preset preset#] [-lp]
 
 subs2cia: subtitle-based condensed audio generator
@@ -80,6 +81,8 @@ optional arguments:
   --no-overwrite-on-generation
                         If set, will not overwrite existing files when
                         generating condensed media.
+  -ni, --ignore-none    If set, will not try to remove non-dialogue lines from
+                        the subtitle.
   -p msecs, --padding msecs
                         Adds this many milliseconds of audio before and after
                         every subtitle. Overlaps with adjacent subtitles are
@@ -127,7 +130,7 @@ optional arguments:
                         subtitle file will be chosen, if available. Used to
                         ignore subtitles that contain onlysigns and songs.",
                         'metavar': '<ratio>', 'container':
-                        <argparse._ArgumentGroup object at 0x7faa2bcf7790>,
+                        <argparse._ArgumentGroup object at 0x7fc7451f9a90>,
                         'prog': 'main.py'}s long as the chosen audio stream.
                         If the output doesn't reach this minimum, then a
                         different subtitle file will be chosen, if available.
@@ -144,9 +147,6 @@ optional arguments:
   --preset preset#      If set, uses a given preset. User arguments will
                         override presets.
   -lp, --list-presets   Lists all available built-in presets.
-
-Process finished with exit code 0
-
 ```
 ## Examples
 * Extract the first audio and subtitle track from ``video.mkv`` file and generate the condensed file ``video.condensed.mp3``

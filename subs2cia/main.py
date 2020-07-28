@@ -61,7 +61,7 @@ def start():
     SubC_args = {key: args[key] for key in
                  ['outdir', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
-                  'target_lang', 'out_audioext', 'minimum_compression_ratio']}
+                  'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs']}
 
     if args['infiles'] is None:
         logging.info("No input files given, nothing to do.")

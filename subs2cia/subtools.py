@@ -166,7 +166,13 @@ def load_subtitle_times(subfile: Path, include_all_lines=False):
     #         print(f"note: {subfile} doesn't exist yet, skipping subtitle loading")
     #         return [[0, 0], ]  # might just be a demuxed file that hasn't been demuxed yet
     logging.info(f"loading {subfile}")
-    subs = ps2.load(str(subfile))
+    try:
+        subs = ps2.load(str(subfile))
+    except (ValueError, AttributeError) as e:
+        logger = logging.getLogger(__name__)
+        logger.exception(e)
+        logging.warning(f"pysub2 enountered error loading subtitle file {subfile}, trying a different subtitle file...")
+        return None
     logging.info(subs)
 
     times = list()

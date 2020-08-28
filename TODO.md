@@ -1,10 +1,11 @@
 ## The Todo List
 ### v0.3 point release goals
- - [ ] Simple CLI to GUI wrapper
-    - .app and .exe releases would be nice
- - [ ] pyPi repo publishing stuff and things
  - [ ] clean up dry-run 
  - [ ] Option to ignore certain ranges for OP/ED removal
+ - [ ] Interactive [Y/n] mode for error handing and action confirmation
+ - [ ] Simple CLI to GUI wrapper
+    - .app and .exe releases would be nice
+ - [ ] PyPI maybe?
 
 ### Bucket list 
  - [ ] Handle directories as inputs

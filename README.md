@@ -21,21 +21,40 @@ Currently only tested on *nix operating systems.
  * Pads subtitles with audio (disabled by default)
  * Process multiple files at once in batch mode (disabled by default)
   
-## Dependencies
-Built and tested on Python 3. Packages that this script depends on are listed in ``requirements.txt``. You can use pip to automatically install them
-like so:
-```pip3 install -r requirements.txt```
-
-You'll also need to install ffmpeg.
 
 ## Installation
-Clone the repository, and run 
+Currently actively tested on Ubuntu 20.04 LTS and macOS Catalina. Windows support is limited, but has been tested to work.
 
-```pip3 install .```
+### Dependencies
+Make sure you have Python 3.6 or later installed, along with pip.
+Built and tested on Python 3. Python package dependencies are listed in [requirements.txt](requirements.txt).
 
-in the subs2cia root folder. A PyPi package is in the works. 
-~~If you prefer, you can also run ``subs2cia/main.py`` directly.~~ See [#2](https://github.com/dxing97/subs2cia/issues/2), fix Coming Soon. 
+You'll also need to install ffmpeg and make sure it's on your PATH (i.e. can execute `ffmpeg` on the command line).
 
+### Linux, macOS CLI 
+Git clone or otherwise download the repository and navigate to it:
+```
+$ git clone "https://github.com/dxing97/subs2cia"
+$ cd subs2cia
+```
+
+Tell pip to install the dependencies and then subs2cia itself:
+```
+$ pip3 install -r requirements.txt
+$ pip3 install .
+```
+On WSL, you may need to add `~/.local/bin` to your PATH first.
+
+You should then be able to run subs2cia:
+```
+$ subs2cia -h
+```
+A PyPi package is coming Eventually.
+If you prefer, you can also run ``subs2cia/main.py`` directly.
+
+### Windows CLI
+Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
+The subs2cia installation process is the same as for Linux, just run the commands in command prompt.
 
 ## Usage
 ```
@@ -153,10 +172,13 @@ optional arguments:
   * ``subs2cia -i video.mkv``
 * Condense ``audio.mp3`` using ``subtitles.srt`` and save it to ``audio.condensed.flac``
   * ``subs2cia -i "./audio.mp3" "./subtitles.srt" -ae flac``
-* Condense all files ending in ``.mkv`` in a directory (*nix only). Automatically pick English subtitle/audio tracks if 
+* Condense `file1.mkv`, `file2.mkv`, `file3.mkv` in batch mode. Automatically pick English subtitle/audio tracks if 
 present. Don't delete extracted subtitle and audio files. Pad subtitles with 300 ms on each side and group subtitles within 
 1500 ms of each other together to keep short silences. 
-  * ``subs2cia -i *.mkv --batch --tl en --keep-temporaries -p 300 -t 1500``
+  * ``subs2cia -i file1.mkv file2.mkv file3.mkv --batch --tl en --keep-temporaries -p 300 -t 1500``
+  * If batch mode is not specified, then subs2cia assumes that all three input files are meant to map to *one* output file.
+  * On Linux and macOS systems, can use shell wildcard to grab all files that end in .mkv:
+    * ``subs2cia -i *.mkv --batch --tl en --keep-temporaries -p 300 -t 1500``
 
 ## Known Issues
 * [Windows] On input files that result in hundreds of audio snippets to condense, the arguments passed to ffmpeg can exceed Windows cmd.exe argument limits. 

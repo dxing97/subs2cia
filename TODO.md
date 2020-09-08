@@ -8,6 +8,7 @@
  - [ ] PyPI maybe?
 
 ### Bucket list 
+ - [ ] (Windows) glob inputs 
  - [ ] Handle directories as inputs
  - [ ] make file extensions more flexible (for demuxing and outputs)
     - [ ] for mp3, add user-settable bitrate/quality options 

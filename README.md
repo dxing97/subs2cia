@@ -54,7 +54,13 @@ If you prefer, you can also run ``subs2cia/main.py`` directly.
 
 ### Windows CLI
 Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
-The subs2cia installation process is the same as for Linux, just run the commands in command prompt.
+The subs2cia installation process is the same as for Linux, although some commands may have different names 
+(e.g. instead of `pip3`, you may need to run `py -m pip` instead).
+Some useful links on installing `pip` and python packages:
+* https://pip.pypa.io/en/stable/installing/
+* https://docs.python.org/3/installing/index.html
+
+You may need to restart command prompt for path changes to take effect when installing `pip`. 
 
 ## Usage
 ```

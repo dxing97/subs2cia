@@ -186,8 +186,12 @@ present. Don't delete extracted subtitle and audio files. Pad subtitles with 300
   * On Linux and macOS systems, can use shell wildcard to grab all files that end in .mkv:
     * ``subs2cia -i *.mkv --batch --tl en --keep-temporaries -p 300 -t 1500``
 
+## Limitations and Assumptions
+* Won't work on bitmap subtitles (e.g. PGS), only supports subtitle formats supported by ffmpeg and pysubs2
+* Subtitles must be aligned to audio
+
 ## Known Issues
-* [Windows] On input files that result in hundreds of audio snippets to condense, the arguments passed to ffmpeg can exceed Windows cmd.exe argument limits. 
+* None (so far)
 
 # subzipper
 Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, 

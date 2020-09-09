@@ -1,6 +1,7 @@
 from subs2cia.sources import Stream
 import pycountry
 
+
 def picker(streams: [Stream], target_lang=None):
     if target_lang is not None:
         target_lang = pycountry.languages.lookup(target_lang)

@@ -9,7 +9,6 @@ from subs2cia.ffmpeg_tools import ffmpeg_demux
 import pycountry
 
 
-
 class AVSFile:
     def __init__(self, filepath: Path):
         if not filepath.exists():
@@ -17,6 +16,7 @@ class AVSFile:
         self.filepath = filepath
         self.info = None
         self.type = None
+
     # returns string-encoded type (subtitle, audio, video)
     # determining type may just be as simple as reading the extension
     # but sometimes its better to use a parser and make sure the extension is correct
@@ -24,7 +24,8 @@ class AVSFile:
         try:
             self.info = ffmpeg.probe(self.filepath, cmd='ffprobe')
         except ffmpeg.Error as e:
-            logging.warning(f"Couldn't probe file, skipping {str(self.filepath)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))
+            logging.warning(
+                f"Couldn't probe file, skipping {str(self.filepath)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))
 
         logging.debug(f"ffmpeg probe results: {self.info}")
 
@@ -60,6 +61,7 @@ class Stream:
         # index of None indicates that demuxing with ffmpeg is not nessecary to extract data
         self.demux_file = None
         self.lang = 'unknownlang'
+
     def is_standalone(self):
         if self.index is None:
             return True
@@ -101,26 +103,28 @@ class Stream:
         # todo: catch exceptions here
         return self.lang.alpha_3
 
-
     def demux(self, overwrite_existing: bool):
         if self.demux_file is not None:
             return self.demux_file
         demux_path = self.file.filepath
         if not self.is_standalone():
             if self.type == 'subtitle':
-                # demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.srt')
+                # demux_path = self.file.filepath.parent /
+                # Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.srt')
                 # todo: bitmap subtitles
                 extension = 'ass'
 
             if self.type == 'audio':
                 # todo: demux file type picker
                 extension = 'flac'
-            demux_path = self.file.filepath.parent / Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')
+            demux_path = self.file.filepath.parent / Path(
+                f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')
 
             if overwrite_existing or not demux_path.exists() or demux_path.stat().st_size == 0:
                 demux_path = ffmpeg_demux(self.file.filepath, self.index, demux_path)
                 if demux_path is None:
-                    logging.error(f"Couldn't demux stream {self.index} from {str(self.file.filepath)} (type={self.type})")
+                    logging.error(
+                        f"Couldn't demux stream {self.index} from {str(self.file.filepath)} (type={self.type})")
                     return
         self.demux_file = AVSFile(demux_path)
         self.demux_file.probe()
@@ -138,6 +142,7 @@ class Stream:
             return self.file.filepath
         else:
             return self.demux_file.filepath
+
 
 def common_count(t0, t1):
     # returns the length of the longest common prefix

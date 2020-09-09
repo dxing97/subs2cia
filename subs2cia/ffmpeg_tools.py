@@ -77,7 +77,6 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         args[idx - 1] = "-filter_complex_script"
     args = ["ffmpeg"] + args
 
-
     # ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
 
     pipe_stdin = False

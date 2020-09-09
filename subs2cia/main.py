@@ -40,7 +40,6 @@ def start():
     args = get_args_subs2cia()
     args = vars(args)
 
-
     if args['verbose']:
         if args['debug']:
             logging.basicConfig(level=logging.DEBUG)
@@ -61,7 +60,7 @@ def start():
             exit(0)
         logging.info(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
-            if key in args.keys() and ((args[key] == False) or (args[key] ==  None)):  # override presets
+            if key in args.keys() and ((args[key] == False) or (args[key] is None)):  # override presets
                 args[key] = val
 
     SubC_args = {key: args[key] for key in

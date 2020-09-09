@@ -10,7 +10,7 @@ stutters, repeated audio, and dialogue with unnatural spacing between each sente
 
 This script aims to fix these issues, as well as allow users the flexibility to choose how the audio is generated. 
 
-Currently only tested on *nix operating systems. 
+Actively tested on *nix operating systems, has been shown to work on Windows systems.
 
 ## Features
  * Removes overlaps between subtitle timings

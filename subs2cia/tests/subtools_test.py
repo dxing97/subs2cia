@@ -30,6 +30,6 @@ if __name__ == '__main__':
     print(sub_obj)
     sub_obj.merge_groups()
     sub_obj.condense()
-    sub_obj.condensed_ssadata.save(args.subfile + ".condensed.ass", encoding=u'utf-8')
+    sub_obj.condensed_ssadata.save(args.subfile + ".condensed.srt", encoding=u'utf-8')
     print(sub_obj)
 

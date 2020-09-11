@@ -285,6 +285,8 @@ def is_dialogue(line, include_all=False, regex=None):
         return False
     if '{' == line.text[0]:
         return False
+    if '（' == line.text[0] and '）' == line.text[-1]:
+        return False
 
     # list of characters that, if present anywhere in the subtitle text, means that the subtitle is not dialogue
     globally_invalid = ["♪", "♪"]

@@ -34,7 +34,6 @@ def start():
     args = get_args_subs2cia()
     args = vars(args)
 
-
     if args['verbose']:
         if args['debug']:
             logging.basicConfig(level=logging.DEBUG)

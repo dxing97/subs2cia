@@ -7,12 +7,147 @@ from pathlib import Path
 from datetime import timedelta
 import ffmpeg
 import re
+import copy
 
+
+class SubGroup:
+    def __init__(self, events: [ps2.SSAEvent], ephemeral: bool, threshold: int, padding: int):
+        self.events = events
+        self.ephemeral = ephemeral  # if true, won't affect merging/splitting
+
+        self.threshold = threshold
+        self.padding = padding
+
+        self.ephemeral_events = []
+
+    @property
+    def events_start(self):
+        lowest = float('inf')
+        for e in self.events:  # there may be 0 events
+            if e.start < lowest:
+                lowest = e.start
+        return lowest
+
+    @property
+    def events_end(self):
+        highest = 0
+        for e in self.events:  # there may be 0 events
+            if e.end > highest:
+                highest = e.end
+        return highest
+
+    @property
+    def group_range(self):
+        if self.ephemeral:
+            return [self.events_start, self.events_end]
+        grange = self.padding
+        return [self.events_start - grange if self.events_start - grange > 0 else 0, self.events_end + grange]
+
+    @property
+    def group_limits(self):
+        if self.ephemeral:
+            return [self.events_start, self.events_end]
+        limit = self.threshold + self.padding
+        return [self.events_start - limit if self.events_start - limit > 0 else 0, self.events_end + limit]
+
+    def __repr__(self):
+        s = f"<SubGroup, |{self.group_limits[0]} {self.group_range[0]} {(self.events_start, self.events_end)} {self.group_range[1]} {self.group_limits[1]}|]"
+        return s
 # TODO
-# take a subfile (or SSAFile) and concatenate times down such that it can be muxed into condensed video
-# good opportunity to add crude shifts/retiming here
-def condense_subtitle():
-    pass
+class SubtitleManipulator:
+    def __init__(self, subpath: Path, threshold: int, padding: int):
+        self.subpath = subpath
+        self.ssadata = None
+        self.condensed_ssadata = None
+        self.ssa_events = None
+        self.groups = None
+        self.ephemeral = None
+
+        self.threshold = threshold
+        self.padding = padding
+
+    def load(self, include_all, regex):
+        if not self.subpath.exists():
+            logging.warning(f"Subtitle file {self.subpath} does not exist")
+            return
+
+        logging.debug(f"Loading subtitles at {self.subpath}")
+        try:
+            self.ssadata = ps2.load(str(self.subpath))
+        except (ValueError, AttributeError) as e:
+            logger = logging.getLogger(__name__)
+            logger.exception(e)
+            logging.warning(f"pysub2 enountered error loading subtitle file {self.subpath}")
+            self.ssadata = None
+            return
+        logging.debug(f"Loaded {self.ssadata}")
+
+        self.ssa_events = self.ssadata.events
+        self.ssa_events.sort(key=lambda x: x.start)
+
+        self.groups = []
+        for e in self.ssa_events:
+            self.groups.append(SubGroup([e], ephemeral=not is_dialogue(e, include_all, regex),
+                                        threshold=self.threshold,
+                                        padding=self.padding))
+
+    def merge_groups(self):
+        merged = []
+        self.ephemeral = []
+        for group in self.groups:
+            # ephermal groups are not merged with any other groups so they can be dealt with seperately
+            if group.ephemeral:
+                self.ephemeral.append(group)
+                continue
+            if len(merged) == 0:
+                merged.append(group)
+                continue
+            if merged[-1].group_limits[1] > group.group_limits[0]:
+                merged[-1].events += group.events
+            else:
+                merged.append(group)
+        self.groups = merged
+        logging.debug("Merged groups")
+        # add ephemeral groups back into rest of groups
+        for egroup in self.ephemeral:  # assuming each egroup contains one ssaevent
+            for group in self.groups:
+                # if egroup is valid inside group range
+                    # create a new ssaevent from egroup that fits inside group
+                if group.group_range[0] < egroup.events_start < group.group_range[1] or \
+                group.group_range[0] < egroup.events_end < group.group_range[1]:
+                    new_event = egroup.events[0].copy()
+                    new_event.start = new_event.start if new_event.start > group.group_range[0] else group.group_range[0]
+                    new_event.end = new_event.end if new_event.end < group.group_range[1] else group.group_range[1]
+                    group.ephemeral_events.append(new_event)
+        logging.debug("Inserted ephemeral events")
+
+    def condense(self):
+        r"""
+        laststart = 0
+        for each group g
+            shift all event times in g back by g.group_range[0] - laststart milliseconds
+        :return:
+        """
+        laststart = 0
+        for g in self.groups:
+            shift = g.group_range[0] - laststart
+            for e in g.events:
+                e.start -= shift
+                e.end -= shift
+            for e in g.ephemeral_events:
+                e.start -= shift
+                e.end -= shift
+            laststart = g.group_range[1]
+        logging.debug("Shifted subtitle groups")
+        # extract shifted SSAevents
+        condensed_events = []
+        for g in self.groups:
+            for e in g.events:
+                condensed_events.append(e)
+            for e in g.ephemeral_events:
+                condensed_events.append(e)
+        self.condensed_ssadata = copy.copy(self.ssadata)
+        self.condensed_ssadata.events = condensed_events
 
 
 def decide_partitions(sub_times, partition=0):
@@ -126,7 +261,8 @@ def merge_times(times: [], threshold=0, padding=0):
                 continue
         idx += 1
 
-    logging.info(f"merged {initial} subtitles into {len(times)} audio snippets\n")
+    logging.info(f"Merged {initial} subtitles into {len(times)} audio snippets\n")
+    logging.debug(f"Merged times: {times}")
     return times
 
 

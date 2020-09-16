@@ -47,7 +47,7 @@ class SubGroup:
     def group_limits(self):
         if self.ephemeral:
             return [self.events_start, self.events_end]
-        limit = self.threshold + self.padding
+        limit = self.threshold/2 + self.padding  # divide by two: threshold is distance to next group
         return [self.events_start - limit if self.events_start - limit > 0 else 0, self.events_end + limit]
 
     def __repr__(self):
@@ -99,7 +99,7 @@ class SubtitleManipulator:
             if group.ephemeral:
                 self.ephemeral.append(group)
                 continue
-            if len(merged) == 0:
+            if len(merged) == 0:  # first group
                 merged.append(group)
                 continue
             if merged[-1].group_limits[1] > group.group_limits[0]:
@@ -107,7 +107,7 @@ class SubtitleManipulator:
             else:
                 merged.append(group)
         self.groups = merged
-        logging.debug("Merged groups")
+        logging.debug("Merged groups", merged)
         # add ephemeral groups back into rest of groups
         for egroup in self.ephemeral:  # assuming each egroup contains one ssaevent
             for group in self.groups:

@@ -110,6 +110,7 @@ class SubCondensed:
         for k in self.partitioned_streams:
             logging.info(f"Found {len(self.partitioned_streams[k])} {k} input streams")
             # logging.debug(f"Streams found: {self.partitioned_streams[k]}")
+
     def initialize_pickers(self):
         for k in self.pickers:
             self.pickers[k] = picker(self.partitioned_streams[k], target_lang=self.target_lang)

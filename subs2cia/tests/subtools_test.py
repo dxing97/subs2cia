@@ -31,5 +31,6 @@ if __name__ == '__main__':
     sub_obj.merge_groups()
     sub_obj.condense()
     sub_obj.condensed_ssadata.save(args.subfile + ".condensed.srt", encoding=u'utf-8')
-    print(sub_obj)
+    print("times:", sub_obj.get_times())
+
 

@@ -1,5 +1,7 @@
 import argparse
 from pathlib import Path
+import sys
+from subs2cia import __version__
 
 
 def get_args_subzipper():
@@ -36,12 +38,25 @@ def get_args_subzipper():
 
 
 def get_args_subs2cia():
-    parser = argparse.ArgumentParser(description=f'subs2cia: subtitle-based condensed audio generator')
+    parser = argparse.ArgumentParser(description=f'subs2cia: subtitle-based condensed audio generator (version {__version__})')
 
+    # todo: implement directory parsing
     parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=False,
                         type=str, nargs='+',
                         help='Paths to input files or a single path to a directory of input files.')
-    # todo: implement directory parsing
+
+
+    parser.add_argument('-si', '--subtitle-index',  metavar='<index>', dest='subtitle_stream_index', default=None,
+                        type=int,
+                        help='Force a certain subtitle stream to use. Takes precedence over --target-language option.'
+                             'If any input files are standalone subtitle files, they will be used first. '
+                             'Use --list-streams for a list of available streams and their indices.')
+
+    parser.add_argument('-ai', '--audio-index',  metavar='<index>', dest='audio_stream_index', default=None,
+                        type=int,
+                        help='Force a certain subtitle audio to use. Takes precedence over --target-language option.'
+                             'If any input files are standalone audio files, they will be used first. '
+                             'Use --list-streams for a list of available streams and their indices.')
 
     parser.add_argument('-b', '--batch', action='store_true', dest='batch', default=False,
                         help='If set, attempts to split input files into groups, one output file per group. '
@@ -85,15 +100,23 @@ def get_args_subs2cia():
                         default=False,
                         help='If set, will not try to remove non-dialogue lines from the subtitle. ')
 
+    parser.add_argument('-R', '--sref', metavar='<regular expression>', dest='subtitle_regex_filter', default=None,
+                        type=str,
+                        help='For filtering non-dialogue subtitles. Lines that match given regex are IGNORED '
+                             'during subtitle processing and will not influence condensed audio. '
+                             'Ignored lines may be included in condensed subtitles. This option will override the '
+                             'internal subs2cia non-dialogue filter.')
+
     parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                         type=int,
                         help='Adds this many milliseconds of audio before and after every subtitle. '
-                             'Overlaps with adjacent subtitles are merged.')
+                             'Overlaps with adjacent subtitles are merged automatically.')
 
     parser.add_argument('-t', '--threshold', metavar='msecs', dest='threshold', default=0,
                         type=int,
-                        help="If there's a subtitle that's threshold+padding msec away, "
-                             "adds the intervening audio into the condensed audio.")
+                        help="If two subtitles start and end within (threshold + 2*padding) "
+                             "milliseconds of each other, they will be merged. Useful for preserving silences between "
+                             "subtitle lines.")
 
     parser.add_argument('-r', '--partition', metavar='secs', dest='partition', default=0,
                         type=int,
@@ -117,10 +140,10 @@ def get_args_subs2cia():
                              "The output file will be split into three files, the first two ~60 seconds long and the "
                              "last ~30 seconds long.")
 
-    parser.add_argument('-c', '--minimum-out-length', metavar='<ratio>', dest='minimum_compression_ratio', default=0.3,
-                        type=float,
+    parser.add_argument('-c', '--minimum-compression-ratio', metavar='<ratio>', dest='minimum_compression_ratio',
+                        default=0.2, type=float,
                         help="Will only generate from subtitle files that are this fraction long of the selected audio "
-                             "file. Default is 0.3, meaning the output condensed file must be at least 30% as long as "
+                             "file. Default is 0.2, meaning the output condensed file must be at least 20% as long as "
                              "the chosen audio stream. If the output doesn't reach this minimum, then a different "
                              "subtitle file will be chosen, if available. Used to ignore subtitles that contain only"
                              "signs and songs.")
@@ -130,6 +153,7 @@ def get_args_subs2cia():
                         help='If set, attempts to use audio and subtitle files that are in this language first. '
                              'Should follow ISO language codes. ')
 
+    # todo: consider depreciating this option
     parser.add_argument('-a', '--absolute-paths', action='store_true', dest='absolute_paths', default=False,
                         help='Prints absolute paths from the root directory instead of given paths.')
 
@@ -142,7 +166,13 @@ def get_args_subs2cia():
     parser.add_argument('--preset', metavar='preset#', dest='preset', type=int, default=None,
                         help='If set, uses a given preset. User arguments will override presets.')
     parser.add_argument('-lp', '--list-presets', dest='list_presets', action='store_true', default=False,
-                        help='Lists all available built-in presets.')
-
+                        help='Lists all available built-in presets and exits.')
+    parser.add_argument('-ls', '--list-streams', dest='list_streams', action='store_true', default=False,
+                        help='Lists all audio, subtitle, and video streams found in given input files and exits.')
     args = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(0)
+
     return args

@@ -60,7 +60,8 @@ def start():
     SubC_args = {key: args[key] for key in
                  ['outdir', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
-                  'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs']}
+                  'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
+                  'audio_stream_index', 'subtitle_stream_index']}
 
     if args['infiles'] is None:
         logging.info("No input files given, nothing to do.")
@@ -94,6 +95,9 @@ def start():
         c.get_and_partition_streams()
         c.initialize_pickers()
         if args['dry_run']:
+            continue
+        if args['list_streams']:
+            c.list_streams()
             continue
         c.choose_streams()
         c.process_subtitles()

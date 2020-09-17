@@ -1,6 +1,7 @@
 from subs2cia.argparser import get_args_subs2cia
 from subs2cia.sources import AVSFile, group_files
 from subs2cia.condense import SubCondensed
+__version__ = 'v0.2.2'
 
 from pathlib import Path
 import logging
@@ -42,6 +43,7 @@ def start():
     elif args['debug']:
         logging.basicConfig(level=logging.DEBUG)
 
+    logging.info(f"subs2cia version {__version__}")
     logging.debug(f"Start arguments: {args}")
 
     if args['list_presets']:

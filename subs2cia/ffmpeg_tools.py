@@ -123,7 +123,7 @@ def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videof
                                (f".s{s + 1}" if len(partition) != 1 else "") + \
                                ".condensed" + \
                                os.path.splitext(outfile)[1]
-
+            # todo: need to split subfiles with partition, split options
             ffmpeg_condense_video(audiofile=audiofile, videofile=videofile, subfile=subfile,
                                   sub_times=split, outfile=outfilesplit)
 
@@ -147,7 +147,7 @@ def trim(input_path, output_path, start=30, end=60):
     output.run()
 
 
-def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
+def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_times, outfile):
     logging.info(f"saving condensed video to {outfile}")
 
     # get samples in audio file
@@ -158,6 +158,7 @@ def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
 
     audiostream = ffmpeg.input(audiofile)
     videostream = ffmpeg.input(videofile)
+    substream = ffmpeg.input(subfile)
     vid = videostream.video.filter_multi_output('split')
     # sub = videostream['s'].filter_multi_output('split')
     aud = audiostream.audio.filter_multi_output('asplit')
@@ -179,7 +180,8 @@ def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
         *clips,
         v=1,
         a=1
-    ).output(outfile)
+    ).output(substream, outfile)
+
     # output = ffmpeg.output(joined[0], joined[1], outfile)
     out = ffmpeg.overwrite_output(out)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(out)}")

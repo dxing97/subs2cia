@@ -102,6 +102,7 @@ class SubCondensed:
         self.subtitle_regex_filter = subtitle_regex_filter
 
         self.insufficient = False
+        self.subtitle_outfile = None
 
     # go through source files and count how many subtitle and audio streams we have
     def get_and_partition_streams(self):
@@ -242,9 +243,9 @@ class SubCondensed:
         subdata.merge_groups()
         subdata.condense()
 
-        outfile = Path(self.outdir) / (
+        self.subtitle_outfile = Path(self.outdir) / (
                     self.outstem + f'.condensed{self.out_subext if self.out_subext is not None else subext}')
-        subdata.condensed_ssadata.save(outfile, encoding=u'utf-8')
+        subdata.condensed_ssadata.save(self.subtitle_outfile, encoding=u'utf-8')
 
     def export_audio(self):
         if self.picked_streams['audio'] is None:
@@ -269,7 +270,7 @@ class SubCondensed:
             logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
             return
         export_condensed_video(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
-                               subfile=self.picked_streams['subtitle'].get_data_path(),
+                               subfile=self.subtitle_outfile,
                                videofile=self.picked_streams['video'].get_data_path(),
                                outfile=outfile)
         return

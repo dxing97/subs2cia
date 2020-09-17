@@ -102,8 +102,13 @@ class Stream:
             return self.lang
         if 'language' not in self.file.info['streams'][self.index]['tags']:
             return self.lang
-        self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
-        # todo: catch exceptions here
+        try:
+            self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
+        except LookupError as e:
+            logging.warning(f"{self} language {self.file.info['streams'][self.index]['tags']['language']} is not a "
+                            f"proper language code, setting to unknown language.")
+            self.lang = 'unknownlang'
+            return self.lang
         return self.lang.alpha_3
 
     def demux(self, overwrite_existing: bool):

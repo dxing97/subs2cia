@@ -1,3 +1,9 @@
+import os
+import sys
+
+# this line is for when main.py is run directly
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from subs2cia.argparser import get_args_subs2cia
 from subs2cia.sources import AVSFile, group_files
 from subs2cia.condense import SubCondensed
@@ -56,7 +62,7 @@ def start():
             exit(0)
         logging.info(f"using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
-            if key in args.keys() and ((args[key] == False) or (args[key] ==  None)):  # override presets
+            if key in args.keys() and ((args[key] == False) or (args[key] is None)):  # override presets
                 args[key] = val
 
     SubC_args = {key: args[key] for key in

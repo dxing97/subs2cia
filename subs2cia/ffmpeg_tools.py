@@ -2,6 +2,8 @@ import ffmpeg
 import logging
 from pathlib import Path
 import os
+import tempfile
+import subprocess
 
 
 # given a stream in the input file, demux the stream and save it into the outfile with some type
@@ -24,6 +26,16 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
             f"Couldn't demux stream {stream_idx} from {infile}, skipping. ffmpeg output: \n" + e.stderr.decode("utf-8"))
         return None
     return outfile
+
+
+# from ffmpeg-python _run.py
+class Error(Exception):
+    def __init__(self, cmd, stdout, stderr):
+        super(Error, self).__init__(
+            '{} error (see stderr output for detail)'.format(cmd)
+        )
+        self.stdout = stdout
+        self.stderr = stderr
 
 
 def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
@@ -51,7 +63,37 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         combined = ffmpeg.output(combined, outfile)
     combined = ffmpeg.overwrite_output(combined)
     logging.debug(f"ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
-    ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
+    args = ffmpeg.get_args(combined)
+    if len("ffmpeg " + " ".join(args)) > 32766 and os.name == 'nt':
+        logging.warning("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
+                        "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
+        idx = args.index("-filter_complex") + 1
+        complex_filter = str(args[idx])
+        # write complex_filter to a temporary file
+        fp = tempfile.NamedTemporaryFile(delete=False)  # don't delete b/c can't open file again when it's already open in windows, need to close first
+        fp.write(complex_filter.encode(encoding="utf-8"))
+        fp.close()
+        args[idx] = fp.name
+        args[idx - 1] = "-filter_complex_script"
+    args = ["ffmpeg"] + args
+
+    # ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
+
+    pipe_stdin = False
+    pipe_stdout = False
+    pipe_stderr = False
+    quiet = logging.getLogger().getEffectiveLevel() >= logging.WARNING
+
+    stdin_stream = subprocess.PIPE if pipe_stdin else None
+    stdout_stream = subprocess.PIPE if pipe_stdout or quiet else None
+    stderr_stream = subprocess.PIPE if pipe_stderr or quiet else None
+    process = subprocess.Popen(
+        args, stdin=stdin_stream, stdout=stdout_stream, stderr=stderr_stream
+    )
+    out, err = process.communicate(input)
+    retcode = process.poll()
+    if retcode:
+        raise Error('ffmpeg', out, err)
 
 
 def export_condensed_audio(divided_times, audiofile: Path, outfile=None, use_absolute_numbering=False):

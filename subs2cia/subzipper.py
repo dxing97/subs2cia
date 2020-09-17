@@ -6,6 +6,7 @@ from pathlib import Path
 import pycountry
 from pprint import pprint
 
+
 def start():
     args = get_args_subzipper()
     args = vars(args)
@@ -27,15 +28,14 @@ def start():
         logging.warning(f"Mismatched number of subtitle and reference files! Got {len(subfiles)} subtitle files and "
                         f"{len(reffiles)} reference files.")
         logging.warning(f"Will only process the first "
-                        f"{len(subfiles) if len(subfiles) < len(reffiles) else len(reffiles)} reference-subtitle pairs.")
+                        f"{len(subfiles) if len(subfiles) < len(reffiles) else len(reffiles)} "
+                        f"reference-subtitle pairs.")
         # exit(1)
 
     # subfiles = [Path(s).absolute() for s in subfiles]
     # reffiles = [Path(r).absolute() for r in reffiles]
     subfiles = [Path(s) for s in subfiles]
     reffiles = [Path(r) for r in reffiles]
-
-
 
     lang = None
     if args['lang'] is not None:
@@ -78,7 +78,6 @@ def start():
         logging.info(f"Renaming {s} to {newpath}...")
         s.rename(newpath)
         logging.info(f"...done")
-
 
 
 if __name__ == '__main__':

@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from subs2cia.argparser import get_args_subs2cia
 from subs2cia.sources import AVSFile, group_files
 from subs2cia.condense import SubCondensed
-__version__ = 'v0.2.2'
+__version__ = 'v0.2.4'
 
 from pathlib import Path
 import logging

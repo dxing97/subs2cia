@@ -1,12 +1,10 @@
-from subs2cia.main import __version__
-
 import argparse
 from pathlib import Path
 import sys
 
 
 def get_args_subzipper():
-    parser = argparse.ArgumentParser(description=f'SubZipper {__version__}: Map video files to subtitle files')
+    parser = argparse.ArgumentParser(description=f'SubZipper: Map video files to subtitle files')
 
     parser.add_argument('-s', '--subtitle', metavar='<input files>', dest='subfiles', default=None, required=True,
                         type=str, nargs='+',
@@ -84,7 +82,8 @@ def get_args_subs2cia():
                              'Default is mp3, flac has been tested to work.')
     # todo: dot stripper, output naming
     parser.add_argument('-m', '--gen-video', action='store_true', dest='condensed_video', default=False,
-                        help='If set, generates condensed video along with condensed audio. '
+                        help='If set, generates condensed video along with condensed audio and subtitles. '
+                             'Subtitles are muxed in to video file. '
                              'WARNING: VERY CPU INTENSIVE).')
 
     parser.add_argument('--overwrite-on-demux', action='store_true', dest='demux_overwrite_existing', default=False,

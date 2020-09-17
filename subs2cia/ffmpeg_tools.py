@@ -70,7 +70,8 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         idx = args.index("-filter_complex") + 1
         complex_filter = str(args[idx])
         # write complex_filter to a temporary file
-        fp = tempfile.NamedTemporaryFile(delete=False)  # don't delete b/c can't open file again when it's already open in windows, need to close first
+        fp = tempfile.NamedTemporaryFile(
+            delete=False)  # don't delete b/c can't open file again when it's already open in windows
         fp.write(complex_filter.encode(encoding="utf-8"))
         fp.close()
         args[idx] = fp.name
@@ -166,7 +167,7 @@ def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videof
                                ".condensed" + \
                                os.path.splitext(outfile)[1]
             # todo: need to split subfiles with partition, split options
-            ffmpeg_condense_video(audiofile=audiofile, videofile=videofile, subfile=subfile,
+            ffmpeg_condense_video(audiofile=audiofile, videofile=str(videofile), subfile=str(subfile),
                                   sub_times=split, outfile=outfilesplit)
 
 

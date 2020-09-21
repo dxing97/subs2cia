@@ -1,3 +1,4 @@
 from subs2cia import main
 from subs2cia import subzipper
-__version__ = 'v0.2.3'
+from subs2cia.main import __version__
+

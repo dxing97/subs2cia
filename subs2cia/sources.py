@@ -54,13 +54,16 @@ class AVSFile:
 class Stream:
     index = None
 
-    def __init__(self, file: AVSFile, type, index=None):
+    def __init__(self, file: AVSFile, type, stream_info, index=None, ):
         self.file = file
         self.index = index
         self.type = type
         # index of None indicates that demuxing with ffmpeg is not nessecary to extract data
         self.demux_file = None
         self.lang = 'unknownlang'
+        self.stream_info = stream_info
+
+        self.get_language()
 
     def is_standalone(self):
         if self.index is None:
@@ -99,8 +102,13 @@ class Stream:
             return self.lang
         if 'language' not in self.file.info['streams'][self.index]['tags']:
             return self.lang
-        self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
-        # todo: catch exceptions here
+        try:
+            self.lang = pycountry.languages.lookup(self.file.info['streams'][self.index]['tags']['language'])
+        except LookupError as e:
+            logging.warning(f"{self} language {self.file.info['streams'][self.index]['tags']['language']} is not a "
+                            f"proper language code, setting to unknown language.")
+            self.lang = 'unknownlang'
+            return self.lang
         return self.lang.alpha_3
 
     def demux(self, overwrite_existing: bool):
@@ -109,13 +117,23 @@ class Stream:
         demux_path = self.file.filepath
         if not self.is_standalone():
             if self.type == 'subtitle':
-                # demux_path = self.file.filepath.parent /
-                # Path(f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.srt')
+                subtitle_mapping = {
+                    'subrip': 'srt',
+                    'ass': 'ass'
+                }
                 # todo: bitmap subtitles
-                extension = 'ass'
+                if self.stream_info is not None and 'codec_name' in self.stream_info:
+                    if self.stream_info['codec_name'] not in subtitle_mapping:
+                        extension = 'ass'
+                        logging.warning(f"Unknown subtitle type {self.stream_info['codec_name']} found, "
+                                     f"will attempt to convert to .ass")
+                    else:
+                        extension = subtitle_mapping[self.stream_info['codec_name']]
 
             if self.type == 'audio':
-                # todo: demux file type picker
+                # we could change what type to demux as similarly to subtitles,
+                # but it may cause compatability issues down the road so let's
+                # keep it as flac for now
                 extension = 'flac'
             demux_path = self.file.filepath.parent / Path(
                 f'{self.file.filepath.name}.stream{self.index}.{self.type}.{self.get_language()}.{extension}')

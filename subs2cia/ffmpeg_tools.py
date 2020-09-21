@@ -70,7 +70,8 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         idx = args.index("-filter_complex") + 1
         complex_filter = str(args[idx])
         # write complex_filter to a temporary file
-        fp = tempfile.NamedTemporaryFile(delete=False)  # don't delete b/c can't open file again when it's already open in windows, need to close first
+        fp = tempfile.NamedTemporaryFile(
+            delete=False)  # don't delete b/c can't open file again when it's already open in windows
         fp.write(complex_filter.encode(encoding="utf-8"))
         fp.close()
         args[idx] = fp.name
@@ -165,8 +166,8 @@ def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videof
                                (f".s{s + 1}" if len(partition) != 1 else "") + \
                                ".condensed" + \
                                os.path.splitext(outfile)[1]
-
-            ffmpeg_condense_video(audiofile=audiofile, videofile=videofile, subfile=subfile,
+            # todo: need to split subfiles with partition, split options
+            ffmpeg_condense_video(audiofile=audiofile, videofile=str(videofile), subfile=str(subfile),
                                   sub_times=split, outfile=outfilesplit)
 
 
@@ -189,7 +190,7 @@ def trim(input_path, output_path, start=30, end=60):
     output.run()
 
 
-def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
+def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_times, outfile):
     logging.info(f"saving condensed video to {outfile}")
 
     # get samples in audio file
@@ -200,6 +201,7 @@ def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
 
     audiostream = ffmpeg.input(audiofile)
     videostream = ffmpeg.input(videofile)
+    substream = ffmpeg.input(subfile)
     vid = videostream.video.filter_multi_output('split')
     # sub = videostream['s'].filter_multi_output('split')
     aud = audiostream.audio.filter_multi_output('asplit')
@@ -221,7 +223,8 @@ def ffmpeg_condense_video(audiofile, videofile, subfile, sub_times, outfile):
         *clips,
         v=1,
         a=1
-    ).output(outfile)
+    ).output(substream, outfile)
+
     # output = ffmpeg.output(joined[0], joined[1], outfile)
     out = ffmpeg.overwrite_output(out)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(out)}")

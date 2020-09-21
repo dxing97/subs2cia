@@ -37,7 +37,8 @@ def get_args_subzipper():
 
 
 def get_args_subs2cia():
-    parser = argparse.ArgumentParser(description=f'subs2cia: subtitle-based condensed audio generator')
+    parser = argparse.ArgumentParser(description=f'subs2cia: Extract subtitled dialogue from audiovisual media for use '
+                                                 f'in language acquisition ')
 
     # todo: implement directory parsing
     parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=False,
@@ -98,7 +99,8 @@ def get_args_subs2cia():
 
     parser.add_argument('-ni', '--ignore-none', action='store_true', dest='use_all_subs',
                         default=False,
-                        help='If set, will not try to remove non-dialogue lines from the subtitle. ')
+                        help='If set, will not use internal heuristics to remove non-dialogue lines from the subtitle. '
+                             'Overridden by -R.')
 
     parser.add_argument('-R', '--sref', metavar='<regular expression>', dest='subtitle_regex_filter', default=None,
                         type=str,

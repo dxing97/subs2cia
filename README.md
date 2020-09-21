@@ -1,21 +1,11 @@
-# subs2cia
+subs2cia - Extract subtitled dialogue from audiovisual media for use in language acquisition 
 
-A subtitled media to condensed immersion media converter.
-
-Inspired by a script demoed [here](https://www.youtube.com/watch?v=QOLTeO-uCYU) that takes audio snippets played during 
-subtitles and concatenates them together to make one large audio file that should contain just spoken audio. 
-However, the quality of the snippets you use directly influences the quality of the final condensed audio, and subtitle 
-timing information isn't taken into account when generating the final condensed audio, potentially resulting in 
-stutters, repeated audio, and dialogue with unnatural spacing between each sentence.
-
-This script aims to fix these issues, as well as allow users the flexibility to choose how the audio is generated. 
-
-Actively tested on *nix operating systems, has been shown to work on Windows systems.
 
 ## Features
- * Removes overlaps between subtitle lines
- * Generate condensed audio, video, and subtitles (`-m`)
- * Automagically choose desired language audio and subtitles from multiple inputs or manually specify them 
+ * Generates _condensed_ media from subtitled media that only contains spoken dialogue
+ * No unnatural stutters: simultaneous subtitles lines are merged for seamless listening
+ * Automatically generate condensed subtitle, audio, and video (video must be enabled with `-m`)
+ * Automagically choose input sources from a certain language or manually specify what inputs to condense
  (`-tl`, `-si`, `-ai`)
  * Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
  * Re-adds natural spacing between sentences that start and end close together (`-t`)
@@ -24,7 +14,11 @@ Actively tested on *nix operating systems, has been shown to work on Windows sys
   
 
 ## Installation
-Currently actively tested on Ubuntu 20.04 LTS and macOS Catalina. Windows support is limited, but has been tested to work.
+Pip install:
+
+```pip3 install subs2cia```
+
+## Pip install from source
 
 ### Dependencies
 Make sure you have Python 3.6 or later installed, along with pip.
@@ -39,9 +33,8 @@ $ git clone "https://github.com/dxing97/subs2cia"
 $ cd subs2cia
 ```
 
-Tell pip to install the dependencies and then subs2cia itself:
+Use pip to install:
 ```
-$ pip3 install -r requirements.txt
 $ pip3 install .
 ```
 On WSL, you may need to add `~/.local/bin` to your PATH first.
@@ -49,8 +42,9 @@ On WSL, you may need to add `~/.local/bin` to your PATH first.
 You should then be able to run subs2cia:
 ```
 $ subs2cia -h
+usage: subs2cia [-h] [-i <input files> [<input files> ...]] [-si <index>]
 ```
-A PyPi package is coming Eventually.
+
 If you prefer, you can also run ``subs2cia/main.py`` directly.
 
 ### Windows CLI
@@ -66,7 +60,7 @@ You may need to restart command prompt for path changes to take effect when inst
 ## Usage
 ```
 $ subs2cia -h
-usage: main.py [-h] [-i <input files> [<input files> ...]] [-si <index>]
+usage: subs2cia [-h] [-i <input files> [<input files> ...]] [-si <index>]
                [-ai <index>] [-b] [-u] [-o <name>] [-d /path/to/directory]
                [-ae <audio extension>] [-m] [--overwrite-on-demux]
                [--keep-temporaries] [--no-overwrite-on-generation] [-ni]
@@ -74,7 +68,8 @@ usage: main.py [-h] [-i <input files> [<input files> ...]] [-si <index>]
                [-s secs] [-c <ratio>] [-tl ISO_code] [-a] [-v] [-vv]
                [--preset preset#] [-lp] [-ls]
 
-subs2cia: subtitle-based condensed audio generator
+subs2cia: Extract subtitled dialogue from audiovisual media for use in
+language acquisition
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -113,15 +108,17 @@ optional arguments:
                         Condensed audio extension to save as (without the
                         dot). Default is mp3, flac has been tested to work.
   -m, --gen-video       If set, generates condensed video along with condensed
-                        audio. WARNING: VERY CPU INTENSIVE).
+                        audio and subtitles. Subtitles are muxed in to video
+                        file. WARNING: VERY CPU INTENSIVE).
   --overwrite-on-demux  If set, will overwrite existing files when demuxing
                         temporary files.
   --keep-temporaries    If set, will not delete any demuxed temporary files.
   --no-overwrite-on-generation
                         If set, will not overwrite existing files when
                         generating condensed media.
-  -ni, --ignore-none    If set, will not try to remove non-dialogue lines from
-                        the subtitle.
+  -ni, --ignore-none    If set, will not use internal heuristics to remove
+                        non-dialogue lines from the subtitle. Overridden by
+                        -R.
   -R <regular expression>, --sref <regular expression>
                         For filtering non-dialogue subtitles. Lines that match
                         given regex are IGNORED during subtitle processing and
@@ -163,21 +160,21 @@ optional arguments:
   -c <ratio>, --minimum-compression-ratio <ratio>
                         Will only generate from subtitle files that are this
                         fraction long of the selected audio file. Default is
-                        0.3, meaning the output condensed file must be at
-                        least 30{'option_strings': ['-c', '--minimum-
+                        0.2, meaning the output condensed file must be at
+                        least 20{'option_strings': ['-c', '--minimum-
                         compression-ratio'], 'dest':
                         'minimum_compression_ratio', 'nargs': None, 'const':
-                        None, 'default': 0.3, 'type': 'float', 'choices':
+                        None, 'default': 0.2, 'type': 'float', 'choices':
                         None, 'required': False, 'help': "Will only generate
                         from subtitle files that are this fraction long of the
-                        selected audio file. Default is 0.3, meaning the
-                        output condensed file must be at least 30% as long as
+                        selected audio file. Default is 0.2, meaning the
+                        output condensed file must be at least 20% as long as
                         the chosen audio stream. If the output doesn't reach
                         this minimum, then a different subtitle file will be
                         chosen, if available. Used to ignore subtitles that
                         contain onlysigns and songs.", 'metavar': '<ratio>',
                         'container': <argparse._ArgumentGroup object at
-                        0x7f588089da30>, 'prog': 'main.py'}s long as the
+                        0x7ff2e3e102b0>, 'prog': 'main.py'}s long as the
                         chosen audio stream. If the output doesn't reach this
                         minimum, then a different subtitle file will be
                         chosen, if available. Used to ignore subtitles that
@@ -192,9 +189,9 @@ optional arguments:
   -vv, --debug          Verbose and debug output if set
   --preset preset#      If set, uses a given preset. User arguments will
                         override presets.
-  -lp, --list-presets   Lists all available built-in presets.
+  -lp, --list-presets   Lists all available built-in presets and exits.
   -ls, --list-streams   Lists all audio, subtitle, and video streams found in
-                        input files and exits.
+                        given input files and exits.
 ```
 ## Examples
 * Extract the first audio and subtitle track from ``video.mkv`` file and generate the condensed files 

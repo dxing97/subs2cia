@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 
 # this line is for when main.py is run directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -38,6 +39,9 @@ def list_presets():
 
 
 def start():
+    if not shutil.which('ffmpeg'):
+        logging.warning(f"Couldn't find ffmpeg in PATH, things may break.")
+
     args = get_args_subs2cia()
     args = vars(args)
 

@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [0.2.5] - 2020-09-22
 ### Added
  - Ignore ranges option for ignoring subtitles that lie in a certain time range for OP/ED removal
 

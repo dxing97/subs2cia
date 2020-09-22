@@ -8,11 +8,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from subs2cia.argparser import get_args_subs2cia
 from subs2cia.sources import AVSFile, group_files
 from subs2cia.condense import SubCondensed
-__version__ = 'v0.2.4'
+__version__ = 'v0.2.5'
 
 from pathlib import Path
 import logging
 from pprint import pprint
+# from gooey import Gooey
 
 presets = [
     {  # preset 0
@@ -38,6 +39,7 @@ def list_presets():
         pprint(preset)
 
 
+# @Gooey
 def start():
     if not shutil.which('ffmpeg'):
         logging.warning(f"Couldn't find ffmpeg in PATH, things may break.")
@@ -73,7 +75,7 @@ def start():
                  ['outdir', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
-                  'audio_stream_index', 'subtitle_stream_index']}
+                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range']}
 
     if args['infiles'] is None:
         logging.info("No input files given, nothing to do.")

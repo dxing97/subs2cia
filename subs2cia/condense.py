@@ -7,6 +7,7 @@ from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 import logging
 from collections import defaultdict
 from pathlib import Path
+import typing
 
 
 def picked_sources_are_insufficient(d: dict):
@@ -32,7 +33,8 @@ class SubCondensed:
     def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio: float,
-                 use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int):
+                 use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
+                 ignore_range: typing.Union[typing.List[typing.List[int]], None]):
         r"""
 
         :param sources: List of AVSFile objects, each representing one input file
@@ -86,6 +88,7 @@ class SubCondensed:
         self.threshold = threshold
         self.partition = partition
         self.split = split
+        self.ignore_range = ignore_range
 
         self.dialogue_times = None
         self.minimum_compression_ratio = minimum_compression_ratio
@@ -186,7 +189,8 @@ class SubCondensed:
                         continue
                     # times = subtools.load_subtitle_times(subfile.filepath, include_all_lines=self.use_all_subs)
                     subdata = subtools.SubtitleManipulator(subfile.filepath,
-                                                           threshold=self.threshold, padding=self.padding)
+                                                           threshold=self.threshold, padding=self.padding,
+                                                           ignore_range=self.ignore_range)
                     subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
                     if subdata.ssadata is None:
                         self.picked_streams[k] = None
@@ -238,7 +242,7 @@ class SubCondensed:
             return
         subpath = self.picked_streams['subtitle'].get_data_path()
         subext = subpath.suffix
-        subdata = subtools.SubtitleManipulator(subpath, threshold=self.threshold, padding=self.padding)
+        subdata = subtools.SubtitleManipulator(subpath, threshold=self.threshold, padding=self.padding, ignore_range=self.ignore_range)
         subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
         subdata.merge_groups()
         subdata.condense()

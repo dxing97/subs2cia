@@ -9,6 +9,71 @@ import ffmpeg
 import re
 import copy
 
+from typing import List
+
+
+def overlap_any_range(range1: List[int], ranges: List[List[int]]):
+    for r in ranges:
+        assert len(r) == 2
+        if overlap_range(r, range1):
+            trimmed = ssaevent_trim(e, ir)
+            return trimmed
+
+
+def overlap_range(range1: List[int], range2: List[int]):
+    assert len(range1) == len(range2) == 2
+    if range1[0] < range2[0] < range1[1] or range1[0] < range2[1] < range1[1] or range2[0] < range1[0] < range2[1] or \
+        range2[0] < range1[1] < range2[1]:
+        return True
+    return False
+
+
+def ssaevent_trim(event: ps2.SSAEvent, ir: List[int]):
+    r"""
+    Given an event that overlaps with ir
+    if subtitle is only on one side of IR
+        trim subtitle to not overlap IR
+    if subtitle is on both sides of IR
+        split subtitle into two and trim each
+    if subtitle is entirely inside IR
+        don't add to groups
+    :param event: SSAEvent to trim or drop
+    :param ir: Ignore range, list of two integers
+    :return: List of trimmed events. There may be one, two or none events returned
+    """
+
+    assert len(ir) == 2
+    trimmed = []
+    if ir[0] < event.start < ir[1] and ir[0] < event.end < ir[1]:
+        return trimmed
+    if ir[0] < event.start < ir[1] and ir[1] < event.end:
+        event.start = ir[1]
+        trimmed.append(event)
+        return trimmed
+    if event.start < ir[0] and ir[0] < event.end < ir[1]:
+        event.end = ir[1]
+        trimmed.append(event)
+        return trimmed
+    if event.start < ir[0] and ir[1] < event.end:
+        # split into two pieces
+        event2 = copy.deepcopy(event)
+        event.end = ir[0]
+        trimmed.append(event)
+        event2.start = ir[1]
+        trimmed.append(event2)
+        return trimmed
+    # should never get here
+
+
+def ignore_nibble(ignore_ranges: List[List[int]], e: ps2.SSAEvent):
+    trimmed = []
+    for ir in ignore_ranges:
+        assert len(ir) == 2
+        if overlap_range(ir, [e.start, e.end]):
+            trimmed = ssaevent_trim(e, ir)
+            return trimmed
+    return [e]
+
 
 class SubGroup:
     def __init__(self, events: [ps2.SSAEvent], ephemeral: bool, threshold: int, padding: int):
@@ -54,9 +119,8 @@ class SubGroup:
         return s
 
 
-# TODO
 class SubtitleManipulator:
-    def __init__(self, subpath: Path, threshold: int, padding: int):
+    def __init__(self, subpath: Path, threshold: int, padding: int, ignore_range: List[List[int]]):
         self.subpath = subpath
         self.ssadata = None
         self.condensed_ssadata = None
@@ -66,6 +130,7 @@ class SubtitleManipulator:
 
         self.threshold = threshold
         self.padding = padding
+        self.ignore_range = ignore_range
 
     def load(self, include_all, regex):
         if not self.subpath.exists():
@@ -86,8 +151,15 @@ class SubtitleManipulator:
         self.ssa_events = self.ssadata.events
         self.ssa_events.sort(key=lambda x: x.start)
 
+        pool = self.ssa_events
         self.groups = []
-        for e in self.ssa_events:
+        while len(pool) > 0:
+            e = pool.pop(0)
+            if self.ignore_range is not None:
+                if any([overlap_range(ir, [e.start, e.end]) for ir in self.ignore_range]):
+                    trimmed = ignore_nibble(self.ignore_range, e)
+                    pool = trimmed + pool
+                    continue  # trimmed events may still overlap other ranges, will need to retest
             self.groups.append(SubGroup([e], ephemeral=not is_dialogue(e, include_all, regex),
                                         threshold=self.threshold,
                                         padding=self.padding))

@@ -1,7 +1,8 @@
 import argparse
 from pathlib import Path
 import sys
-
+import re
+from pysubs2.time import make_time
 
 def get_args_subzipper():
     parser = argparse.ArgumentParser(description=f'SubZipper: Map video files to subtitle files')
@@ -36,6 +37,14 @@ def get_args_subzipper():
     return args
 
 
+# taken from pysubs2:cli.py
+def time(s):
+    d = {}
+    for v, k in re.findall(r"(\d*\.?\d*)(ms|m|s|h)", s):
+        d[k] = float(v)
+    return make_time(**d)
+
+
 def get_args_subs2cia():
     parser = argparse.ArgumentParser(description=f'subs2cia: Extract subtitled dialogue from audiovisual media for use '
                                                  f'in language acquisition ')
@@ -44,7 +53,6 @@ def get_args_subs2cia():
     parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=False,
                         type=str, nargs='+',
                         help='Paths to input files or a single path to a directory of input files.')
-
 
     parser.add_argument('-si', '--subtitle-index',  metavar='<index>', dest='subtitle_stream_index', default=None,
                         type=int,
@@ -100,7 +108,7 @@ def get_args_subs2cia():
     parser.add_argument('-ni', '--ignore-none', action='store_true', dest='use_all_subs',
                         default=False,
                         help='If set, will not use internal heuristics to remove non-dialogue lines from the subtitle. '
-                             'Overridden by -R.')
+                             'Ignored if -R is set.')
 
     parser.add_argument('-R', '--sref', metavar='<regular expression>', dest='subtitle_regex_filter', default=None,
                         type=str,
@@ -108,6 +116,14 @@ def get_args_subs2cia():
                              'during subtitle processing and will not influence condensed audio. '
                              'Ignored lines may be included in condensed subtitles. This option will override the '
                              'internal subs2cia non-dialogue filter.')
+
+    parser.add_argument('-I', '--ignore-range', metavar="timestamp", dest="ignore_range", default=None,
+                        type=time, nargs=2, action="append",
+                        help="Time range to ignore when condensing. Useful for removing fixed openings of shows. \n"
+                             "Time formatting example: '2h30m2s100ms', '10m20s', etc. \n"
+                             "Subtitles that fall into an ignored range before padding are trimmed so that they "
+                             "do not overlap with the ignore range. "
+                             "Multiple ranges can be specified like so: -I 2m 3m30s -I 20m 21m")
 
     parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                         type=int,
@@ -147,15 +163,15 @@ def get_args_subs2cia():
                         help="Will only generate from subtitle files that are this fraction long of the selected audio "
                              "file. Default is 0.2, meaning the output condensed file must be at least 20% as long as "
                              "the chosen audio stream. If the output doesn't reach this minimum, then a different "
-                             "subtitle file will be chosen, if available. Used to ignore subtitles that contain only"
+                             "subtitle file will be chosen, if available. Used for ignoring subtitles that contain only"
                              "signs and songs.")
 
     parser.add_argument('-tl', '--target-language', metavar='ISO_code', dest='target_lang', default=None,
                         type=str,
                         help='If set, attempts to use audio and subtitle files that are in this language first. '
-                             'Should follow ISO language codes. ')
+                             'Input should be an ISO 639-3 language code.')
 
-    # todo: consider depreciating this option
+    # todo: consider depreciating this option, it's not really _that_ useful aside from user debugging
     parser.add_argument('-a', '--absolute-paths', action='store_true', dest='absolute_paths', default=False,
                         help='Prints absolute paths from the root directory instead of given paths.')
 
@@ -167,6 +183,7 @@ def get_args_subs2cia():
 
     parser.add_argument('--preset', metavar='preset#', dest='preset', type=int, default=None,
                         help='If set, uses a given preset. User arguments will override presets.')
+    # todo: consider listing presets somewhere else
     parser.add_argument('-lp', '--list-presets', dest='list_presets', action='store_true', default=False,
                         help='Lists all available built-in presets and exits.')
     parser.add_argument('-ls', '--list-streams', dest='list_streams', action='store_true', default=False,

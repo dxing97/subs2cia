@@ -14,19 +14,20 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
   
 
 ## Installation
+#### Dependencies
+* Python 3.6 or later
+* FFmpeg binaries must be on your PATH (i.e. can execute `ffmpeg` from the command line)
+
+### Debian-based Linux:
 Pip install:
 
 ```pip3 install subs2cia```
 
 ## Pip install from source
 
-### Dependencies
-Make sure you have Python 3.6 or later installed, along with pip.
-Built and tested on Python 3. Python package dependencies are listed in [requirements.txt](requirements.txt).
 
-You'll also need to install ffmpeg and make sure it's on your PATH (i.e. can execute `ffmpeg` on the command line).
 
-### Linux, macOS CLI 
+### Linux, macOS 
 Git clone or otherwise download the repository and navigate to it:
 ```
 $ git clone "https://github.com/dxing97/subs2cia"
@@ -43,6 +44,7 @@ You should then be able to run subs2cia:
 ```
 $ subs2cia -h
 usage: subs2cia [-h] [-i <input files> [<input files> ...]] [-si <index>]
+...
 ```
 
 If you prefer, you can also run ``subs2cia/main.py`` directly.
@@ -64,9 +66,9 @@ usage: subs2cia [-h] [-i <input files> [<input files> ...]] [-si <index>]
                [-ai <index>] [-b] [-u] [-o <name>] [-d /path/to/directory]
                [-ae <audio extension>] [-m] [--overwrite-on-demux]
                [--keep-temporaries] [--no-overwrite-on-generation] [-ni]
-               [-R <regular expression>] [-p msecs] [-t msecs] [-r secs]
-               [-s secs] [-c <ratio>] [-tl ISO_code] [-a] [-v] [-vv]
-               [--preset preset#] [-lp] [-ls]
+               [-R <regular expression>] [-I timestamp timestamp] [-p msecs]
+               [-t msecs] [-r secs] [-s secs] [-c <ratio>] [-tl ISO_code] [-a]
+               [-v] [-vv] [--preset preset#] [-lp] [-ls]
 
 subs2cia: Extract subtitled dialogue from audiovisual media for use in
 language acquisition
@@ -117,14 +119,22 @@ optional arguments:
                         If set, will not overwrite existing files when
                         generating condensed media.
   -ni, --ignore-none    If set, will not use internal heuristics to remove
-                        non-dialogue lines from the subtitle. Overridden by
-                        -R.
+                        non-dialogue lines from the subtitle. Ignored if -R is
+                        set.
   -R <regular expression>, --sref <regular expression>
                         For filtering non-dialogue subtitles. Lines that match
                         given regex are IGNORED during subtitle processing and
                         will not influence condensed audio. Ignored lines may
                         be included in condensed subtitles. This option will
                         override the internal subs2cia non-dialogue filter.
+  -I timestamp timestamp, --ignore-range timestamp timestamp
+                        Time range to ignore when condensing. Useful for
+                        removing fixed openings of shows. Time formatting
+                        example: '2h30m2s100ms', '10m20s', etc. Subtitles that
+                        fall into an ignored range before padding are trimmed
+                        so that they do not overlap with the ignore range.
+                        Multiple ranges can be specified like so: -I 2m 3m30s
+                        -I 20m 21m
   -p msecs, --padding msecs
                         Adds this many milliseconds of audio before and after
                         every subtitle. Overlaps with adjacent subtitles are
@@ -171,18 +181,18 @@ optional arguments:
                         output condensed file must be at least 20% as long as
                         the chosen audio stream. If the output doesn't reach
                         this minimum, then a different subtitle file will be
-                        chosen, if available. Used to ignore subtitles that
+                        chosen, if available. Used for ignoring subtitles that
                         contain onlysigns and songs.", 'metavar': '<ratio>',
                         'container': <argparse._ArgumentGroup object at
-                        0x7ff2e3e102b0>, 'prog': 'main.py'}s long as the
+                        0x7fb949853a30>, 'prog': 'main.py'}s long as the
                         chosen audio stream. If the output doesn't reach this
                         minimum, then a different subtitle file will be
-                        chosen, if available. Used to ignore subtitles that
+                        chosen, if available. Used for ignoring subtitles that
                         contain onlysigns and songs.
   -tl ISO_code, --target-language ISO_code
                         If set, attempts to use audio and subtitle files that
-                        are in this language first. Should follow ISO language
-                        codes.
+                        are in this language first. Input should be an ISO
+                        639-3 language code.
   -a, --absolute-paths  Prints absolute paths from the root directory instead
                         of given paths.
   -v, --verbose         Verbose output if set.
@@ -192,8 +202,11 @@ optional arguments:
   -lp, --list-presets   Lists all available built-in presets and exits.
   -ls, --list-streams   Lists all audio, subtitle, and video streams found in
                         given input files and exits.
+
+Process finished with exit code 0
+
 ```
-## Examples
+## Usage Examples
 * Extract the first audio and subtitle track from ``video.mkv`` file and generate the condensed files 
 ``video.condensed.mp3`` and ``video.condensed.srt`` (exact subtitle format depends on existing format in video.mkv).
   * ``subs2cia -i video.mkv``
@@ -216,7 +229,7 @@ present. Don't delete extracted subtitle and audio files. Pad subtitles with 300
 
 # subzipper
 Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, 
-optionally adding language information. 
+optionally adding language information. Intended for use with shell wildcards.
 
 ## Usage
 ```

@@ -39,25 +39,7 @@ def list_presets():
         pprint(preset)
 
 
-# @Gooey
-def start():
-    if not shutil.which('ffmpeg'):
-        logging.warning(f"Couldn't find ffmpeg in PATH, things may break.")
-
-    args = get_args_subs2cia()
-    args = vars(args)
-
-    if args['verbose']:
-        if args['debug']:
-            logging.basicConfig(level=logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.INFO)
-    elif args['debug']:
-        logging.basicConfig(level=logging.DEBUG)
-
-    logging.info(f"subs2cia version {__version__}")
-    logging.debug(f"Start arguments: {args}")
-
+def condense_start(args):
     if args['list_presets']:
         list_presets()
         return
@@ -117,6 +99,35 @@ def start():
         c.process_subtitles()
         c.export()
         c.cleanup()
+
+def srs_export_start(args):
+    pass
+
+# @Gooey
+def start():
+    if not shutil.which('ffmpeg'):
+        logging.warning(f"Couldn't find ffmpeg in PATH, things may break.")
+
+    args = get_args_subs2cia()
+    args = vars(args)
+
+    if args['verbose']:
+        if args['debug']:
+            logging.basicConfig(level=logging.DEBUG)
+        else:
+            logging.basicConfig(level=logging.INFO)
+    elif args['debug']:
+        logging.basicConfig(level=logging.DEBUG)
+
+    logging.info(f"subs2cia version {__version__}")
+    logging.debug(f"Start arguments: {args}")
+
+    commands = {
+        'condense': condense_start,
+        'srs': srs_export_start
+    }
+
+    commands[args['command']](args)
 
 
 if __name__ == '__main__':

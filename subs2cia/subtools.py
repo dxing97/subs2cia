@@ -9,7 +9,7 @@ import ffmpeg
 import re
 import copy
 
-from typing import List
+from typing import List, Union
 
 
 def overlap_any_range(range1: List[int], ranges: List[List[int]]):
@@ -120,7 +120,7 @@ class SubGroup:
 
 
 class SubtitleManipulator:
-    def __init__(self, subpath: Path, threshold: int, padding: int, ignore_range: List[List[int]]):
+    def __init__(self, subpath: Path, threshold: int, padding: int, ignore_range: Union[List[List[int]], None]):
         self.subpath = subpath
         self.ssadata = None
         self.condensed_ssadata = None

@@ -6,11 +6,11 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
  * No unnatural stutters: simultaneous subtitles lines are merged for seamless listening
  * Automatically generate condensed subtitle, audio, and video (video must be enabled with `-m`)
  * Automagically choose input sources from a certain language or manually specify what inputs to condense
- (`-tl`, `-si`, `-ai`)
+ (`-tl`, `-si`, `-ai`, `-ls`)
  * Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
- * Re-adds natural spacing between sentences that start and end close together (`-t`)
+ * Reinserts natural spacing between sentences that start and end close together (`-t`)
  * Pads subtitles with additional audio (`-p`)
- * Process multiple files at once in batch mode (`-b`)
+ * Process multiple files with batch mode (`-b`)
   
 
 ## Installation

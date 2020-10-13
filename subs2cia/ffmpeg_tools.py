@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import tempfile
 import subprocess
+from typing import List
 
 
 # given a stream in the input file, demux the stream and save it into the outfile with some type
@@ -229,3 +230,21 @@ def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_time
     out = ffmpeg.overwrite_output(out)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(out)}")
     ffmpeg.run(out, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
+
+
+def ffmpeg_get_frames(videofile: Path, timestamp: List[int], outpath: Path):
+    logging.debug(f"Saving frame from {videofile} at {timestamp} to {outpath}")
+    videostream = ffmpeg.input(str(videofile))
+    timepoint = timestamp[0]
+
+    # from https://superuser.com/a/1330042
+    # this method will probably need the windows long-argument fix as well
+    videostream = videostream.video.filter('select', f"lt(prev_pts*TB,{timepoint})*gte(pts*TB,{timepoint})")
+
+    # from https://stackoverflow.com/a/28321986
+    # TODO: compare speed of this and the other method
+
+    videostream = ffmpeg.output(videostream, str(outpath), vsync='drop')
+    args = videostream.get_args()
+    print(args)
+    ffmpeg.run(videostream)

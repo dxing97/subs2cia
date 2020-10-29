@@ -1,3 +1,4 @@
+from subs2cia.Common import Common
 from subs2cia.sources import AVSFile
 from subs2cia.pickers import picker
 from subs2cia.sources import Stream
@@ -29,12 +30,28 @@ def insufficient_source_streams(d: dict):
     return False
 
 
-class SubCondensed:
+class Condense(Common):
     def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio: float,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: typing.Union[typing.List[typing.List[int]], None]):
+        super(Condense, self).__init__(
+            sources=sources,
+            outdir=outdir,
+            condensed_video=condensed_video,
+            padding=padding,
+            demux_overwrite_existing=demux_overwrite_existing,
+            overwrite_existing_generated=overwrite_existing_generated,
+            keep_temporaries=keep_temporaries,
+            target_lang=target_lang,
+            out_audioext=out_audioext,
+            use_all_subs=use_all_subs,
+            subtitle_regex_filter=subtitle_regex_filter,
+            audio_stream_index=audio_stream_index,
+            subtitle_stream_index=subtitle_stream_index,
+            ignore_range=ignore_range
+        )
         r"""
 
         :param sources: List of AVSFile objects, each representing one input file
@@ -52,14 +69,14 @@ class SubCondensed:
         :param minimum_compression_ratio: Chosen subtitle stream must yield generated audio at least this percent long of audio file
         """
 
-        if outdir is None:
-            self.outdir = sources[0].filepath.parent
-        else:
-            self.outdir = outdir
-        self.outstem = sources[0].filepath.stem
-        self.sources = sources
-        self.out_audioext = out_audioext
-        self.out_vidoeext = '.mkv'
+        # if outdir is None:
+        #     self.outdir = sources[0].filepath.parent
+        # else:
+        #     self.outdir = outdir
+        # self.outstem = sources[0].filepath.stem
+        # self.sources = sources
+        # self.out_audioext = out_audioext
+        # self.out_vidoeext = '.mkv'
         self.out_subext = None  # extensions must contain dot
 
         # logging.debug(f'Will save a file with stem "{self.outstem}" to directory "{self.outdir}"')
@@ -79,30 +96,30 @@ class SubCondensed:
             'video': None
         }
 
-        self.target_lang = target_lang
-        # following indices overrides target_lang, is overridden by standalone input audio/subtitle files
-        self.audio_stream_index = audio_stream_index
-        self.subtitle_stream_index = subtitle_stream_index
+        # self.target_lang = target_lang
+        # # following indices overrides target_lang, is overridden by standalone input audio/subtitle files
+        # self.audio_stream_index = audio_stream_index
+        # self.subtitle_stream_index = subtitle_stream_index
 
-        self.padding = padding
+        # self.padding = padding
         self.threshold = threshold
         self.partition = partition
         self.split = split
-        self.ignore_range = ignore_range
+        # self.ignore_range = ignore_range
 
         self.dialogue_times = None
         self.minimum_compression_ratio = minimum_compression_ratio
 
-        self.demux_overwrite_existing = demux_overwrite_existing
-        self.overwrite_existing_generated = overwrite_existing_generated
-        self.keep_temporaries = keep_temporaries
+        # self.demux_overwrite_existing = demux_overwrite_existing
+        # self.overwrite_existing_generated = overwrite_existing_generated
+        # self.keep_temporaries = keep_temporaries
 
         self.condensed_audio = True  # can be exposed later if needed
         self.condensed_video = condensed_video
         self.condensed_subtitles = True  # can be exposed later if needed
 
-        self.use_all_subs = use_all_subs
-        self.subtitle_regex_filter = subtitle_regex_filter
+        # self.use_all_subs = use_all_subs
+        # self.subtitle_regex_filter = subtitle_regex_filter
 
         self.insufficient = False
         self.subtitle_outfile = None

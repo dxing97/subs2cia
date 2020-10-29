@@ -232,14 +232,31 @@ def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_time
     ffmpeg.run(out, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
 
 
-def ffmpeg_get_frames(videofile: Path, timestamp: List[int], outpath: Path):
-    logging.debug(f"Saving frame from {videofile} at {timestamp} to {outpath}")
+def ffmpeg_get_frames(videofile: Path, timestamps: List[int], outdir: Path, outstem: str, outext: str, w: int, h: int):
+    r"""
+
+    :param videofile:
+    :param timestamps:
+    :param outdir:
+    :param outstem:
+    :param outext: image extension. Should include dot.
+    :return:
+    """
+    # todo: make async if needed
+    for idx, timestamp in enumerate(timestamps):
+        outname = outstem + f"_{idx}_{timestamp}" + outext
+        ffmpeg_get_frame_fast(videofile, timestamp, outdir / outname, w, h)
+
+
+# too slow, not used
+def ffmpeg_get_frame(videofile: Path, timestamp: int, outpath: Path):
+    logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
     videostream = ffmpeg.input(str(videofile))
-    timepoint = timestamp[0]
 
     # from https://superuser.com/a/1330042
     # this method will probably need the windows long-argument fix as well
-    videostream = videostream.video.filter('select', f"lt(prev_pts*TB,{timepoint})*gte(pts*TB,{timepoint})")
+    # it's also relatively slow
+    videostream = videostream.video.filter('select', f"lt(prev_pts*TB,{timestamp/1000})*gte(pts*TB,{timestamp/1000})")
 
     # from https://stackoverflow.com/a/28321986
     # TODO: compare speed of this and the other method
@@ -248,3 +265,36 @@ def ffmpeg_get_frames(videofile: Path, timestamp: List[int], outpath: Path):
     args = videostream.get_args()
     print(args)
     ffmpeg.run(videostream)
+
+
+def ffmpeg_get_frame_fast(videofile: Path, timestamp: float, outpath: Path, w: int, h: int):
+    logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
+
+    # from https://stackoverflow.com/a/28321986
+    videostream = ffmpeg.input(str(videofile), ss=timestamp/1000)
+    if w == -1 and h == -1:
+        pass
+    else:
+        videostream = videostream.video.filter('scale', w, h)
+    videostream = ffmpeg.output(videostream, str(outpath), vframes=1)
+    videostream = ffmpeg.overwrite_output(videostream)
+    args = videostream.get_args()
+    print(args)
+    ffmpeg.run(videostream)
+
+
+def ffmpeg_trim_audio_clips():
+    # ideally this will be faster than the filter_complex, but if not, then just use the export_condensed function
+    pass
+
+
+def ffmpeg_trim_audio_clip():
+    pass
+
+
+def ffmpeg_trim_video_clips():
+    pass
+
+
+def ffmpeg_trim_video_clip():
+    pass

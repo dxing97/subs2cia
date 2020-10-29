@@ -5,8 +5,8 @@
      - [X] Option to ignore certain ranges for OP/ED removal
  - [X] PyPI package
  - [ ] output indivdual audio snippets instead of/in addition to one large condensed audio file (where have I seen this before...)
-     - [ ] Multiprocessor acceleration
-     - [ ] Snapshot support
+     - [ ] Clip audio (with options) 
+     - [ ] Snapshot support (with options)
      - [ ] TSV-formatted output index containing subtitle text, output file names
  - [ ] make file extensions more flexible by making it more strict (for demuxing? and outputs)
     - [ ] handful of output formats to start with: flac, mp3 
@@ -14,8 +14,12 @@
         (right now if it outputs to mp3, defaults to 320k CBR)
     - [ ] add mono-channel output option
     - [ ] new cli interface for all this (replace -ae)
+ - [ ] make ignore-range more powerful (subs2cia#6)
+    - [ ] specify negative ranges (relative to end of audio)
+    - [ ] specify intervals relative to an absolute timestamp
     
 ### Bucket list 
+ - [ ] Multiprocessor acceleration where sensible
  - [ ] clean up dry-run 
  - [ ] clean up ~~debug, verbose~~ logging (doesn't need to spit out that much input data)
  - [ ] Interactive [Y/n] mode for error handing and action confirmation

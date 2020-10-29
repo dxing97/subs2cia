@@ -25,4 +25,6 @@ if __name__ == '__main__':
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    ffmpeg_get_frames(Path(args.videofile), args.timestamps, Path("output.png"))
+    args.timestamps = [0, 1000, 2000, 30000, 600000, 700000]
+    ffmpeg_get_frames(Path(args.videofile), args.timestamps, outdir=Path("."), outstem=Path(args.videofile).stem,
+                      outext=".jpg", w=-1, h=-1)

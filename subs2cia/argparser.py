@@ -59,38 +59,35 @@ def get_args_subs2cia():
                                help='Verbose and debug output if set')
 
     # todo: implement directory parsing
+    # if directory is an input, batch mode must be specified
     parent_parser.add_argument('-i', '--inputs', metavar='<input files>', dest='infiles', default=None, required=False,
                             type=str, nargs='+',
                             help='Paths to input files or a single path to a directory of input files.')
 
-    cia_parser = subparsers.add_parser('condense', parents=[parent_parser],
-                                       help="Condense input audio into a single audio file")
-    srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
-                                       help="Snip input media for import into spaced-repetition software")
 
-    cia_parser.add_argument('-si', '--subtitle-index', metavar='<index>', dest='subtitle_stream_index', default=None,
+    parent_parser.add_argument('-si', '--subtitle-index', metavar='<index>', dest='subtitle_stream_index', default=None,
                             type=int,
                             help='Force a certain subtitle stream to use. '
                                  'Takes precedence over --target-language option.'
                                  'If any input files are standalone subtitle files, they will be used first. '
                                  'Use --list-streams for a list of available streams and their indices.')
 
-    cia_parser.add_argument('-ai', '--audio-index', metavar='<index>', dest='audio_stream_index', default=None,
+    parent_parser.add_argument('-ai', '--audio-index', metavar='<index>', dest='audio_stream_index', default=None,
                             type=int,
                             help='Force a certain subtitle audio to use. '
                                  'Takes precedence over --target-language option.'
                                  'If any input files are standalone audio files, they will be used first. '
                                  'Use --list-streams for a list of available streams and their indices.')
 
-    cia_parser.add_argument('-b', '--batch', action='store_true', dest='batch', default=False,
+    parent_parser.add_argument('-b', '--batch', action='store_true', dest='batch', default=False,
                             help='If set, attempts to split input files into groups, one output file per group. '
                                  'Groups are determined by file names. If two files share the same root name, such as '
                                  '"video0.mkv" and "video0.srt", then they are part of the same group.')
 
-    cia_parser.add_argument('-u', '--dry-run', action='store_true', dest='dry_run', default=False,
-                            help="If set, will analyze input files but won't demux or generate any condensed files")
+    parent_parser.add_argument('-u', '--dry-run', action='store_true', dest='dry_run', default=False,
+                            help="If set, will analyze input files but won't demux or generate any output files")
 
-    cia_parser.add_argument('-o', '--output-name', metavar='<name>', dest='outstem', default=None,
+    parent_parser.add_argument('-o', '--output-name', metavar='<name>', dest='outstem', default=None,
                             type=str,
                             help='Output file name to save to, without the extension '
                                  '(specify extension using -ae or -ve). '
@@ -99,54 +96,69 @@ def get_args_subs2cia():
                                  'and "condensed.{output extension} added. \n'
                                  'Ignored if batch mode is enabled.')
 
-    cia_parser.add_argument('-d', '--output-dir', metavar='/path/to/directory', dest='outdir', default=None,
+    parent_parser.add_argument('-d', '--output-dir', metavar='/path/to/directory', dest='outdir', default=None,
                             type=str,
                             help='Output directory to save to. Default is the directory the input files reside in.')
 
-    cia_parser.add_argument('-ae', '--audio-extension', metavar='<audio extension>', dest='out_audioext', default='mp3',
+    parent_parser.add_argument('-ae', '--audio-extension', metavar='<audio extension>', dest='out_audioext', default='mp3',
                             type=str,
                             help='Condensed audio extension to save as (without the dot). '
                                  'Default is mp3, flac has been tested to work.')
     # todo: dot stripper, output naming
-    cia_parser.add_argument('-m', '--gen-video', action='store_true', dest='condensed_video', default=False,
+    parent_parser.add_argument('-m', '--gen-video', action='store_true', dest='condensed_video', default=False,
                             help='If set, generates condensed video along with condensed audio and subtitles. '
                                  'Subtitles are muxed in to video file. '
                                  'WARNING: VERY CPU INTENSIVE).')
 
-    cia_parser.add_argument('--overwrite-on-demux', action='store_true', dest='demux_overwrite_existing', default=False,
+    parent_parser.add_argument('--overwrite-on-demux', action='store_true', dest='demux_overwrite_existing', default=False,
                             help='If set, will overwrite existing files when demuxing temporary files.')
 
-    cia_parser.add_argument('--keep-temporaries', action='store_true', dest='keep_temporaries', default=False,
+    parent_parser.add_argument('--keep-temporaries', action='store_true', dest='keep_temporaries', default=False,
                             help='If set, will not delete any demuxed temporary files.')
 
-    cia_parser.add_argument('--no-overwrite-on-generation', action='store_false', dest='overwrite_existing_generated',
+    parent_parser.add_argument('--no-overwrite-on-generation', action='store_false', dest='overwrite_existing_generated',
                             default=True,
-                            help='If set, will not overwrite existing files when generating condensed media.')
+                            help='If set, will not overwrite existing files when generating output media.')
 
-    cia_parser.add_argument('-ni', '--ignore-none', action='store_true', dest='use_all_subs',
+    parent_parser.add_argument('-ni', '--ignore-none', action='store_true', dest='use_all_subs',
                             default=False,
                             help='If set, will not use internal heuristics to remove non-dialogue '
                                  'lines from the subtitle. Ignored if -R is set.')
 
-    cia_parser.add_argument('-R', '--sref', metavar='<regular expression>', dest='subtitle_regex_filter', default=None,
+    parent_parser.add_argument('-R', '--sref', metavar='<regular expression>', dest='subtitle_regex_filter', default=None,
                             type=str,
                             help='For filtering non-dialogue subtitles. Lines that match given regex are IGNORED '
-                                 'during subtitle processing and will not influence condensed audio. '
-                                 'Ignored lines may be included in condensed subtitles. This option will override the '
-                                 'internal subs2cia non-dialogue filter.')
+                                 'during subtitle processing and will not influence condensed audio or be included in output cards. '
+                                 'Ignored lines may still be included in condensed subtitles if they overlap with non-ignored subtitles. '
+                                 'This option will override the internal subs2cia non-dialogue filter.')
 
-    cia_parser.add_argument('-I', '--ignore-range', metavar="timestamp", dest="ignore_range", default=None,
+    parent_parser.add_argument('-I', '--ignore-range', metavar="timestamp", dest="ignore_range", default=None,
                             type=time, nargs=2, action="append",
                             help="Time range to ignore when condensing. Useful for removing fixed openings of shows. \n"
                                  "Time formatting example: '2h30m2s100ms', '10m20s', etc. \n"
                                  "Subtitles that fall into an ignored range before padding are trimmed so that they "
                                  "do not overlap with the ignore range. "
+                                 "If batch modes is enabled, the same ranges are applied to ALL outputs."
                                  "Multiple ranges can be specified like so: -I 2m 3m30s -I 20m 21m")
 
-    cia_parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
+    parent_parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                             type=int,
                             help='Adds this many milliseconds of audio before and after every subtitle. '
                                  'Overlaps with adjacent subtitles are merged automatically.')
+
+    parent_parser.add_argument('-tl', '--target-language', metavar='ISO_code', dest='target_lang', default=None,
+                            type=str,
+                            help='If set, attempts to use audio and subtitle files that are in this language first. '
+                                 'Input should be an ISO 639-3 language code.')
+
+    parent_parser.add_argument('-ls', '--list-streams', dest='list_streams', action='store_true', default=False,
+                            help='Lists all audio, subtitle, and video streams found in given input files and exits.')
+
+    cia_parser = subparsers.add_parser('condense', parents=[parent_parser],
+                                       help="Condense input audio into a single audio file")
+    srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
+                                       help="Snip input media for import into spaced-repetition software")
+
 
     cia_parser.add_argument('-t', '--threshold', metavar='msecs', dest='threshold', default=0,
                             type=int,
@@ -185,10 +197,7 @@ def get_args_subs2cia():
                                  "subtitle file will be chosen, if available. Used for ignoring subtitles that contain only"
                                  "signs and songs.")
 
-    cia_parser.add_argument('-tl', '--target-language', metavar='ISO_code', dest='target_lang', default=None,
-                            type=str,
-                            help='If set, attempts to use audio and subtitle files that are in this language first. '
-                                 'Input should be an ISO 639-3 language code.')
+
 
     # todo: consider depreciating this option, it's not really _that_ useful aside from user debugging
     cia_parser.add_argument('-a', '--absolute-paths', action='store_true', dest='absolute_paths', default=False,
@@ -199,8 +208,7 @@ def get_args_subs2cia():
     # todo: consider listing presets somewhere else
     cia_parser.add_argument('-lp', '--list-presets', dest='list_presets', action='store_true', default=False,
                             help='Lists all available built-in presets and exits.')
-    cia_parser.add_argument('-ls', '--list-streams', dest='list_streams', action='store_true', default=False,
-                            help='Lists all audio, subtitle, and video streams found in given input files and exits.')
+
     args = parser.parse_args()
 
     if len(sys.argv) == 1:

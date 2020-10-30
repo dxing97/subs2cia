@@ -14,7 +14,7 @@
         (right now if it outputs to mp3, defaults to 320k CBR)
     - [X] add mono-channel output option
     - [ ] ~~new cli interface for all this (replace -ae)~~
- - [ ] make ignore-range more powerful (subs2cia#6)
+ - [ ] [make ignore-range more powerful](https://github.com/dxing97/subs2cia/issues/6)
     - [ ] specify negative ranges (relative to end of audio)
     - [ ] specify intervals relative to an absolute timestamp
     

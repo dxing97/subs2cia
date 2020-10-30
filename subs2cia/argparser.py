@@ -102,8 +102,18 @@ def get_args_subs2cia():
 
     parent_parser.add_argument('-ae', '--audio-extension', metavar='<audio extension>', dest='out_audioext', default='mp3',
                             type=str,
-                            help='Condensed audio extension to save as (without the dot). '
+                            help='Output audio extension to save as (without the dot). '
                                  'Default is mp3, flac has been tested to work.')
+
+    parent_parser.add_argument('-q', '--bitrate', metavar='<bitrate in kbps>', dest='bitrate', default=320,
+                            type=int,
+                            help='Output audio bitrate in kbps, lower bitrates result in smaller files and lower '
+                                 'fidelity. Ignored if the output type is not mp3. Default is 320 kbps. '
+                                 'Bitrates below 64 kbps are not recommended.')
+
+    parent_parser.add_argument('-M', '--mono', dest='mono_channel', default=False,
+                            action="store_true",
+                            help='If set, mixes audio channels to a single channel, primarily to save space.')
     # todo: dot stripper, output naming
     parent_parser.add_argument('-m', '--gen-video', action='store_true', dest='condensed_video', default=False,
                             help='If set, generates condensed video along with condensed audio and subtitles. '

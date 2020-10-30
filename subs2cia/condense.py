@@ -8,7 +8,7 @@ from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 import logging
 from collections import defaultdict
 from pathlib import Path
-import typing
+from typing import Union, List
 
 
 def picked_sources_are_insufficient(d: dict):
@@ -31,14 +31,15 @@ def insufficient_source_streams(d: dict):
 
 
 class Condense(Common):
-    def __init__(self, sources: [AVSFile], outdir: Path, condensed_video: bool, threshold: int, padding: int,
+    def __init__(self, sources: [AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool, threshold: int, padding: int,
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio: float,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: typing.Union[typing.List[typing.List[int]], None]):
+                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool):
         super(Condense, self).__init__(
             sources=sources,
             outdir=outdir,
+            outstem=outstem,
             condensed_video=condensed_video,
             padding=padding,
             demux_overwrite_existing=demux_overwrite_existing,
@@ -50,7 +51,9 @@ class Condense(Common):
             subtitle_regex_filter=subtitle_regex_filter,
             audio_stream_index=audio_stream_index,
             subtitle_stream_index=subtitle_stream_index,
-            ignore_range=ignore_range
+            ignore_range=ignore_range,
+            bitrate=bitrate,
+            mono_channel=mono_channel
         )
         r"""
 
@@ -278,7 +281,7 @@ class Condense(Common):
             logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
             return
         export_condensed_audio(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
-                               outfile=outfile)
+                               outfile=outfile, to_mono=self.to_mono, quality=self.quality)
 
     def export_video(self):
         if self.picked_streams['video'] is None:

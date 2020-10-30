@@ -4,7 +4,7 @@ from pathlib import Path
 from subs2cia.ffmpeg_tools import ffmpeg_get_frames
 
 def get_args():
-    parser = argparse.ArgumentParser(description=f'subtools manual testing')
+    parser = argparse.ArgumentParser(description=f'frame capture manual testing')
 
     parser.add_argument('-V', '--video', metavar='<input file>', dest='videofile', default=None, required=True,
                         type=str,

@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 import tempfile
 import subprocess
-from typing import List
+from typing import List, Union
 
 
 # given a stream in the input file, demux the stream and save it into the outfile with some type
@@ -39,7 +39,7 @@ class Error(Exception):
         self.stderr = stderr
 
 
-def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
+def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mono: bool, outfile=None):
     if outfile is None:
         outfile = "condensed.flac"
     # logging.info(f"saving condensed audio to {outfile}")
@@ -51,6 +51,7 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
     # samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
 
     stream = ffmpeg.input(audiofile)
+
     clips = list()
     for time in sub_times:  # times are in milliseconds
         start = int(time[0] * sps / 1000)  # convert to sample index
@@ -58,10 +59,18 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         # use start_pts for sample/millisecond level precision
         clips.append(stream.audio.filter('atrim', start_pts=start, end_pts=end).filter('asetpts', 'PTS-STARTPTS'))
     combined = ffmpeg.concat(*clips, a=1, v=0)
-    if os.path.splitext(outfile)[1] == ".mp3":
-        combined = ffmpeg.output(combined, outfile, audio_bitrate='320k')  # todo: make this user-settable
-    else:
-        combined = ffmpeg.output(combined, outfile)
+
+    kwargs = {}
+    if Path(outfile).suffix.lower() == ".mp3":
+        if quality is None:
+            kwargs['audio_bitrate'] = "320k"
+        else:
+            kwargs['audio_bitrate'] = f"{quality}k"
+    if to_mono:
+        kwargs['ac'] = 1
+
+    combined = ffmpeg.output(combined, outfile, **kwargs)
+
     combined = ffmpeg.overwrite_output(combined)
     logging.debug(f"ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
     args = ffmpeg.get_args(combined)
@@ -98,7 +107,7 @@ def ffmpeg_condense_audio(audiofile, sub_times, outfile=None):
         raise Error('ffmpeg', out, err)
 
 
-def export_condensed_audio(divided_times, audiofile: Path, outfile=None, use_absolute_numbering=False):
+def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, None], to_mono: bool, outfile=None, use_absolute_numbering=False):
     # outfile is full path with extension
     audiofile = str(audiofile)
     if outfile is not None:
@@ -131,7 +140,8 @@ def export_condensed_audio(divided_times, audiofile: Path, outfile=None, use_abs
                                ".condensed" + \
                                os.path.splitext(outfile)[1]
 
-            ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit)
+            ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit, quality=quality,
+                                  to_mono=to_mono)
 
 
 def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videofile: Path, outfile=None,
@@ -263,7 +273,7 @@ def ffmpeg_get_frame(videofile: Path, timestamp: int, outpath: Path):
 
     videostream = ffmpeg.output(videostream, str(outpath), vsync='drop')
     args = videostream.get_args()
-    print(args)
+    logging.debug(f"ffmpeg_get_frame: args: {args}")
     ffmpeg.run(videostream)
 
 
@@ -279,7 +289,7 @@ def ffmpeg_get_frame_fast(videofile: Path, timestamp: float, outpath: Path, w: i
     videostream = ffmpeg.output(videostream, str(outpath), vframes=1)
     videostream = ffmpeg.overwrite_output(videostream)
     args = videostream.get_args()
-    print(args)
+    logging.debug(f"ffmpeg_get_frame_fast: args: {args}")
     ffmpeg.run(videostream)
 
 
@@ -288,13 +298,112 @@ def ffmpeg_trim_audio_clips():
     pass
 
 
-def ffmpeg_trim_audio_clip():
-    pass
+def ffmpeg_trim_audio_clip_directcopy(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int, outpath: Path):
+    videostream = ffmpeg.input(str(videofile))
+    # outpath extension must be a container format (mp4, mkv) or the same type as the audio (.mp3, .eac3, .flac, etc)
+    # todo: may need to use AVSfile to specify audio stream/direct demux
+    videostream = ffmpeg.output(videostream[str(stream_index)], str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000, c="copy")
+
+    videostream = ffmpeg.overwrite_output(videostream)
+    args = videostream.get_args()
+    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
+    ffmpeg.run(videostream)
+
+
+def ffmpeg_trim_audio_clip_encode(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
+                                  quality: Union[int, None], to_mono: bool,
+                                  outpath: Path):
+    r"""
+    Take source file and export a trimmed audio file encoded from input. Typically the output encoding will be mp3 but
+    flac may also be used. Quality setting only applies for mp3 inputs.
+    :param videofile:
+    :param timestamp_start:
+    :param timestamp_end:
+    :param quality: If output extension is .mp3, this is the bitrate in kbps.
+    :param outpath: Path to save to.
+    :return:
+    """
+    videostream = ffmpeg.input(str(videofile))
+    videostream = videostream[str(stream_index)]
+    # todo: may need to use AVSfile to specify audio stream/direct demux
+
+    kwargs = {
+        "ss": timestamp_start/1000,
+        "to": timestamp_end/1000
+    }
+
+    if outpath.suffix.lower() == ".mp3":
+        if quality is not None:
+            kwargs['audio_bitrate'] = f'{quality}k'
+        else:
+            kwargs['audio_bitrate'] = '320k'
+
+    if to_mono:
+        kwargs['ac'] = 1
+    videostream = ffmpeg.output(videostream, str(outpath), **kwargs)
+
+
+    videostream = ffmpeg.overwrite_output(videostream)
+    args = videostream.get_args()
+    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
+    ffmpeg.run(videostream)
+
+
+def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
+                                  quality: Union[int, None], to_mono: bool, normalize_audio: bool,
+                                  outpath: Path):
+    r"""
+    Take source file and export a trimmed audio file encoded from input. Typically the output encoding will be mp3 but
+    flac may also be used. Quality setting only applies for mp3 inputs.
+    :param videofile:
+    :param timestamp_start:
+    :param timestamp_end:
+    :param quality: If output extension is .mp3, this is the bitrate in kbps.
+    :param outpath: Path to save to.
+    :return:
+    """
+    videostream = ffmpeg.input(str(videofile))
+    videostream = videostream[str(stream_index)]
+    # todo: may need to use AVSfile to specify audio stream/direct demux
+
+    videostream = videostream
+
+    videostream = videostream.filter("atrim",
+                                     start=timestamp_start/1000,
+                                     end=timestamp_end/1000).filter("asetpts", "PTS-STARTPTS")
+
+    if normalize_audio:
+        videostream = videostream.filter("loudnorm", print_format="summary")
+
+    kwargs = {}
+
+    if outpath.suffix.lower() == ".mp3":
+        if quality is not None:
+            kwargs['audio_bitrate'] = f'{quality}k'
+        else:
+            kwargs['audio_bitrate'] = '320k'
+
+    if to_mono:
+        kwargs['ac'] = 1
+    videostream = ffmpeg.output(videostream, str(outpath), **kwargs)
+
+
+    videostream = ffmpeg.overwrite_output(videostream)
+    args = videostream.get_args()
+    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
+    ffmpeg.run(videostream)
 
 
 def ffmpeg_trim_video_clips():
     pass
 
 
-def ffmpeg_trim_video_clip():
-    pass
+def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, timestamp_end: int, quality, outpath: Path):
+    videostream = ffmpeg.input(str(videofile))
+
+    videostream = ffmpeg.output(videostream, str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000, c="copy")
+
+    videostream = ffmpeg.overwrite_output(videostream)
+    args = videostream.get_args()
+    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
+    ffmpeg.run(videostream)

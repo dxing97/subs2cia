@@ -8,12 +8,12 @@
      - [ ] Clip audio (with options) 
      - [ ] Snapshot support (with options)
      - [ ] TSV-formatted output index containing subtitle text, output file names
- - [ ] make file extensions more flexible by making it more strict (for demuxing? and outputs)
-    - [ ] handful of output formats to start with: flac, mp3 
-    - [ ] for mp3, add user-settable bitrate/quality options 
+ - [X] make file extensions more flexible by making it more strict (for demuxing? and outputs)
+    - [ ] ~~handful of output formats to start with: flac, mp3~~
+    - [X] for mp3, add user-settable bitrate/quality options 
         (right now if it outputs to mp3, defaults to 320k CBR)
-    - [ ] add mono-channel output option
-    - [ ] new cli interface for all this (replace -ae)
+    - [X] add mono-channel output option
+    - [ ] ~~new cli interface for all this (replace -ae)~~
  - [ ] make ignore-range more powerful (subs2cia#6)
     - [ ] specify negative ranges (relative to end of audio)
     - [ ] specify intervals relative to an absolute timestamp

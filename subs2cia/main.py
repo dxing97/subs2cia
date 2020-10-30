@@ -54,10 +54,10 @@ def condense_start(args, groups: List[List[AVSFile]]):
     #             args[key] = val
 
     condense_args = {key: args[key] for key in
-                 ['outdir', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
+                 ['outdir', 'outstem','condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
-                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range']}
+                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'bitrate', 'mono_channel']}
 
     # if args['infiles'] is None:
     #     logging.info("No input files given, nothing to do.")
@@ -153,6 +153,7 @@ def start():
         s.get_type()
 
     if args['batch']:
+        args['outstem'] = None
         logging.info(f"Running in batch mode, attempting to group input files together.")
         groups = list(group_files(sources))
     else:

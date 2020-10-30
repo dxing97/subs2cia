@@ -5,18 +5,24 @@ from pathlib import Path
 
 
 class Common:
-    def __init__(self, sources: List[AVSFile], outdir: Union[Path, None], condensed_video: bool, padding: int,
+    def __init__(self, sources: List[AVSFile], outdir: Union[Path, None], outstem: Union[str, None], condensed_video: bool, padding: int,
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: Union[List[List[int]], None]):
+                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool):
         if outdir is None:
             self.outdir = sources[0].filepath.parent
         else:
             self.outdir = outdir
 
         self.sources = sources
-        self.outstem = sources[0].filepath.stem
+        if outstem is not None:
+            self.outstem = outstem
+        else:
+            self.outstem = sources[0].filepath.stem
+
+        self.quality = bitrate
+        self.to_mono = mono_channel
 
         self.export_video = condensed_video
         self.padding = padding

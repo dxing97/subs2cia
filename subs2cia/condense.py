@@ -177,6 +177,8 @@ class SubCondensed:
 
                 # todo: spin off into its own function at a later step
                 if k == 'audio':
+                    #  todo: if subtitle grabbing fails and overwrite_existing is enabled,
+                    #  this function gets run twice unnessecarily
                     afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
                     if afile is None:
                         self.picked_streams[k] = None

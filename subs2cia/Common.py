@@ -1,7 +1,33 @@
 from subs2cia.sources import AVSFile
+from subs2cia.pickers import picker
+from subs2cia.sources import Stream
+import subs2cia.subtools as subtools
+from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 
 from typing import List, Union
+from collections import defaultdict
 from pathlib import Path
+
+import logging
+
+
+def picked_sources_are_insufficient(d: dict):
+    for k in d:
+        if d[k] == 'retry':
+            return True
+    if d['subtitle'] is None:
+        return True
+    if d['audio'] is None:
+        return True
+    return False
+
+
+def insufficient_source_streams(d: dict):
+    if len(d['subtitle']) == 0:
+        return True
+    if len(d['audio']) == 0:
+        return True
+    return False
 
 
 class Common:
@@ -20,6 +46,20 @@ class Common:
             self.outstem = outstem
         else:
             self.outstem = sources[0].filepath.stem
+
+        self.partitioned_streams = defaultdict(list)
+
+        self.picked_streams = {
+            'audio': None,
+            'subtitle': None,
+            'video': None
+        }
+
+        self.pickers = {
+            'audio': None,
+            'subtitle': None,
+            'video': None
+        }
 
         self.quality = bitrate
         self.to_mono = mono_channel
@@ -41,3 +81,164 @@ class Common:
         self.subtitle_stream_index = subtitle_stream_index
         # todo: verify ignore_range, make sure start is after end
         self.ignore_range = ignore_range
+
+        self.insufficient = False
+
+    # go through source files and count how many subtitle and audio streams we have
+    def get_and_partition_streams(self):
+        for sourcefile in self.sources:
+            if sourcefile.type == 'video':
+                # dig into streams
+                for idx, stream_info in enumerate(sourcefile.info['streams']):
+                    stype = stream_info['codec_type']
+                    self.partitioned_streams[stype].append(Stream(file=sourcefile, type=stype,
+                                                                  index=idx, stream_info=stream_info))
+                continue
+            self.partitioned_streams[sourcefile.type].append(Stream(file=sourcefile, type=sourcefile.type,
+                                                                    stream_info=sourcefile.info,
+                                                                    index=None))
+            # for stream in sourcefile
+        for k in self.partitioned_streams:
+            logging.info(f"Found {len(self.partitioned_streams[k])} {k} input streams")
+            # logging.debug(f"Streams found: {self.partitioned_streams[k]}")
+
+    def initialize_pickers(self):
+        for k in self.pickers:
+            idx = None
+            if k == 'audio':
+                idx = self.audio_stream_index
+            if k == 'subtitle':
+                idx = self.subtitle_stream_index
+            self.pickers[k] = picker(self.partitioned_streams[k], target_lang=self.target_lang, forced_stream=idx)
+
+    def list_streams(self):
+        print(f"Listing streams found in {self.sources}")
+        for k in ['subtitle', 'audio', 'video']:
+            print(f"Available {k} streams:")
+            for idx, stream in enumerate(self.partitioned_streams[k]):
+                desc_str = ''
+                if "codec_name" in stream.stream_info:
+                    desc_str = desc_str + "codec: " + stream.stream_info['codec_name'] + ", "
+                if "tags" in stream.stream_info:
+                    tags = stream.stream_info['tags']
+                    if "language" in tags:
+                        desc_str = desc_str + "lang_code: " + tags['language'] + ", "
+                    if "title" in tags:
+                        desc_str = desc_str + "title: " + tags['title'] + ", "
+                if desc_str == '':
+                    desc_str = f"Stream {idx: 3}: no information found"
+                else:
+                    desc_str = f"Stream {idx: 3}: {desc_str}"
+                print(desc_str)
+            print("")
+
+    def choose_audio(self, interactive=False):
+        r"""
+        Picks an audio stream to use. If there are multiple audio streams, prioritizes the following:
+            * CLI-specified stream index
+            * target language
+            * order of appearance
+        :param interactive: if true, prompts user about which audio stream to use
+        :return:
+        """
+        if interactive:
+            print("Input files:")
+            for avsf in self.sources:
+                print(f"\t{avsf}")
+            print(f"Found the following streams:")
+            for idx, stream in enumerate(self.partitioned_streams['audio']):
+                desc_str = ''
+                if "codec_name" in stream.stream_info:
+                    desc_str = desc_str + "codec: " + stream.stream_info['codec_name'] + ", "
+                if "tags" in stream.stream_info:
+                    tags = stream.stream_info['tags']
+                    if "language" in tags:
+                        desc_str = desc_str + "lang_code: " + tags['language'] + ", "
+                    if "title" in tags:
+                        desc_str = desc_str + "title: " + tags['title'] + ", "
+                if desc_str == '':
+                    desc_str = f"\tStream {idx: 3}: no information found"
+                else:
+                    desc_str = f"\tStream {idx: 3}: {desc_str}"
+                desc_str += f"file: {str(stream.file)}"
+                print(desc_str)
+            print("")
+            idx = int(input("Which stream to use?"))
+            self.picked_streams['audio'] = self.partitioned_streams['audio'][idx]
+            return
+        # todo: automatic version of above
+
+    def choose_subtitle(self, interactive=False):
+        pass
+
+    def choose_video(self, interactive=False):
+        pass
+
+    def choose_streams(self):
+        if insufficient_source_streams(self.partitioned_streams):
+            logging.error(f"Not enough input sources to generate condensed output for output stem {self.outstem}")
+            self.insufficient = True
+            return
+        while picked_sources_are_insufficient(self.picked_streams):
+            for k in ['audio', 'video', 'subtitle']:
+                if len(self.partitioned_streams[k]) == 0:
+                    logging.debug(f"no input streams of type {k}")
+                    continue
+                if self.picked_streams[k] is None:
+                    try:
+                        self.picked_streams[k] = next(self.pickers[k])
+                    except StopIteration as s:
+                        logging.critical("Input streams for this input group are invalid for condensing "
+                                         "(missing audio or subtitles)")
+                        self.insufficient = True
+                        return
+            for k in ['audio', 'subtitle', 'video']:
+                # validate picked streams
+
+                # todo: spin off into its own function at a later step
+                if k == 'audio':
+                    afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
+                    if afile is None:
+                        self.picked_streams[k] = None
+
+                if k == 'subtitle':
+                    subfile = self.picked_streams[k].demux(
+                        overwrite_existing=self.demux_overwrite_existing)  # type AVSFile
+                    if subfile is None:
+                        self.picked_streams[k] = None
+                        continue
+                    # times = subtools.load_subtitle_times(subfile.filepath, include_all_lines=self.use_all_subs)
+                    subdata = subtools.SubtitleManipulator(subfile.filepath,
+                                                           threshold=self.threshold, padding=self.padding,
+                                                           ignore_range=self.ignore_range)
+                    subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
+                    if subdata.ssadata is None:
+                        self.picked_streams[k] = None
+                        continue
+                    if self.picked_streams['audio'] is None:
+                        # can't verify subtitle validity until audio candidate is found
+                        continue
+                    # times = subtools.merge_times(times, threshold=self.threshold, padding=self.padding)
+                    subdata.merge_groups()
+                    times = subdata.get_times()
+                    ps_times = subtools.partition_and_split(times, self.partition, self.split)
+
+                    sublength = subtools.get_partitioned_and_split_times_duration(ps_times)
+                    audiolength = subtools.get_audiofile_duration(
+                        self.picked_streams['audio'].demux_file.filepath)
+                    compression_ratio = sublength / audiolength
+                    if compression_ratio < self.minimum_compression_ratio:
+                        logging.info(f"got compression ratio of {compression_ratio}, which is smaller than the minimum"
+                                     f" ratio of {self.minimum_compression_ratio}, retrying wth different subtitle "
+                                     f"file. If too many subtitles are being ignored, try -ni or -R. If the minimum "
+                                     f"ratio is too high, try -c.")
+                        self.picked_streams[k] = None
+                        continue
+                    self.dialogue_times = subtools.partition_and_split(sub_times=times,
+                                                                       partition_size=1000 * self.partition,
+                                                                       split_size=1000 * self.split)
+                if k == 'video':
+                    pass
+        logging.info(f"Picked {self.picked_streams['audio']} to use for condensing")
+        logging.info(f"Picked {self.picked_streams['video']} to use for condensing")
+        logging.info(f"Picked {self.picked_streams['subtitle']} to use for condensing")

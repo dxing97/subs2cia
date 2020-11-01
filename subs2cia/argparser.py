@@ -164,6 +164,16 @@ def get_args_subs2cia():
     parent_parser.add_argument('-ls', '--list-streams', dest='list_streams', action='store_true', default=False,
                             help='Lists all audio, subtitle, and video streams found in given input files and exits.')
 
+    parent_parser.add_argument('--preset', metavar='preset#', dest='preset', type=int, default=None,
+                            help='If set, uses a given preset. User arguments will override presets.')
+    # todo: consider listing presets somewhere else
+    parent_parser.add_argument('-lp', '--list-presets', dest='list_presets', action='store_true', default=False,
+                            help='Lists all available built-in presets and exits.')
+
+    # todo: consider depreciating this option, it's not really _that_ useful aside from user debugging
+    parent_parser.add_argument('-a', '--absolute-paths', action='store_true', dest='absolute_paths', default=False,
+                            help='Prints absolute paths from the root directory instead of given paths.')
+
     cia_parser = subparsers.add_parser('condense', parents=[parent_parser],
                                        help="Condense input audio into a single audio file")
     srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
@@ -209,15 +219,9 @@ def get_args_subs2cia():
 
 
 
-    # todo: consider depreciating this option, it's not really _that_ useful aside from user debugging
-    cia_parser.add_argument('-a', '--absolute-paths', action='store_true', dest='absolute_paths', default=False,
-                            help='Prints absolute paths from the root directory instead of given paths.')
 
-    cia_parser.add_argument('--preset', metavar='preset#', dest='preset', type=int, default=None,
-                            help='If set, uses a given preset. User arguments will override presets.')
-    # todo: consider listing presets somewhere else
-    cia_parser.add_argument('-lp', '--list-presets', dest='list_presets', action='store_true', default=False,
-                            help='Lists all available built-in presets and exits.')
+
+
 
     args = parser.parse_args()
 

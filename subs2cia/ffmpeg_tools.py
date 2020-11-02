@@ -360,7 +360,7 @@ def ffmpeg_trim_audio_clip_encode(videofile: Path, stream_index: int, timestamp_
 
 def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
                                   quality: Union[int, None], to_mono: bool, normalize_audio: bool,
-                                  outpath: Path):
+                                  outpath: Path, format: str = None, capture_stdout: bool = False):
     r"""
     Take source file and export a trimmed audio file encoded from input. Typically the output encoding will be mp3 but
     flac may also be used. Quality setting only applies for mp3 inputs.
@@ -371,7 +371,8 @@ def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, time
     :param to_mono: If set, mixes all input channels to mono to save space
     :param normalize_audio: If set, attempts to normalize loudness of audio. YMMV.
     :param outpath: Path to save to.
-    :return:
+    :param format: Output format (e.g. mp3, flac, etc). Required if outpath is "pipe:"
+    :return: ffmpeg stdout
     """
     videostream = ffmpeg.input(str(videofile))
     videostream = videostream[str(stream_index)]
@@ -396,13 +397,17 @@ def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, time
 
     if to_mono:
         kwargs['ac'] = 1
+
+    if format is not None:
+        kwargs['format'] = format
     videostream = ffmpeg.output(videostream, str(outpath), **kwargs)
 
 
     videostream = ffmpeg.overwrite_output(videostream)
     args = videostream.get_args()
     logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
-    ffmpeg.run(videostream)
+    stdout, stderr = ffmpeg.run(videostream, capture_stdout=capture_stdout)
+    return stdout
 
 
 def ffmpeg_trim_video_clips():

@@ -2,6 +2,7 @@ import argparse
 import logging
 from pathlib import Path
 from subs2cia.ffmpeg_tools import *
+import base64
 
 def get_args():
     parser = argparse.ArgumentParser(description=f'audio trimming manual testing')
@@ -29,8 +30,13 @@ if __name__ == '__main__':
     # ffmpeg_trim_audio_clip_directcopy(Path(args.videofile), timestamp_start=10000, timestamp_end=20000,
     #                        outpath=Path("output.eac3"))
 
-    ffmpeg_trim_audio_clip_encode(Path(args.videofile), stream_index=2, timestamp_start=40000, timestamp_end=50000, quality=None,
-                           to_mono=True, outpath=Path("output.mp3"))
+    # ffmpeg_trim_audio_clip_encode(Path(args.videofile), stream_index=2, timestamp_start=40000, timestamp_end=50000, quality=None,
+    #                        to_mono=True, outpath=Path("output.mp3"))
 
-    ffmpeg_trim_audio_clip_atrim_encode(Path(args.videofile), stream_index=2, timestamp_start=40000, timestamp_end=50000, quality=None,
-                           to_mono=True, normalize_audio=True, outpath=Path("output_normalized.mp3"))
+    stdout = ffmpeg_trim_audio_clip_atrim_encode(Path(args.videofile), stream_index=2, timestamp_start=40000, timestamp_end=50000, quality=None,
+                           to_mono=True, normalize_audio=True, outpath=Path("pipe:"), format="mp3", capture_stdout=True)
+    encoded = base64.b64encode(stdout)
+    print(encoded)
+    decoded = base64.b64decode(encoded)
+    with open('output.mp3', 'wb') as fp:
+        fp.write(decoded)

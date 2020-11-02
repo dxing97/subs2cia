@@ -277,7 +277,16 @@ def ffmpeg_get_frame(videofile: Path, timestamp: int, outpath: Path):
     ffmpeg.run(videostream)
 
 
-def ffmpeg_get_frame_fast(videofile: Path, timestamp: float, outpath: Path, w: int, h: int):
+def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int, h: int):
+    r"""
+    Gets a screenshot from a video file
+    :param videofile:
+    :param timestamp: In milliseconds
+    :param outpath:
+    :param w: Width in pixels. -1 preserves aspect ratio.
+    :param h: Height in pixels. -1 preserves aspect ratio.
+    :return:
+    """
     logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
 
     # from https://stackoverflow.com/a/28321986
@@ -359,6 +368,8 @@ def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, time
     :param timestamp_start:
     :param timestamp_end:
     :param quality: If output extension is .mp3, this is the bitrate in kbps.
+    :param to_mono: If set, mixes all input channels to mono to save space
+    :param normalize_audio: If set, attempts to normalize loudness of audio. YMMV.
     :param outpath: Path to save to.
     :return:
     """

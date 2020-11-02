@@ -207,10 +207,11 @@ class Condense(Common):
                     if subfile is None:
                         self.picked_streams[k] = None
                         continue
+                    audiolength = subtools.get_audiofile_duration(self.picked_streams['audio'].demux_file.filepath)
                     # times = subtools.load_subtitle_times(subfile.filepath, include_all_lines=self.use_all_subs)
                     subdata = subtools.SubtitleManipulator(subfile.filepath,
                                                            threshold=self.threshold, padding=self.padding,
-                                                           ignore_range=self.ignore_range)
+                                                           ignore_range=self.ignore_range, audio_length=audiolength)
                     subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
                     if subdata.ssadata is None:
                         self.picked_streams[k] = None
@@ -224,8 +225,6 @@ class Condense(Common):
                     ps_times = subtools.partition_and_split(times, self.partition, self.split)
 
                     sublength = subtools.get_partitioned_and_split_times_duration(ps_times)
-                    audiolength = subtools.get_audiofile_duration(
-                        self.picked_streams['audio'].demux_file.filepath)
                     compression_ratio = sublength / audiolength
                     if compression_ratio < self.minimum_compression_ratio:
                         logging.info(f"got compression ratio of {compression_ratio}, which is smaller than the minimum"
@@ -262,7 +261,7 @@ class Condense(Common):
             return
         subpath = self.picked_streams['subtitle'].get_data_path()
         subext = subpath.suffix
-        subdata = subtools.SubtitleManipulator(subpath, threshold=self.threshold, padding=self.padding, ignore_range=self.ignore_range)
+        subdata = subtools.SubtitleManipulator(subpath, threshold=self.threshold, padding=self.padding, ignore_range=self.ignore_range, audio_length=subtools.get_audiofile_duration(self.picked_streams['audio'].demux_file.filepath))
         subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
         subdata.merge_groups()
         subdata.condense()

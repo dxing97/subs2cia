@@ -40,9 +40,11 @@ def get_args_subzipper():
 # taken from pysubs2:cli.py
 def time(s):
     d = {}
+    # all = re.findall(r"(\+?|-?|^$)(\d*\.?\d*)(ms|m|s|h)", s)
+    sign = s[0] if s[0] == 'e' or s[0] == '+' else ''
     for v, k in re.findall(r"(\d*\.?\d*)(ms|m|s|h)", s):
         d[k] = float(v)
-    return make_time(**d)
+    return sign, make_time(**d)
 
 
 def get_args_subs2cia():
@@ -142,14 +144,22 @@ def get_args_subs2cia():
                                  'Ignored lines may still be included in condensed subtitles if they overlap with non-ignored subtitles. '
                                  'This option will override the internal subs2cia non-dialogue filter.')
 
-    parent_parser.add_argument('-I', '--ignore-range', metavar="timestamp", dest="ignore_range", default=None,
+    parent_parser.add_argument('-I', '--ignore-range', metavar="[prefix]timestamp", dest="ignore_range", default=None,
                             type=time, nargs=2, action="append",
-                            help="Time range to ignore when condensing. Useful for removing fixed openings of shows. \n"
+                            help="Time range to ignore when condensing, specified using two timestamps. "
+                                 "Useful for removing openings and endings of shows. \n"
                                  "Time formatting example: '2h30m2s100ms', '10m20s', etc. \n"
-                                 "Subtitles that fall into an ignored range before padding are trimmed so that they "
+                                  "Subtitles that fall into an ignored range before padding are trimmed so that they "
                                  "do not overlap with the ignore range. "
-                                 "If batch modes is enabled, the same ranges are applied to ALL outputs."
-                                 "Multiple ranges can be specified like so: -I 2m 3m30s -I 20m 21m")
+                                 "Timestamps can measured from the start of the audio (no prefix), end of the audio (using the 'e' prefix), or relative to "
+                                 "another timestamp (using the '+' prefix). "
+                                    # "Examples: \n"
+                                    #     "\t-I 1m 2m30s  # ignore subtitles that exist between 01:00 and 02:30\n"
+                                    #     "\t-I 1m12s +1m30s  # ignore subtitiles in the 1m30s after 01:12\n"
+                                    #     "\t-I -3m -1ms  # ignore subtitles that exist between 3 minutes from end of audio and 1 minute from end of audio"
+                                    #     "\t-I -2m +1m30s  # ignore subtitles that exist in the first 1m30s of the last 2 minutes of audio"
+                                 "If batch mode is enabled, the same ranges are applied to ALL outputs."
+                                 "Multiple ranges can be specified like so: -I 2m 3m30s -I 20m 21m. ")
 
     parent_parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                             type=int,

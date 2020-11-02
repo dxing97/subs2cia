@@ -12,12 +12,12 @@ import copy
 from typing import List, Union
 
 
-def overlap_any_range(range1: List[int], ranges: List[List[int]]):
-    for r in ranges:
-        assert len(r) == 2
-        if overlap_range(r, range1):
-            trimmed = ssaevent_trim(e, ir)
-            return trimmed
+# def overlap_any_range(range1: List[int], ranges: List[List[int]]):
+#     for r in ranges:
+#         assert len(r) == 2
+#         if overlap_range(r, range1):
+#             trimmed = ssaevent_trim(e, ir)
+#             return trimmed
 
 
 def overlap_range(range1: List[int], range2: List[int]):
@@ -44,14 +44,17 @@ def ssaevent_trim(event: ps2.SSAEvent, ir: List[int]):
 
     assert len(ir) == 2
     trimmed = []
-    if ir[0] < event.start < ir[1] and ir[0] < event.end < ir[1]:
+    if ir[0] <= event.start < ir[1] and ir[0] < event.end <= ir[1]:
+        # event falls completely inside an ignore range
         return trimmed
-    if ir[0] < event.start < ir[1] and ir[1] < event.end:
+    if ir[0] <= event.start < ir[1] and ir[1] < event.end:
+        # event starts inside ignore range, ends outside of it
         event.start = ir[1]
         trimmed.append(event)
         return trimmed
-    if event.start < ir[0] and ir[0] < event.end < ir[1]:
-        event.end = ir[1]
+    if event.start < ir[0] and ir[0] < event.end <= ir[1]:
+        # event starts outside of ignore range, ends inside of it
+        event.end = ir[0]
         trimmed.append(event)
         return trimmed
     if event.start < ir[0] and ir[1] < event.end:
@@ -63,7 +66,7 @@ def ssaevent_trim(event: ps2.SSAEvent, ir: List[int]):
         trimmed.append(event2)
         return trimmed
     # should never get here
-
+    assert False
 
 def ignore_nibble(ignore_ranges: List[List[int]], e: ps2.SSAEvent):
     trimmed = []
@@ -71,6 +74,7 @@ def ignore_nibble(ignore_ranges: List[List[int]], e: ps2.SSAEvent):
         assert len(ir) == 2
         if overlap_range(ir, [e.start, e.end]):
             trimmed = ssaevent_trim(e, ir)
+            # assert(trimmed is not None)
             return trimmed
     return [e]
 
@@ -120,7 +124,15 @@ class SubGroup:
 
 
 class SubtitleManipulator:
-    def __init__(self, subpath: Path, threshold: int, padding: int, ignore_range: Union[List[List[int]], None]):
+    def __init__(self, subpath: Path, threshold: int, padding: int, ignore_range: Union[List[List[int]], None], audio_length: int):
+        r"""
+        Class for subtitle manipulation
+        :param subpath: Path to pysubs2-compatible subtitle file
+        :param threshold: in milliseconds
+        :param padding: in milliseconds
+        :param ignore_range: list of ranges. each range is a list of two tuples. each tuple contains two values, a "sign" and a "duration".
+        :param audio_length: How long the audio is in milliseconds.
+        """
         self.subpath = subpath
         self.ssadata = None
         self.condensed_ssadata = None
@@ -130,7 +142,30 @@ class SubtitleManipulator:
 
         self.threshold = threshold
         self.padding = padding
-        self.ignore_range = ignore_range
+
+        self.audio_length = audio_length
+
+        self.ignore_range = []
+        for irange in ignore_range:
+            assert(len(irange) == 2)
+            to_append = []
+            for idx, (sign, duration) in enumerate(irange):
+                if sign == "+":
+                    if idx == 0:
+                        raise AssertionError("Can't have '+' as first range value, must be second range value "
+                                             "(e.g. -I 1m +1m30s)")
+                    to_append.append(to_append[0] + duration)
+                elif sign == "e":
+                    to_append.append(int(self.audio_length - duration))
+                elif sign == "":
+                    to_append.append(duration)
+                else:
+                    # shouldn't get here, re.findall should strip anything unexpected out
+                    raise AssertionError(f"SubtitleManipulator received unexpected sign ({sign})")
+            if not to_append[0] < to_append[1]:
+                raise AssertionError(f"An ignore range is invalid: end of range "
+                                     f"({to_append[0]}ms) is before start of range ({to_append[1]})")
+            self.ignore_range.append(to_append)
 
     def load(self, include_all, regex):
         if not self.subpath.exists():

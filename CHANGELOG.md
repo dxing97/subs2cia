@@ -1,7 +1,18 @@
 # Changelog
 
 ## [Unreleased]
-
+### Added
+ - Ignore ranges can now be specified relative to end of audio (using `e` prefix) and to start of ignore range 
+ (using `+` prefix)
+    - Examples: 
+        - Ignore two minutes minute after 10 minute mark: `-I 10m +2m`
+        - Ignore last minute: `-I e1m +1m` or `-I e1m e0m`
+        - Ignore 1m30s after 2 minute mark: `-I 2m +1m30s`
+ - Interactive mode for selecting audio/subtitle/video streams as alternative to current automatic picker system
+ 
+ ### Fixed
+ - Fix infinite loop that ococured when ignore range exactly matched subtitle start/end
+ 
 ## [0.2.5] - 2020-09-22
 ### Added
  - Ignore ranges option for ignoring subtitles that lie in a certain time range for OP/ED removal

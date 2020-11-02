@@ -145,27 +145,29 @@ class SubtitleManipulator:
 
         self.audio_length = audio_length
 
-        self.ignore_range = []
-        for irange in ignore_range:
-            assert(len(irange) == 2)
-            to_append = []
-            for idx, (sign, duration) in enumerate(irange):
-                if sign == "+":
-                    if idx == 0:
-                        raise AssertionError("Can't have '+' as first range value, must be second range value "
-                                             "(e.g. -I 1m +1m30s)")
-                    to_append.append(to_append[0] + duration)
-                elif sign == "e":
-                    to_append.append(int(self.audio_length - duration))
-                elif sign == "":
-                    to_append.append(duration)
-                else:
-                    # shouldn't get here, re.findall should strip anything unexpected out
-                    raise AssertionError(f"SubtitleManipulator received unexpected sign ({sign})")
-            if not to_append[0] < to_append[1]:
-                raise AssertionError(f"An ignore range is invalid: end of range "
-                                     f"({to_append[0]}ms) is before start of range ({to_append[1]})")
-            self.ignore_range.append(to_append)
+        self.ignore_range = None
+        if ignore_range is not None:
+            self.ignore_range = []
+            for irange in ignore_range:
+                assert(len(irange) == 2)
+                to_append = []
+                for idx, (sign, duration) in enumerate(irange):
+                    if sign == "+":
+                        if idx == 0:
+                            raise AssertionError("Can't have '+' as first range value, must be second range value "
+                                                 "(e.g. -I 1m +1m30s)")
+                        to_append.append(to_append[0] + duration)
+                    elif sign == "e":
+                        to_append.append(int(self.audio_length - duration))
+                    elif sign == "":
+                        to_append.append(duration)
+                    else:
+                        # shouldn't get here, re.findall should strip anything unexpected out
+                        raise AssertionError(f"SubtitleManipulator received unexpected sign ({sign})")
+                if not to_append[0] < to_append[1]:
+                    raise AssertionError(f"An ignore range is invalid: end of range "
+                                         f"({to_append[0]}ms) is before start of range ({to_append[1]})")
+                self.ignore_range.append(to_append)
 
     def load(self, include_all, regex):
         if not self.subpath.exists():

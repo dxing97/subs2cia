@@ -1,8 +1,9 @@
 from subs2cia.sources import AVSFile
-from subs2cia.Common import Common
+from subs2cia.Common import Common, interactive_picker
 
 from typing import List, Union
 from pathlib import Path
+import logging
 
 class CardExport(Common):
     def __init__(self, sources: List[AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool, padding: int,
@@ -32,3 +33,26 @@ class CardExport(Common):
 
         self.insufficient = False
 
+    def choose_subtitle(self, interactive):
+        if len(self.partitioned_streams['subtitle']) == 0:
+            logging.warning(f"Couldn't find audio streams in input files")
+            return
+        if interactive and len(self.partitioned_streams['subtitle']) > 1:
+            self.picked_streams['subtitle'] = interactive_picker(self.sources, self.partitioned_streams, 'subtitle')
+            return
+
+        k = 'subtitle'
+        while self.picked_streams[k] is None:
+            try:
+                self.picked_streams[k] = next(self.pickers[k])
+            except StopIteration as s:
+                logging.critical(f"Input files {self.sources} don't contain usable subtitles")
+                self.insufficient = True
+                return
+            subfile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
+            if subfile is None:
+                logging.warning(f"Error while demuxing {self.picked_streams[k]}")
+                self.picked_streams[k] = None
+
+    def export(self):
+        pass

@@ -45,7 +45,8 @@ def condense_start(args, groups: List[List[AVSFile]]):
                  ['outdir', 'outstem','condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
-                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'bitrate', 'mono_channel']}
+                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'bitrate', 'mono_channel',
+                  'interactive']}
 
     condensed_files = [Condense(g, **condense_args) for g in groups]
     for c in condensed_files:
@@ -57,7 +58,6 @@ def condense_start(args, groups: List[List[AVSFile]]):
             c.list_streams()
             continue  # todo: why don't we break here?
         c.choose_streams()
-        c.process_subtitles()
         c.export()
         c.cleanup()
 
@@ -79,7 +79,8 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
                     'subtitle_stream_index',
                     'ignore_range',
                     'bitrate',
-                    'mono_channel',]
+                    'mono_channel',
+                    'interactive']
                 }
 
     # pprint(srs_args)
@@ -93,10 +94,7 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
         if args['list_streams']:
             c.list_streams()
             continue  # todo: why don't we break here?
-        c.choose_audio(interactive=True)
-
-        # c.choose_streams()
-        # c.process_subtitles()
+        c.choose_streams()
         # c.export()
         # c.cleanup()
 

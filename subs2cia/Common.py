@@ -4,7 +4,7 @@ from subs2cia.sources import Stream
 import subs2cia.subtools as subtools
 from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 
-from typing import List, Union
+from typing import List, Union, Dict
 from collections import defaultdict
 from pathlib import Path
 
@@ -30,12 +30,44 @@ def insufficient_source_streams(d: dict):
     return False
 
 
+def interactive_picker(sources: List[AVSFile], partitioned_streams: Dict[str, Stream], media_type: str):
+    print("Input files:")
+    for avsf in sources:
+        print(f"\t{avsf}")
+    print(f"Found the following {media_type} streams:")
+    for idx, stream in enumerate(partitioned_streams[media_type]):
+        desc_str = ''
+        if "codec_name" in stream.stream_info:
+            desc_str = desc_str + "codec: " + stream.stream_info['codec_name'] + ", "
+        if media_type == 'video':
+            if 'width' in stream.stream_info and 'height' in stream.stream_info:
+                desc_str = desc_str + f"{stream.stream_info['width']}x{stream.stream_info['height']}, "
+        if media_type == 'audio':
+            if "tags" in stream.stream_info:
+                tags = stream.stream_info['tags']
+                if "language" in tags:
+                    desc_str = desc_str + "lang_code: " + tags['language'] + ", "
+                if "title" in tags:
+                    desc_str = desc_str + "title: " + tags['title'] + ", "
+        if desc_str == '':
+            desc_str = f"\tStream {idx: 3}: no information found, "
+        else:
+            desc_str = f"\tStream {idx: 3}: {desc_str}"
+        desc_str += f"file: {str(stream.file)}"
+        print(desc_str)
+    print("")
+    idx = int(input("Which stream to use?"))
+    return partitioned_streams[media_type][idx]
+
+
 class Common:
-    def __init__(self, sources: List[AVSFile], outdir: Union[Path, None], outstem: Union[str, None], condensed_video: bool, padding: int,
+    def __init__(self, sources: List[AVSFile], outdir: Union[Path, None], outstem: Union[str, None],
+                 condensed_video: bool, padding: int,
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool):
+                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool,
+                 interactive: bool):
         if outdir is None:
             self.outdir = sources[0].filepath.parent
         else:
@@ -83,6 +115,8 @@ class Common:
         self.ignore_range = ignore_range
 
         self.insufficient = False
+
+        self.interactive = interactive
 
     # go through source files and count how many subtitle and audio streams we have
     def get_and_partition_streams(self):
@@ -132,7 +166,7 @@ class Common:
                 print(desc_str)
             print("")
 
-    def choose_audio(self, interactive=False):
+    def choose_audio(self, interactive: bool):
         r"""
         Picks an audio stream to use. If there are multiple audio streams, prioritizes the following:
             * CLI-specified stream index
@@ -141,40 +175,61 @@ class Common:
         :param interactive: if true, prompts user about which audio stream to use
         :return:
         """
-        if interactive:
-            print("Input files:")
-            for avsf in self.sources:
-                print(f"\t{avsf}")
-            print(f"Found the following streams:")
-            for idx, stream in enumerate(self.partitioned_streams['audio']):
-                desc_str = ''
-                if "codec_name" in stream.stream_info:
-                    desc_str = desc_str + "codec: " + stream.stream_info['codec_name'] + ", "
-                if "tags" in stream.stream_info:
-                    tags = stream.stream_info['tags']
-                    if "language" in tags:
-                        desc_str = desc_str + "lang_code: " + tags['language'] + ", "
-                    if "title" in tags:
-                        desc_str = desc_str + "title: " + tags['title'] + ", "
-                if desc_str == '':
-                    desc_str = f"\tStream {idx: 3}: no information found"
-                else:
-                    desc_str = f"\tStream {idx: 3}: {desc_str}"
-                desc_str += f"file: {str(stream.file)}"
-                print(desc_str)
-            print("")
-            idx = int(input("Which stream to use?"))
-            self.picked_streams['audio'] = self.partitioned_streams['audio'][idx]
+        if len(self.partitioned_streams['audio']) == 0:
+            logging.warning(f"Couldn't find audio streams in input files")
             return
-        # todo: automatic version of above
+        if interactive and len(self.partitioned_streams['audio']) > 1:
+            self.picked_streams['audio'] = interactive_picker(self.sources, self.partitioned_streams, 'audio')
+            return
 
-    def choose_subtitle(self, interactive=False):
-        pass
+        k = 'audio'
+        while self.picked_streams[k] is None:
+            try:
+                self.picked_streams[k] = next(self.pickers[k])
+            except StopIteration as s:
+                logging.critical("Inputs don't contain usable audio")
+                self.insufficient = True
+                return
+            afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
+            if afile is None:
+                logging.warning(f"Error while demuxing {self.picked_streams[k]}")
+                self.picked_streams[k] = None
 
-    def choose_video(self, interactive=False):
-        pass
+    def choose_subtitle(self, interactive: bool):
+        # pass
+        raise NotImplementedError("Child classes must implement choose_subtitles")
+
+    def choose_video(self, interactive: bool):
+        if len(self.partitioned_streams['video']) == 0:
+            logging.info(f"Couldn't find video streams in input files")
+            return
+        if interactive and len(self.partitioned_streams['audio']) > 1:
+            self.picked_streams['audio'] = interactive_picker(self.sources, self.partitioned_streams, 'video')
+            return
+        k = 'video'
+        while self.picked_streams[k] is None:
+            try:
+                self.picked_streams[k] = next(self.pickers[k])
+            except StopIteration as s:
+                logging.critical("Inputs don't contain usable audio")
+                self.insufficient = True
+                return
+            # afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
+            # if afile is None:
+            #     logging.warning(f"Error while demuxing {self.picked_streams[k]}")
+            #     self.picked_streams[k] = None
 
     def choose_streams(self):
+        if insufficient_source_streams(self.partitioned_streams):
+            logging.error(f"Not enough input sources to generate condensed output for output stem {self.outstem} "
+                          f"(missing audio and/or subtitles)")
+            self.insufficient = True
+            return
+        self.choose_audio(interactive=self.interactive)
+        self.choose_subtitle(interactive=self.interactive)
+        self.choose_video(interactive=self.interactive)
+
+    def choose_streams_old(self):
         if insufficient_source_streams(self.partitioned_streams):
             logging.error(f"Not enough input sources to generate condensed output for output stem {self.outstem}")
             self.insufficient = True

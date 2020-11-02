@@ -143,7 +143,7 @@ class Stream:
                 if demux_path is None:
                     logging.error(
                         f"Couldn't demux stream {self.index} from {str(self.file.filepath)} (type={self.type})")
-                    return
+                    return None
         self.demux_file = AVSFile(demux_path)
         self.demux_file.probe()
         self.demux_file.get_type()

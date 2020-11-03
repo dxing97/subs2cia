@@ -260,7 +260,7 @@ def ffmpeg_get_frames(videofile: Path, timestamps: List[int], outdir: Path, outs
 
 # too slow, not used
 def ffmpeg_get_frame(videofile: Path, timestamp: int, outpath: Path):
-    logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
+    # logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
     videostream = ffmpeg.input(str(videofile))
 
     # from https://superuser.com/a/1330042
@@ -277,7 +277,7 @@ def ffmpeg_get_frame(videofile: Path, timestamp: int, outpath: Path):
     ffmpeg.run(videostream)
 
 
-def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int, h: int):
+def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int, h: int, silent: bool = True):
     r"""
     Gets a screenshot from a video file
     :param videofile:
@@ -287,7 +287,7 @@ def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int
     :param h: Height in pixels. -1 preserves aspect ratio.
     :return:
     """
-    logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
+    # logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
 
     # from https://stackoverflow.com/a/28321986
     videostream = ffmpeg.input(str(videofile), ss=timestamp/1000)
@@ -298,8 +298,8 @@ def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int
     videostream = ffmpeg.output(videostream, str(outpath), vframes=1)
     videostream = ffmpeg.overwrite_output(videostream)
     args = videostream.get_args()
-    logging.debug(f"ffmpeg_get_frame_fast: args: {args}")
-    ffmpeg.run(videostream)
+    # logging.debug(f"ffmpeg_get_frame_fast: args: {args}")
+    ffmpeg.run(videostream, capture_stderr=silent)
 
 
 def ffmpeg_trim_audio_clips():
@@ -360,7 +360,8 @@ def ffmpeg_trim_audio_clip_encode(videofile: Path, stream_index: int, timestamp_
 
 def ffmpeg_trim_audio_clip_atrim_encode(input_file: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
                                         quality: Union[int, None], to_mono: bool, normalize_audio: bool,
-                                        outpath: Path, format: str = None, capture_stdout: bool = False):
+                                        outpath: Path, format: str = None, capture_stdout: bool = False,
+                                        silent: bool = True):
     r"""
     Take media file and export a trimmed audio file.
     :param stream_index: FFmpeg stream index. If input is not a container format, 0 should be used.
@@ -404,8 +405,8 @@ def ffmpeg_trim_audio_clip_atrim_encode(input_file: Path, stream_index: int, tim
 
     input_stream = ffmpeg.overwrite_output(input_stream)
     args = input_stream.get_args()
-    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
-    stdout, stderr = ffmpeg.run(input_stream, capture_stdout=capture_stdout)
+    # logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
+    stdout, stderr = ffmpeg.run(input_stream, capture_stdout=capture_stdout, capture_stderr=silent)
     return stdout
 
 
@@ -413,12 +414,18 @@ def ffmpeg_trim_video_clips():
     pass
 
 
-def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, timestamp_end: int, quality, outpath: Path):
+# todo?: fixme
+def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, timestamp_end: int, quality, outpath: Path,
+                                      quiet: bool=True):
     videostream = ffmpeg.input(str(videofile))
 
-    videostream = ffmpeg.output(videostream, str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000, c="copy")
+    videostream = ffmpeg.output(videostream, str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000)
 
     videostream = ffmpeg.overwrite_output(videostream)
-    args = videostream.get_args()
-    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
-    ffmpeg.run(videostream)
+    # args = videostream.get_args()
+    # logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
+    try:
+        stdout, stderr = ffmpeg.run(videostream, capture_stderr=quiet)
+    except ffmpeg._run.Error as e:
+        print(e.stderr.decode("utf-8"))
+        raise e

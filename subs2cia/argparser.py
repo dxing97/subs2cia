@@ -193,6 +193,8 @@ def get_args_subs2cia():
     srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
                                        help="Snip input media for import into spaced-repetition software")
 
+    srs_parser.add_argument('-N', '--normalize', action='store_true', dest='normalize_audio', default=False,
+                            help="If set, normalizes volume of audio clips to the same loudness. YMMV.")
 
     cia_parser.add_argument('-t', '--threshold', metavar='msecs', dest='threshold', default=0,
                             type=int,

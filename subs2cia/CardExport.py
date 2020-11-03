@@ -1,11 +1,13 @@
 from subs2cia.sources import AVSFile
 from subs2cia.Common import Common, interactive_picker
 import subs2cia.subtools as subtools
-from subs2cia.ffmpeg_tools import ffmpeg_trim_audio_clip_atrim_encode
+from subs2cia.ffmpeg_tools import ffmpeg_trim_audio_clip_atrim_encode, ffmpeg_get_frame_fast, ffmpeg_trim_video_clip_directcopy
 
 from typing import List, Union
 from pathlib import Path
 import logging
+import tqdm
+import pandas as pd
 
 class CardExport(Common):
     def __init__(self, sources: List[AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool, padding: int,
@@ -13,7 +15,7 @@ class CardExport(Common):
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool,
-                 interactive: bool):
+                 interactive: bool, normalize_audio: bool):
         super(CardExport, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -36,6 +38,8 @@ class CardExport(Common):
         )
 
         self.insufficient = False
+
+        self.normalize_audio = normalize_audio
 
         self.subdata = None
 
@@ -73,14 +77,46 @@ class CardExport(Common):
             self.subdata = subdata
 
     def export(self):
-        exported = []
-        for group in self.subdata.groups:
+        export_audio = True
+        export_screenshot = True
+        export_video = False
+        lbda = 0.0
+        w = -1
+        h = -1
+        columns = ['text', 'timestamps', 'audioclip', 'screenclip', 'videoclip', 'sources']
+        exported = pd.DataFrame(columns=columns)
+        for group in tqdm.tqdm(self.subdata.groups[0:10]):
             # since subdata.merge_groups hasn't been called, each group only contains one SSAevent
+
             if group.contains_only_ephemeral:
                 continue
-            outpath = self.outdir / (self.outstem + f"_{group.group_range[0]}_{group.group_range[1]}")
-
-            # group.export(audio=self.picked_streams['audio'], screenshot=self.picked_streams['video'], video=None,
-            #              quality=320, to_mono=False, normalize_aduio=False)
-
-
+            row = {'text': group.events[0].plaintext,
+                   'timestamps': f"{group.group_range[0]}-{group.group_range[1]}",
+                   'audioclip': None,
+                   'screenclip': None,
+                   'videoclip': None,
+                   'sources': f"{self.sources}"[1:-1]}
+            if export_audio:
+                outpath = self.outdir / (self.outstem + f"({group.group_range[0]}-{group.group_range[1]}).mp3")
+                row['audioclip'] = f"[sound:{outpath.name}]"
+                ffmpeg_trim_audio_clip_atrim_encode(input_file=self.picked_streams['audio'].demux_file,
+                                                    stream_index=0,
+                                                    timestamp_start=group.group_range[0],
+                                                    timestamp_end=group.group_range[1], quality=self.quality,
+                                                    to_mono=self.to_mono, normalize_audio=self.normalize_audio,
+                                                    outpath=outpath)
+            if export_screenshot:
+                outpath = self.outdir / (self.outstem + f"[{group.group_range[0]}-{group.group_range[1]}].jpg")
+                row['screenclip'] = f"<img src='{outpath.name}' />"
+                timestamp = (1-lbda) * group.group_range[0] + lbda * group.group_range[1]
+                ffmpeg_get_frame_fast(self.picked_streams['video'].file,
+                                      timestamp=timestamp, outpath=outpath, w=w, h=h)
+            if export_video:
+                outpath = self.outdir / (self.outstem + f"_{group.group_range[0]}_{group.group_range[1]}.mp4")
+                row['videoclip'] = f"[sound:{outpath.name}]"
+                ffmpeg_trim_video_clip_directcopy(self.picked_streams['video'].file, timestamp_start=group.group_range[0],
+                                                    timestamp_end=group.group_range[1], quality=None, outpath=outpath)
+            exported = exported.append([row], ignore_index=True)
+        # print(exported)
+        outpath = self.outdir / (self.outstem + ".tsv")
+        exported.to_csv(outpath, sep='\t')

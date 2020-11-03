@@ -358,34 +358,33 @@ def ffmpeg_trim_audio_clip_encode(videofile: Path, stream_index: int, timestamp_
     ffmpeg.run(videostream)
 
 
-def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
-                                  quality: Union[int, None], to_mono: bool, normalize_audio: bool,
-                                  outpath: Path, format: str = None, capture_stdout: bool = False):
+def ffmpeg_trim_audio_clip_atrim_encode(input_file: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
+                                        quality: Union[int, None], to_mono: bool, normalize_audio: bool,
+                                        outpath: Path, format: str = None, capture_stdout: bool = False):
     r"""
-    Take source file and export a trimmed audio file encoded from input. Typically the output encoding will be mp3 but
-    flac may also be used. Quality setting only applies for mp3 inputs.
-    :param videofile:
-    :param timestamp_start:
-    :param timestamp_end:
-    :param quality: If output extension is .mp3, this is the bitrate in kbps.
+    Take media file and export a trimmed audio file.
+    :param stream_index: FFmpeg stream index. If input is not a container format, 0 should be used.
+    :param capture_stdout: If true, returns stdout. Used in conjunction with outpath="pipe:" and format option.
+    :param input_file: Path to video/audio file to clip from.
+    :param timestamp_start: Start time in milliseconds.
+    :param timestamp_end: End time in milliseconds.
+    :param quality: If output extension is .mp3, this is the bitrate in kbps. Ignored otherwise.
     :param to_mono: If set, mixes all input channels to mono to save space
-    :param normalize_audio: If set, attempts to normalize loudness of audio. YMMV.
+    :param normalize_audio: If set, attempts to normalize loudness of output audio. YMMV.
     :param outpath: Path to save to.
-    :param format: Output format (e.g. mp3, flac, etc). Required if outpath is "pipe:"
-    :return: ffmpeg stdout
+    :param format: Output format (e.g. mp3, flac, etc), required if extension of outpath is missing/not the intended
+                    format. Required if outpath is "pipe:" since there is no output extension to infer from.
+    :return: FFmpeg stdout data if capture_stdout is set
     """
-    videostream = ffmpeg.input(str(videofile))
-    videostream = videostream[str(stream_index)]
-    # todo: may need to use AVSfile to specify audio stream/direct demux
+    input_stream = ffmpeg.input(str(input_file))
+    input_stream = input_stream[str(stream_index)]
 
-    videostream = videostream
-
-    videostream = videostream.filter("atrim",
+    input_stream = input_stream.filter("atrim",
                                      start=timestamp_start/1000,
                                      end=timestamp_end/1000).filter("asetpts", "PTS-STARTPTS")
 
     if normalize_audio:
-        videostream = videostream.filter("loudnorm", print_format="summary")
+        input_stream = input_stream.filter("loudnorm", print_format="summary")
 
     kwargs = {}
 
@@ -396,17 +395,17 @@ def ffmpeg_trim_audio_clip_atrim_encode(videofile: Path, stream_index: int, time
             kwargs['audio_bitrate'] = '320k'
 
     if to_mono:
-        kwargs['ac'] = 1
+        kwargs['ac'] = 1  # audio channels
 
     if format is not None:
         kwargs['format'] = format
-    videostream = ffmpeg.output(videostream, str(outpath), **kwargs)
+    input_stream = ffmpeg.output(input_stream, str(outpath), **kwargs)
 
 
-    videostream = ffmpeg.overwrite_output(videostream)
-    args = videostream.get_args()
+    input_stream = ffmpeg.overwrite_output(input_stream)
+    args = input_stream.get_args()
     logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
-    stdout, stderr = ffmpeg.run(videostream, capture_stdout=capture_stdout)
+    stdout, stderr = ffmpeg.run(input_stream, capture_stdout=capture_stdout)
     return stdout
 
 

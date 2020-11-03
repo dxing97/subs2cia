@@ -33,8 +33,8 @@ if __name__ == '__main__':
     # ffmpeg_trim_audio_clip_encode(Path(args.videofile), stream_index=2, timestamp_start=40000, timestamp_end=50000, quality=None,
     #                        to_mono=True, outpath=Path("output.mp3"))
 
-    stdout = ffmpeg_trim_audio_clip_atrim_encode(Path(args.videofile), stream_index=2, timestamp_start=40000, timestamp_end=50000, quality=None,
-                           to_mono=True, normalize_audio=True, outpath=Path("pipe:"), format="mp3", capture_stdout=True)
+    stdout = ffmpeg_trim_audio_clip_atrim_encode(Path(args.videofile), stream_index=0, timestamp_start=40000, timestamp_end=50000, quality=None,
+                           to_mono=True, normalize_audio=True, outpath=Path("pipe:"), format="mp3", capture_stdout=False)
     encoded = base64.b64encode(stdout)
     print(encoded)
     decoded = base64.b64decode(encoded)

@@ -53,49 +53,33 @@ def condense_start(args, groups: List[List[AVSFile]]):
         c.get_and_partition_streams()
         c.initialize_pickers()
         if args['dry_run']:
-            continue  # todo: why don't we break here?
+            continue
         if args['list_streams']:
             c.list_streams()
-            continue  # todo: why don't we break here?
+            continue
         c.choose_streams()
         c.export()
         c.cleanup()
 
 def srs_export_start(args, groups: List[List[AVSFile]]):
     srs_args = {key: args[key] for key in
-                 [
-                    'outdir',
-                    'outstem',
-                    'condensed_video',
-                    'padding',
-                    'demux_overwrite_existing',
-                    'overwrite_existing_generated',
-                    'keep_temporaries',
-                    'target_lang',
-                    'out_audioext',
-                    'use_all_subs',
-                    'subtitle_regex_filter',
-                    'audio_stream_index',
-                    'subtitle_stream_index',
-                    'ignore_range',
-                    'bitrate',
-                    'mono_channel',
-                    'interactive']
+                 ['outdir', 'outstem', 'condensed_video', 'padding', 'demux_overwrite_existing',
+                  'overwrite_existing_generated', 'keep_temporaries', 'target_lang', 'out_audioext', 'use_all_subs',
+                  'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'bitrate',
+                  'mono_channel', 'interactive']
                 }
-
-    # pprint(srs_args)
 
     cardexport_group = [CardExport(g, **srs_args) for g in groups]
     for c in cardexport_group:
         c.get_and_partition_streams()
         c.initialize_pickers()
         if args['dry_run']:
-            continue  # todo: why don't we break here?
+            continue
         if args['list_streams']:
             c.list_streams()
-            continue  # todo: why don't we break here?
+            continue
         c.choose_streams()
-        # c.export()
+        c.export()
         # c.cleanup()
 
 def start():

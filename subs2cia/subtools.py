@@ -1,5 +1,5 @@
 from subs2cia.sources import Stream
-from subs2cia.ffmpeg_tools import ffmpeg_demux
+from subs2cia.ffmpeg_tools import ffmpeg_demux, ffmpeg_trim_audio_clip_atrim_encode, ffmpeg_get_frame_fast
 
 import logging
 import pysubs2 as ps2  # for reading in subtitles
@@ -121,6 +121,15 @@ class SubGroup:
     def __repr__(self):
         s = f"<SubGroup, |{self.group_limits[0]} {self.group_range[0]} {(self.events_start, self.events_end)} {self.group_range[1]} {self.group_limits[1]}|]"
         return s
+
+    # def export(self, audio: Union[Stream, None], screenshot: Union[Stream, None], video: Union[Stream, None],
+    #            quality: Union[int, None], to_mono: bool, normalize_audio: bool, outpath: Path):
+    #     # print(f"SubGroup export called on {self}")
+    #     if audio is not None:
+    #         ffmpeg_trim_audio_clip_atrim_encode(input_file=audio.demux_file, stream_index=audio.index,
+    #                                             timestamp_start=self.group_range[0], timestamp_end=self.group_range[1],
+    #                                             quality=quality, to_mono=to_mono, normalize_audio=normalize_audio,
+    #                                             outpath=outpath)
 
 
 class SubtitleManipulator:

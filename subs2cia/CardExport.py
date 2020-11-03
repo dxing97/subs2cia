@@ -85,7 +85,7 @@ class CardExport(Common):
         h = -1
         columns = ['text', 'timestamps', 'audioclip', 'screenclip', 'videoclip', 'sources']
         exported = pd.DataFrame(columns=columns)
-        for group in tqdm.tqdm(self.subdata.groups[0:10]):
+        for group in tqdm.tqdm(self.subdata.groups):
             # since subdata.merge_groups hasn't been called, each group only contains one SSAevent
 
             if group.contains_only_ephemeral:

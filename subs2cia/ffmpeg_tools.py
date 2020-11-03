@@ -414,12 +414,11 @@ def ffmpeg_trim_video_clips():
     pass
 
 
-# todo?: fixme
 def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, timestamp_end: int, quality, outpath: Path,
                                       quiet: bool=True):
     videostream = ffmpeg.input(str(videofile))
 
-    videostream = ffmpeg.output(videostream, str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000)
+    videostream = ffmpeg.output(videostream, str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000, c="copy")
 
     videostream = ffmpeg.overwrite_output(videostream)
     # args = videostream.get_args()
@@ -429,3 +428,8 @@ def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, tim
     except ffmpeg._run.Error as e:
         print(e.stderr.decode("utf-8"))
         raise e
+
+# todo: only first audio stream is saved, just want target audio, nothing else
+#  https://video.stackexchange.com/a/21738
+def ffmpeg_clip_video():
+    pass

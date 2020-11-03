@@ -77,6 +77,7 @@ class CardExport(Common):
             self.subdata = subdata
 
     def export(self):
+        # expose these as options at some point
         export_audio = True
         export_screenshot = True
         export_video = False

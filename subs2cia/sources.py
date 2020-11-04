@@ -1,12 +1,13 @@
 # each output has a set of possible input files
 # all source_files does is take all of the input files and partitons them into three lists:
 
+from subs2cia.ffmpeg_tools import ffmpeg_demux
+
 from pathlib import Path
 import logging
 import ffmpeg
-from collections import defaultdict
-from subs2cia.ffmpeg_tools import ffmpeg_demux
 import pycountry
+from typing import List, Union
 
 
 class AVSFile:
@@ -83,10 +84,10 @@ class Stream:
             # no metadata to analyze, look in suffixes for language codes
             suffixes = self.file.filepath.suffixes
             if len(suffixes) >= 2:
-                if suffixes[-2] != 'forced':
-                    self.lang = suffixes[-2]
+                if suffixes[-2] != '.forced':
+                    self.lang = suffixes[-2][1:]
                 elif len(suffixes) != 2:
-                    self.lang = suffixes[-3]
+                    self.lang = suffixes[-3][1:]
             if self.lang == 'unknownlang':
                 return self.lang
             try:
@@ -171,47 +172,21 @@ def common_count(t0, t1):
     return i + 1
 
 
-# todo: needs work for batching to work
-def group_by_longest_prefix(sources: [AVSFile]):
-    files = sources
-    out = []
-    longest = 0
-    for f in files:
-        # splits = str(f.filepath.name).split('.')
-        splits = str(f.filepath.name)
-        if out:
-            # common = common_count(splits, str(out[-1].filepath.name).split('.'))
-            common = common_count(splits, str(out[-1].filepath.name))
-            if common < longest:
-                yield out
-                longest = 0
-                out = []
-                # otherwise, just update the target prefix length
-            else:
-                longest = common
-
-                # add the current entry to the group
-        out.append(f)
-
-    # return remaining entries as the last group
-    if out:
-        yield out
-
-
 def is_language(s):
     try:
         pycountry.languages.lookup(s)
         return True
     except:
-        # print(f"{s} is not a language")
         return False
 
 
+# Strip extensions and language info from local assets, Plex style.
+# see https://support.plex.tv/articles/200471133-adding-local-subtitles-to-your-media/
 def strip_extensions(p: Path) -> Path:
     if len(p.suffixes) <= 1:
         return p.with_suffix('')
     p = p.with_suffix('')
-    if len(p.suffixes) > 1:
+    if len(p.suffixes) >= 1:
         if p.suffixes[-1] == '.forced':
             p = p.with_suffix('')
     if len(p.suffixes) >= 1:
@@ -219,47 +194,26 @@ def strip_extensions(p: Path) -> Path:
         lcode = lcode.replace('.', '')
         if is_language(lcode):
             return p.with_suffix('')
-        return p
+        # return p
+    return p
 
 
-# todo: needs work for batching to work
-def group_names(sources: [AVSFile]):
-    files = sources
-    out = []
-    longest = 0
-    for f in files:
-        # splits = str(f.filepath.name).split('.')
-        splits = str(strip_extensions(f.filepath).name)
-        if out:
-            # common = common_count(splits, str(out[-1].filepath.name).split('.'))
-            common = common_count(splits, str(strip_extensions(out[0].filepath).name))
-            # if common < longest:
-            #     yield out
-            #     longest = 0
-            #     out = []
-            #     # otherwise, just update the target prefix length
-            # else:
-            #     longest = common
-            #     # add the current entry to the group
-            # print(splits[0:common])
-            # print(strip_extensions(out[0].filepath).name)
-            if common == 0 or \
-                    strip_extensions(out[0].filepath).name != splits[0:common] or \
-                    (len(splits) > common and splits[common] != '.'):
-                # no similarity, or similarity does not contain the entire previous name
-                yield out
-                longest = 0
-                out = []
-            else:
-                longest = common
-        out.append(f)
-
-    # return remaining entries as the last group
-    if out:
-        yield out
+def group_names_better(sources: List[AVSFile]) -> List[List[AVSFile]]:
+    all_groups = []
+    while(len(sources) > 0):
+        group = [sources.pop(0)]
+        to_remove = []
+        for f in sources:
+            if strip_extensions(f.filepath) == strip_extensions(group[0].filepath):
+                group.append(f)
+                to_remove.append(f)
+        for f in to_remove:
+            sources.remove(f)
+        all_groups.append(group)
+    return all_groups
 
 
 def group_files(sources: [AVSFile]):
-    file_groups = list(group_names(sources))
+    file_groups = group_names_better(sources)
     logging.debug(f"groups: {[[f.filepath for f in g] for g in file_groups]}")
     return file_groups

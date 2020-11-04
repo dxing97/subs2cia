@@ -1,7 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2020-11-03
 ### Added
+ - Export subtitles, audio, screenshots for use in a SRS application
  - Ignore ranges can now be specified relative to end of audio (using `e` prefix) and to start of ignore range 
  (using `+` prefix)
     - Examples: 
@@ -12,6 +13,8 @@
  
  ### Fixed
  - Fix infinite loop that ococured when ignore range exactly matched subtitle start/end
+ - Fix issue where files were not correctly grouped
+ - Picker now accounts for input file order when choosing streams
  
 ## [0.2.5] - 2020-09-22
 ### Added

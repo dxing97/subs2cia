@@ -229,6 +229,10 @@ class Common:
         self.choose_subtitle(interactive=self.interactive)
         self.choose_video(interactive=self.interactive)
 
+        logging.info(f"Picked audio stream:    {self.picked_streams['audio']}")
+        logging.info(f"Picked subtitle stream: {self.picked_streams['subtitle']}")
+        logging.info(f"Picked video stream:    {self.picked_streams['video']}")
+
     def choose_streams_old(self):
         if insufficient_source_streams(self.partitioned_streams):
             logging.error(f"Not enough input sources to generate condensed output for output stem {self.outstem}")
@@ -300,3 +304,12 @@ class Common:
         logging.info(f"Picked {self.picked_streams['audio']} to use for condensing")
         logging.info(f"Picked {self.picked_streams['video']} to use for condensing")
         logging.info(f"Picked {self.picked_streams['subtitle']} to use for condensing")
+
+    def cleanup(self):
+        if self.keep_temporaries:
+            return
+        for k in ['audio', 'video', 'subtitle']:
+            if len(self.partitioned_streams) == 0:
+                continue
+            for s in self.partitioned_streams[k]:
+                s.cleanup_demux()

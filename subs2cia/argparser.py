@@ -228,16 +228,10 @@ def get_args_subs2cia():
     cia_parser.add_argument('-c', '--minimum-compression-ratio', metavar='<ratio>', dest='minimum_compression_ratio',
                             default=0.2, type=float,
                             help="Will only generate from subtitle files that are this fraction long of the selected audio "
-                                 "file. Default is 0.2, meaning the output condensed file must be at least 20% as long as "
+                                 "file. Default is 0.2, meaning the output condensed file must be at least 20 percent as long as "
                                  "the chosen audio stream. If the output doesn't reach this minimum, then a different "
                                  "subtitle file will be chosen, if available. Used for ignoring subtitles that contain only"
                                  "signs and songs.")
-
-
-
-
-
-
 
     args = parser.parse_args()
 

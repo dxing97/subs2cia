@@ -72,7 +72,7 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     combined = ffmpeg.output(combined, outfile, **kwargs)
 
     combined = ffmpeg.overwrite_output(combined)
-    logging.debug(f"ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
+    logging.debug(f"ffmpeg_condense_audio: ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
     args = ffmpeg.get_args(combined)
     if len("ffmpeg " + " ".join(args)) > 32766 and os.name == 'nt':
         logging.warning("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
@@ -285,6 +285,7 @@ def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int
     :param outpath:
     :param w: Width in pixels. -1 preserves aspect ratio.
     :param h: Height in pixels. -1 preserves aspect ratio.
+    :param silent: Suppresses stderr if set.
     :return:
     """
     # logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
@@ -302,55 +303,11 @@ def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int
     ffmpeg.run(videostream, capture_stderr=silent)
 
 
-def ffmpeg_trim_audio_clips():
-    # ideally this will be faster than the filter_complex, but if not, then just use the export_condensed function
-    pass
-
-
 def ffmpeg_trim_audio_clip_directcopy(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int, outpath: Path):
     videostream = ffmpeg.input(str(videofile))
     # outpath extension must be a container format (mp4, mkv) or the same type as the audio (.mp3, .eac3, .flac, etc)
     # todo: may need to use AVSfile to specify audio stream/direct demux
     videostream = ffmpeg.output(videostream[str(stream_index)], str(outpath), ss=timestamp_start/1000, to=timestamp_end/1000, c="copy")
-
-    videostream = ffmpeg.overwrite_output(videostream)
-    args = videostream.get_args()
-    logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
-    ffmpeg.run(videostream)
-
-
-def ffmpeg_trim_audio_clip_encode(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int,
-                                  quality: Union[int, None], to_mono: bool,
-                                  outpath: Path):
-    r"""
-    Take source file and export a trimmed audio file encoded from input. Typically the output encoding will be mp3 but
-    flac may also be used. Quality setting only applies for mp3 inputs.
-    :param videofile:
-    :param timestamp_start:
-    :param timestamp_end:
-    :param quality: If output extension is .mp3, this is the bitrate in kbps.
-    :param outpath: Path to save to.
-    :return:
-    """
-    videostream = ffmpeg.input(str(videofile))
-    videostream = videostream[str(stream_index)]
-    # todo: may need to use AVSfile to specify audio stream/direct demux
-
-    kwargs = {
-        "ss": timestamp_start/1000,
-        "to": timestamp_end/1000
-    }
-
-    if outpath.suffix.lower() == ".mp3":
-        if quality is not None:
-            kwargs['audio_bitrate'] = f'{quality}k'
-        else:
-            kwargs['audio_bitrate'] = '320k'
-
-    if to_mono:
-        kwargs['ac'] = 1
-    videostream = ffmpeg.output(videostream, str(outpath), **kwargs)
-
 
     videostream = ffmpeg.overwrite_output(videostream)
     args = videostream.get_args()
@@ -375,6 +332,7 @@ def ffmpeg_trim_audio_clip_atrim_encode(input_file: Path, stream_index: int, tim
     :param outpath: Path to save to.
     :param format: Output format (e.g. mp3, flac, etc), required if extension of outpath is missing/not the intended
                     format. Required if outpath is "pipe:" since there is no output extension to infer from.
+    :param silent: If set, suppresses stderr.
     :return: FFmpeg stdout data if capture_stdout is set
     """
     input_stream = ffmpeg.input(str(input_file))
@@ -410,10 +368,7 @@ def ffmpeg_trim_audio_clip_atrim_encode(input_file: Path, stream_index: int, tim
     return stdout
 
 
-def ffmpeg_trim_video_clips():
-    pass
-
-
+# buggy, dont use
 def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, timestamp_end: int, quality, outpath: Path,
                                       quiet: bool=True):
     videostream = ffmpeg.input(str(videofile))
@@ -428,6 +383,7 @@ def ffmpeg_trim_video_clip_directcopy(videofile: Path, timestamp_start: int, tim
     except ffmpeg._run.Error as e:
         print(e.stderr.decode("utf-8"))
         raise e
+
 
 # todo: only first audio stream is saved, just want target audio, nothing else
 #  https://video.stackexchange.com/a/21738

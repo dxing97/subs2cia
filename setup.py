@@ -28,7 +28,9 @@ setuptools.setup(
     install_requires=[
         "ffmpeg-python",
         "pycountry",
-        "pysubs2"
+        "pysubs2",
+        "tqdm",
+        "pandas"
     ],
     entry_points={
         # create a cli command called 'subs2cia' which runs the main() function in subs2cia.cli

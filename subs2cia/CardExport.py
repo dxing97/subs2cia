@@ -9,6 +9,7 @@ import logging
 import tqdm
 import pandas as pd
 
+
 class CardExport(Common):
     def __init__(self, sources: List[AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool, padding: int,
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,

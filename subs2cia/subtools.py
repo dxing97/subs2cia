@@ -12,14 +12,6 @@ import copy
 from typing import List, Union
 
 
-# def overlap_any_range(range1: List[int], ranges: List[List[int]]):
-#     for r in ranges:
-#         assert len(r) == 2
-#         if overlap_range(r, range1):
-#             trimmed = ssaevent_trim(e, ir)
-#             return trimmed
-
-
 def overlap_range(range1: List[int], range2: List[int]):
     assert len(range1) == len(range2) == 2
     if range1[0] < range2[0] < range1[1] or range1[0] < range2[1] < range1[1] or range2[0] < range1[0] < range2[1] or \
@@ -36,10 +28,10 @@ def ssaevent_trim(event: ps2.SSAEvent, ir: List[int]):
     if subtitle is on both sides of IR
         split subtitle into two and trim each
     if subtitle is entirely inside IR
-        don't add to groups
-    :param event: SSAEvent to trim or drop
-    :param ir: Ignore range, list of two integers
-    :return: List of trimmed events. There may be one, two or none events returned
+        drop it
+    :param event: SSAEvent to trim/split+trim/drop
+    :param ir: Ignore range, two integers representing milliseconds
+    :return: List of trimmed events. There may be zero, one, or two events returned
     """
 
     assert len(ir) == 2
@@ -68,8 +60,14 @@ def ssaevent_trim(event: ps2.SSAEvent, ir: List[int]):
     # should never get here
     assert False
 
+
 def ignore_nibble(ignore_ranges: List[List[int]], e: ps2.SSAEvent):
-    trimmed = []
+    r"""
+    Given a set of ignore_ranges and a SSAEvent, determine if the event falls in an IR and if it does, trim it
+    :param ignore_ranges: List of IRs
+    :param e: SSAEvent of interest
+    :return: List of SSAEvents
+    """
     for ir in ignore_ranges:
         assert len(ir) == 2
         if overlap_range(ir, [e.start, e.end]):
@@ -106,6 +104,10 @@ class SubGroup:
 
     @property
     def group_range(self):
+        r"""
+        Subtitle group start, end with padding
+        :return: [range_start, range_end]
+        """
         if self.contains_only_ephemeral:
             return [self.events_start, self.events_end]
         grange = self.padding
@@ -113,6 +115,10 @@ class SubGroup:
 
     @property
     def group_limits(self):
+        r"""
+        Subtitle group start/end extended with padding and threshold
+        :return: [limit_start, limit_end]
+        """
         if self.contains_only_ephemeral:
             return [self.events_start, self.events_end]
         limit = self.threshold/2 + self.padding  # divide by two: threshold is distance to next group
@@ -121,15 +127,6 @@ class SubGroup:
     def __repr__(self):
         s = f"<SubGroup, |{self.group_limits[0]} {self.group_range[0]} {(self.events_start, self.events_end)} {self.group_range[1]} {self.group_limits[1]}|]"
         return s
-
-    # def export(self, audio: Union[Stream, None], screenshot: Union[Stream, None], video: Union[Stream, None],
-    #            quality: Union[int, None], to_mono: bool, normalize_audio: bool, outpath: Path):
-    #     # print(f"SubGroup export called on {self}")
-    #     if audio is not None:
-    #         ffmpeg_trim_audio_clip_atrim_encode(input_file=audio.demux_file, stream_index=audio.index,
-    #                                             timestamp_start=self.group_range[0], timestamp_end=self.group_range[1],
-    #                                             quality=quality, to_mono=to_mono, normalize_audio=normalize_audio,
-    #                                             outpath=outpath)
 
 
 class SubtitleManipulator:
@@ -163,7 +160,8 @@ class SubtitleManipulator:
                 for idx, (sign, duration) in enumerate(irange):
                     if sign == "+":
                         if idx == 0:
-                            raise AssertionError("Can't have '+' as first range value, must be second range value "
+                            raise AssertionError("Can't have duration '+' as first range value, "
+                                                 "must be second range value "
                                                  "(e.g. -I 1m +1m30s)")
                         to_append.append(to_append[0] + duration)
                     elif sign == "e":
@@ -174,8 +172,9 @@ class SubtitleManipulator:
                         # shouldn't get here, re.findall should strip anything unexpected out
                         raise AssertionError(f"SubtitleManipulator received unexpected sign ({sign})")
                 if not to_append[0] < to_append[1]:
-                    raise AssertionError(f"An ignore range is invalid: end of range "
-                                         f"({to_append[0]}ms) is before start of range ({to_append[1]})")
+                    raise AssertionError(f"Ignore range '{irange[0][0]}{irange[0][1]}ms {irange[1][0]}{irange[1][1]}ms'"
+                                         f" is invalid: end of range "
+                                         f"({to_append[1]}ms) is before start of range ({to_append[0]}ms)")
                 self.ignore_range.append(to_append)
 
     def load(self, include_all, regex):

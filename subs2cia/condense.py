@@ -11,25 +11,6 @@ from pathlib import Path
 from typing import Union, List
 
 
-# def picked_sources_are_insufficient(d: dict):
-#     for k in d:
-#         if d[k] == 'retry':
-#             return True
-#     if d['subtitle'] is None:
-#         return True
-#     if d['audio'] is None:
-#         return True
-#     return False
-#
-#
-# def insufficient_source_streams(d: dict):
-#     if len(d['subtitle']) == 0:
-#         return True
-#     if len(d['audio']) == 0:
-#         return True
-#     return False
-
-
 class Condense(Common):
     def __init__(self, sources: [AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool,
                  threshold: int, padding: int,
@@ -213,12 +194,3 @@ class Condense(Common):
             self.export_audio()
         if self.condensed_video:
             self.export_video()
-
-    def cleanup(self):
-        if self.keep_temporaries:
-            return
-        for k in ['audio', 'video', 'subtitle']:
-            if len(self.partitioned_streams) == 0:
-                continue
-            for s in self.partitioned_streams[k]:
-                s.cleanup_demux()

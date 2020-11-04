@@ -61,6 +61,7 @@ def condense_start(args, groups: List[List[AVSFile]]):
         c.export()
         c.cleanup()
 
+
 def srs_export_start(args, groups: List[List[AVSFile]]):
     srs_args = {key: args[key] for key in
                  ['outdir', 'outstem', 'condensed_video', 'padding', 'demux_overwrite_existing',
@@ -80,7 +81,8 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
             continue
         c.choose_streams()
         c.export()
-        # c.cleanup()
+        c.cleanup()
+
 
 def start():
     if not shutil.which('ffmpeg'):
@@ -118,10 +120,6 @@ def start():
     if args['infiles'] is None:
         logging.info("No input files given, nothing to do.")
         exit(0)
-
-    # todo: can we remove this sort and still have groupings work properly?
-    #  Removing sorting would be nice for stream picking down the road
-    args['infiles'].sort()
 
     if args['absolute_paths']:
         sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]

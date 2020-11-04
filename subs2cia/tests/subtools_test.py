@@ -25,7 +25,7 @@ if __name__ == '__main__':
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG)
 
-    sub_obj = SubtitleManipulator(subpath=Path(args.subfile), threshold=1500, padding=200)
+    sub_obj = SubtitleManipulator(subpath=Path(args.subfile), threshold=1500, padding=200, ignore_range=None, audio_length=0)
     sub_obj.load(include_all=False, regex=None)
     print(sub_obj)
     sub_obj.merge_groups()

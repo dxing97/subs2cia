@@ -277,18 +277,21 @@ def ffmpeg_get_frame(videofile: Path, timestamp: int, outpath: Path):
     ffmpeg.run(videostream)
 
 
-def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int, h: int, silent: bool = True):
+def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int, h: int,
+                          format: Union[str, None] = None, capture_stdout: bool = False, silent: bool = True):
     r"""
     Gets a screenshot from a video file
-    :param videofile:
-    :param timestamp: In milliseconds
-    :param outpath:
+    :param videofile: Path to input file containing a video stream
+    :param timestamp: Timestamp to get in milliseconds
+    :param outpath: Output path to save to. If set to 'pipe:', will instead pipe to stdout.
     :param w: Width in pixels. -1 preserves aspect ratio.
     :param h: Height in pixels. -1 preserves aspect ratio.
-    :param silent: Suppresses stderr if set.
+    :param format: Output format (e.g. mjpeg for JPG, image2 for PNG, etc), required if outpath is missing/misleading an extension.
+    :param capture_stdout: If set to true, captures ffmpeg's stdout and returns as raw bytestream.
+            Otherwise prints to stdout.
+    :param silent: Suppresses stderr from printing if set. Useful for exporting many frames at a time.
     :return:
     """
-    # logging.debug(f"Saving frame from {videofile} at {timestamp}ms to {outpath}")
 
     # from https://stackoverflow.com/a/28321986
     videostream = ffmpeg.input(str(videofile), ss=timestamp/1000)
@@ -296,11 +299,18 @@ def ffmpeg_get_frame_fast(videofile: Path, timestamp: int, outpath: Path, w: int
         pass
     else:
         videostream = videostream.video.filter('scale', w, h)
-    videostream = ffmpeg.output(videostream, str(outpath), vframes=1)
+
+    kwargs = {'vframes': 1}
+    if format is not None:
+        kwargs['format'] = format
+
+    videostream = ffmpeg.output(videostream, str(outpath), **kwargs)
     videostream = ffmpeg.overwrite_output(videostream)
     args = videostream.get_args()
-    # logging.debug(f"ffmpeg_get_frame_fast: args: {args}")
-    ffmpeg.run(videostream, capture_stderr=silent)
+    logging.debug(f"ffmpeg_get_frame_fast: args: {args}")
+    stdout, stderr = ffmpeg.run(videostream, capture_stdout=capture_stdout, capture_stderr=silent)
+
+    return stdout
 
 
 def ffmpeg_trim_audio_clip_directcopy(videofile: Path, stream_index: int, timestamp_start: int, timestamp_end: int, outpath: Path):

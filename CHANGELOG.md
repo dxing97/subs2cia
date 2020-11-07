@@ -10,9 +10,10 @@
         - Ignore last minute: `-I e1m +1m` or `-I e1m e0m`
         - Ignore 1m30s after 2 minute mark: `-I 2m +1m30s`
  - Interactive mode for selecting audio/subtitle/video streams as alternative to current automatic picker system
+ - Bitrate, mono-channel output controls
  
  ### Fixed
- - Fix infinite loop that ococured when ignore range exactly matched subtitle start/end
+ - Fix infinite loop that occurred when ignore range exactly matched subtitle start/end
  - Fix issue where files were not correctly grouped
  - Picker now accounts for input file order when choosing streams
  

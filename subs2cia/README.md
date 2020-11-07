@@ -67,3 +67,9 @@ delete any demuxed files (if told to do so) then terminate execution
 do ffmpeg condensing stuff here
 
 ```
+
+### Upload package to PyPi
+```
+python setup.py sdist bdist_wheel
+twine upload dist/*
+```

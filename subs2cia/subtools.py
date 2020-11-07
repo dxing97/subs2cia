@@ -125,7 +125,7 @@ class SubGroup:
         return [self.events_start - limit if self.events_start - limit > 0 else 0, self.events_end + limit]
 
     def __repr__(self):
-        s = f"<SubGroup, |{self.group_limits[0]} {self.group_range[0]} {(self.events_start, self.events_end)} {self.group_range[1]} {self.group_limits[1]}|]"
+        s = f"<SubGroup |{self.group_limits[0]} {self.group_range[0]} {(self.events_start, self.events_end)} {self.group_range[1]} {self.group_limits[1]}|>"
         return s
 
 

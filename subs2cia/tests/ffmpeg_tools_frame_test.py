@@ -32,8 +32,8 @@ if __name__ == '__main__':
     # ffmpeg_get_frames(Path(args.videofile), args.timestamps, outdir=Path("."), outstem=Path(args.videofile).stem,
     #                   outext=".jpg", w=-1, h=-1)
 
-    stdout = ffmpeg_get_frame_fast(Path(args.videofile), args.timestamps[3], outpath=Path('pipe:'), w=-1, h=-1,
-                                   capture_stdout=True, format='image2', silent=False)
+    stdout = ffmpeg_get_frame_fast(Path(args.videofile), args.timestamps[3], outpath=Path('output.png'), w=-1, h=-1,
+                                   capture_stdout=True, format=None, silent=False)
 
     encoded = base64.b64encode(stdout)
     print(encoded)

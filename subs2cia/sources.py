@@ -8,6 +8,8 @@ import logging
 import ffmpeg
 import pycountry
 from typing import List, Union
+from collections import defaultdict
+
 
 
 class AVSFile:
@@ -31,7 +33,7 @@ class AVSFile:
         logging.debug(f"ffmpeg probe results: {self.info}")
 
     def get_type(self):
-        if self.info is None:
+        if self.info is None:  # ffprobe probably failed for some reason
             self.type = 'unknown'
             return
         if 'streams' not in self.info:
@@ -47,8 +49,11 @@ class AVSFile:
             logging.info(f"File {str(self.filepath)} contains no audio or subtitle tracks!")
         self.type = stream['codec_type']
 
+    def __str__(self):
+        return f"{str(self.filepath)} ({self.type})"
+
     def __repr__(self):
-        return str(self.filepath)
+        return f"AVSFile(filepath={self.filepath.__repr__()})"
 
 
 # single ffmpeg stream
@@ -71,11 +76,14 @@ class Stream:
             return True
         return False
 
-    def __repr__(self):
+    def __str__(self):
         if self.is_standalone():
-            return str(self.file)
+            return f"standalone {self.stream_info['codec_name']} {self.type} at {str(self.file)}"
         else:
-            return f"stream {self.index} ({self.type}) in {self.file}"
+            return f"stream {self.index} ({self.type}, {self.stream_info['codec_name']}) in {self.file}"
+
+    def __repr__(self):
+        return f"Stream(file={self.file.__repr__()}, type={self.type}, index={self.index})"
 
     def get_language(self):
         if self.lang != 'unknownlang':
@@ -217,3 +225,23 @@ def group_files(sources: [AVSFile]):
     file_groups = group_names_better(sources)
     logging.debug(f"groups: {[[f.filepath for f in g] for g in file_groups]}")
     return file_groups
+
+
+def get_and_partition_streams(sources: List[AVSFile]):
+    partitioned_streams = defaultdict(list)
+    for sourcefile in sources:
+        if sourcefile.type == 'video':
+            # dig into streams
+            for idx, stream_info in enumerate(sourcefile.info['streams']):
+                stype = stream_info['codec_type']
+                partitioned_streams[stype].append(Stream(file=sourcefile, type=stype,
+                                                              index=idx, stream_info=stream_info))
+            continue
+        partitioned_streams[sourcefile.type].append(Stream(file=sourcefile, type=sourcefile.type,
+                                                                stream_info=sourcefile.info['streams'][0],
+                                                                index=None))
+        # for stream in sourcefile
+    for k in partitioned_streams:
+        logging.info(f"Found {len(partitioned_streams[k])} {k} input streams")
+        # logging.debug(f"Streams found: {self.partitioned_streams[k]}")
+    return partitioned_streams

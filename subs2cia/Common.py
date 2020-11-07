@@ -1,6 +1,6 @@
 from subs2cia.sources import AVSFile
 from subs2cia.pickers import picker
-from subs2cia.sources import Stream
+from subs2cia.sources import Stream, get_and_partition_streams
 import subs2cia.subtools as subtools
 from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 
@@ -120,21 +120,22 @@ class Common:
 
     # go through source files and count how many subtitle and audio streams we have
     def get_and_partition_streams(self):
-        for sourcefile in self.sources:
-            if sourcefile.type == 'video':
-                # dig into streams
-                for idx, stream_info in enumerate(sourcefile.info['streams']):
-                    stype = stream_info['codec_type']
-                    self.partitioned_streams[stype].append(Stream(file=sourcefile, type=stype,
-                                                                  index=idx, stream_info=stream_info))
-                continue
-            self.partitioned_streams[sourcefile.type].append(Stream(file=sourcefile, type=sourcefile.type,
-                                                                    stream_info=sourcefile.info,
-                                                                    index=None))
-            # for stream in sourcefile
-        for k in self.partitioned_streams:
-            logging.info(f"Found {len(self.partitioned_streams[k])} {k} input streams")
-            # logging.debug(f"Streams found: {self.partitioned_streams[k]}")
+        self.partitioned_streams = get_and_partition_streams(self.sources)
+        # for sourcefile in self.sources:
+        #     if sourcefile.type == 'video':
+        #         # dig into streams
+        #         for idx, stream_info in enumerate(sourcefile.info['streams']):
+        #             stype = stream_info['codec_type']
+        #             self.partitioned_streams[stype].append(Stream(file=sourcefile, type=stype,
+        #                                                           index=idx, stream_info=stream_info))
+        #         continue
+        #     self.partitioned_streams[sourcefile.type].append(Stream(file=sourcefile, type=sourcefile.type,
+        #                                                             stream_info=sourcefile.info,
+        #                                                             index=None))
+        #     # for stream in sourcefile
+        # for k in self.partitioned_streams:
+        #     logging.info(f"Found {len(self.partitioned_streams[k])} {k} input streams")
+        #     # logging.debug(f"Streams found: {self.partitioned_streams[k]}")
 
     def initialize_pickers(self):
         for k in self.pickers:

@@ -1,5 +1,5 @@
 from subs2cia.sources import AVSFile
-from subs2cia.Common import Common, interactive_picker
+from subs2cia.Common import Common, interactive_picker, chapter_timestamps
 import subs2cia.subtools as subtools
 from subs2cia.ffmpeg_tools import ffmpeg_trim_audio_clip_atrim_encode, ffmpeg_get_frame_fast, ffmpeg_trim_video_clip_directcopy
 
@@ -15,8 +15,8 @@ class CardExport(Common):
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool,
-                 interactive: bool, normalize_audio: bool):
+                 ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
+                 bitrate: Union[int, None], mono_channel: bool, interactive: bool, normalize_audio: bool):
         super(CardExport, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -33,6 +33,7 @@ class CardExport(Common):
             audio_stream_index=audio_stream_index,
             subtitle_stream_index=subtitle_stream_index,
             ignore_range=ignore_range,
+            ignore_chapters=ignore_chapters,
             bitrate=bitrate,
             mono_channel=mono_channel,
             interactive=interactive
@@ -61,6 +62,7 @@ class CardExport(Common):
                 self.insufficient = True
                 return
             subfile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
+            ignore_range = (self.ignore_range or []) + chapter_timestamps(self.picked_streams[k].file, self.ignore_chapters or [])
             if subfile is None:
                 logging.warning(f"Error while demuxing {self.picked_streams[k]}")
                 self.picked_streams[k] = None
@@ -68,7 +70,7 @@ class CardExport(Common):
             audiolength = subtools.get_audiofile_duration(self.picked_streams['audio'].demux_file.filepath)
             subdata = subtools.SubtitleManipulator(subfile.filepath,
                                                    threshold=0, padding=self.padding,
-                                                   ignore_range=self.ignore_range, audio_length=audiolength)
+                                                   ignore_range=ignore_range, audio_length=audiolength)
             subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
             if subdata.ssadata is None:
                 logging.warning(f"Problem loading subtitle data from {self.picked_streams[k]}")

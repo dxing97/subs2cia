@@ -45,8 +45,8 @@ def condense_start(args, groups: List[List[AVSFile]]):
                  ['outdir', 'outstem','condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
-                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'bitrate', 'mono_channel',
-                  'interactive']}
+                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
+                  'bitrate', 'mono_channel', 'interactive']}
 
     condensed_files = [Condense(g, **condense_args) for g in groups]
     for c in condensed_files:
@@ -66,8 +66,8 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
     srs_args = {key: args[key] for key in
                  ['outdir', 'outstem', 'condensed_video', 'padding', 'demux_overwrite_existing',
                   'overwrite_existing_generated', 'keep_temporaries', 'target_lang', 'out_audioext', 'use_all_subs',
-                  'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'bitrate',
-                  'mono_channel', 'interactive', 'normalize_audio']
+                  'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
+                  'bitrate', 'mono_channel', 'interactive', 'normalize_audio']
                 }
 
     cardexport_group = [CardExport(g, **srs_args) for g in groups]

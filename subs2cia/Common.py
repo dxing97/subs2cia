@@ -30,6 +30,11 @@ def insufficient_source_streams(d: dict):
     return False
 
 
+def chapter_timestamps(sourcefile: AVSFile, ignore_chapters: List[str]):
+    chapters = sourcefile.info['chapters'] or []
+    return [[('', 1000 * int(float((chapter['start_time'])))), ('', 1000 * int(float(chapter['end_time'])))]
+            for chapter in chapters if chapter['tags']['title'] in ignore_chapters]
+
 def interactive_picker(sources: List[AVSFile], partitioned_streams: Dict[str, Stream], media_type: str):
     print("Input files:")
     for avsf in sources:
@@ -66,8 +71,8 @@ class Common:
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool,
-                 interactive: bool):
+                 ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
+                 bitrate: Union[int, None], mono_channel: bool, interactive: bool):
         if outdir is None:
             self.outdir = sources[0].filepath.parent
         else:
@@ -113,6 +118,7 @@ class Common:
         self.subtitle_stream_index = subtitle_stream_index
         # todo: verify ignore_range, make sure start is after end
         self.ignore_range = ignore_range
+        self.ignore_chapters = ignore_chapters
 
         self.insufficient = False
 

@@ -12,8 +12,9 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
     # output format is specified via extention on outfile
     logging.debug(f"demuxing stream {stream_idx} from file {infile} to {outfile}")
     video = ffmpeg.input(infile)
-    stream = video[str(stream_idx)]  # don't need 0
-    stream = ffmpeg.output(stream, str(outfile))
+    stream = video[str(stream_idx)]
+    output_args = {'codec': 'copy'} if str(outfile).endswith('.sup') else {}
+    stream = ffmpeg.output(stream, str(outfile), **output_args)
     stream = ffmpeg.overwrite_output(stream)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(stream)}")
     try:

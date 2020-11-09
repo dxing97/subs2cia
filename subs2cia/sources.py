@@ -9,8 +9,8 @@ import ffmpeg
 import pycountry
 from typing import List, Union
 from collections import defaultdict
-
-
+import pysubs2 as ps2
+from subs2cia.pgsreader import PGSReader
 
 class AVSFile:
     def __init__(self, filepath: Path):
@@ -128,9 +128,9 @@ class Stream:
             if self.type == 'subtitle':
                 subtitle_mapping = {
                     'subrip': 'srt',
-                    'ass': 'ass'
+                    'ass': 'ass',
+                    'hdmv_pgs_subtitle': 'sup'
                 }
-                # todo: bitmap subtitles
                 if self.stream_info is not None and 'codec_name' in self.stream_info:
                     if self.stream_info['codec_name'] not in subtitle_mapping:
                         extension = 'ass'
@@ -153,10 +153,49 @@ class Stream:
                     logging.error(
                         f"Couldn't demux stream {self.index} from {str(self.file.filepath)} (type={self.type})")
                     return None
+
+        if self.type == 'subtitle' and str(demux_path).endswith('.sup'):
+            demux_path = self._convert_to_ass(demux_path)
+
         self.demux_file = AVSFile(demux_path)
         self.demux_file.probe()
         self.demux_file.get_type()
         return self.demux_file
+
+    def _convert_to_ass(self, path: Path):
+        path_string = str(path)
+
+        if not path_string.endswith('.sup'):
+            return path
+ 
+        reader = PGSReader(path_string)
+        ssadata = ps2.SSAFile()
+        sub_start_time = None
+        sub_end_time = None
+        index = 0
+
+        for ds in reader.iter_displaysets():
+            if ds.has_image:
+                sub_start_time = sub_start_time or ds.ods[0].presentation_timestamp
+            elif sub_start_time:
+                sub_end_time = ds.end[0].presentation_timestamp
+                ssadata.insert(
+                    index,
+                    ps2.SSAEvent(
+                        start=ps2.make_time(ms=sub_start_time),
+                        end=ps2.make_time(ms=sub_end_time),
+                        text="n/a"
+                    )
+                )
+                index += 1
+                sub_start_time = None
+
+        ass_path = path_string[0:len(path_string) - 4] + '.ass'
+        ssadata.save(ass_path)
+        path.unlink()
+
+        return Path(ass_path)
+
 
     def cleanup_demux(self):
         if self.demux_file is not None and self.index is not None:

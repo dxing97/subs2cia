@@ -1,4 +1,4 @@
-from subs2cia.Common import Common, interactive_picker
+from subs2cia.Common import Common, interactive_picker, chapter_timestamps
 from subs2cia.sources import AVSFile
 from subs2cia.pickers import picker
 from subs2cia.sources import Stream
@@ -17,8 +17,8 @@ class Condense(Common):
                  partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio: float,
                  use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: Union[List[List[int]], None], bitrate: Union[int, None], mono_channel: bool,
-                 interactive: bool):
+                 ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
+                 bitrate: Union[int, None], mono_channel: bool, interactive: bool):
         super(Condense, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -35,6 +35,7 @@ class Condense(Common):
             audio_stream_index=audio_stream_index,
             subtitle_stream_index=subtitle_stream_index,
             ignore_range=ignore_range,
+            ignore_chapters=ignore_chapters,
             bitrate=bitrate,
             mono_channel=mono_channel,
             interactive=interactive
@@ -98,10 +99,11 @@ class Condense(Common):
                 continue
 
             assert(self.picked_streams['audio'] is not None)  # must call choose_audio first
+            ignore_range = (self.ignore_range or []) + chapter_timestamps(self.picked_streams['audio'].file, self.ignore_chapters or [])
             audiolength = subtools.get_audiofile_duration(self.picked_streams['audio'].demux_file.filepath)
             subdata = subtools.SubtitleManipulator(subfile.filepath,
                                                    threshold=self.threshold, padding=self.padding,
-                                                   ignore_range=self.ignore_range, audio_length=audiolength)
+                                                   ignore_range=ignore_range, audio_length=audiolength)
             subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
             if subdata.ssadata is None:
                 logging.warning(f"Problem loading subtitle data from {self.picked_streams[k]}")

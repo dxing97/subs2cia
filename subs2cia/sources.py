@@ -25,7 +25,7 @@ class AVSFile:
     # but sometimes its better to use a parser and make sure the extension is correct
     def probe(self):
         try:
-            self.info = ffmpeg.probe(self.filepath, cmd='ffprobe')
+            self.info = ffmpeg.probe(self.filepath, 'ffprobe', **{'show_chapters': None})
         except ffmpeg.Error as e:
             logging.warning(
                 f"Couldn't probe file, skipping {str(self.filepath)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))

@@ -160,7 +160,9 @@ def get_args_subs2cia():
                                     #     "\t-I -2m +1m30s  # ignore subtitles that exist in the first 1m30s of the last 2 minutes of audio"
                                  "If batch mode is enabled, the same ranges are applied to ALL outputs."
                                  "Multiple ranges can be specified like so: -I 2m 3m30s -I 20m 21m. ")
-
+    parent_parser.add_argument('-Ic', '--ignore-chapter', metavar="<chapter name>", dest="ignore_chapters", default=None,
+                            type=str, action="append",
+                            help="Chapters to ignore. Can be used in addition to --ignore-range to ignore sections of the stream.")
     parent_parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                             type=int,
                             help='Adds this many milliseconds of audio before and after every subtitle. '

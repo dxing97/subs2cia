@@ -31,9 +31,25 @@ def insufficient_source_streams(d: dict):
 
 
 def chapter_timestamps(sourcefile: AVSFile, ignore_chapters: List[str]):
+    if len(ignore_chapters) == 0:
+        return []
+
     chapters = sourcefile.info['chapters'] or []
-    return [[('', 1000 * int(float((chapter['start_time'])))), ('', 1000 * int(float(chapter['end_time'])))]
-            for chapter in chapters if chapter['tags']['title'] in ignore_chapters]
+
+    if len(chapters) == 0:
+        return []
+
+    chapters_by_title = {c['tags']['title']: c for c in chapters}
+    timestamps = []
+
+    for title in ignore_chapters:
+        if title in chapters_by_title:
+            chapter = chapters_by_title[title]
+            timestamps.append([('', 1000 * int(float((chapter['start_time'])))), ('', 1000 * int(float(chapter['end_time'])))])
+        else:
+            logging.warning(f"Chapter '{title}' was specified to be ignored, but it was not found")
+
+    return timestamps
 
 def interactive_picker(sources: List[AVSFile], partitioned_streams: Dict[str, Stream], media_type: str):
     print("Input files:")

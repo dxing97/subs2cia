@@ -7,6 +7,8 @@ from subs2cia.ffmpeg_tools import export_condensed_audio, export_condensed_video
 from typing import List, Union, Dict
 from collections import defaultdict
 from pathlib import Path
+from pprint import pprint
+import pysubs2 as ps2
 
 import logging
 
@@ -50,6 +52,7 @@ def chapter_timestamps(sourcefile: AVSFile, ignore_chapters: List[str]):
             logging.warning(f"Chapter '{title}' was specified to be ignored, but it was not found")
 
     return timestamps
+
 
 def interactive_picker(sources: List[AVSFile], partitioned_streams: Dict[str, Stream], media_type: str):
     print("Input files:")
@@ -169,7 +172,8 @@ class Common:
             self.pickers[k] = picker(self.partitioned_streams[k], target_lang=self.target_lang, forced_stream=idx)
 
     def list_streams(self):
-        print(f"Listing streams found in {self.sources}")
+        source_string = ', '.join([str(s) for s in self.sources])
+        print(f"Listing streams found in {source_string}")
         for k in ['subtitle', 'audio', 'video']:
             print(f"Available {k} streams:")
             for idx, stream in enumerate(self.partitioned_streams[k]):
@@ -182,12 +186,28 @@ class Common:
                         desc_str = desc_str + "lang_code: " + tags['language'] + ", "
                     if "title" in tags:
                         desc_str = desc_str + "title: " + tags['title'] + ", "
+                desc_str = desc_str + f"[{stream.file.filepath}]"
                 if desc_str == '':
                     desc_str = f"Stream {idx: 3}: no information found"
                 else:
                     desc_str = f"Stream {idx: 3}: {desc_str}"
                 print(desc_str)
             print("")
+
+        print(f"Available chapters:")
+        for source in self.sources:
+            if source.type != 'video':
+                continue
+            if 'chapters' not in source.info or len(source.info['chapters']) == 0:
+                continue
+            chapters = source.info['chapters']
+            chapters_by_title = {c['tags']['title']: c for c in chapters}
+            # pprint(chapters_by_title)
+            for k in chapters_by_title:
+                start = ps2.time.ms_to_str(float(chapters_by_title[k]['start_time']) * 1000)
+                end = ps2.time.ms_to_str(float(chapters_by_title[k]['end_time']) * 1000)
+                print(f'{start} - {end} "{k}"')
+        print("\n")
 
     def choose_audio(self, interactive: bool):
         r"""

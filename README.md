@@ -8,6 +8,7 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
      * Automagically choose input sources from a certain language or manually specify what inputs to condense
      (`-tl`, `-si`, `-ai`, `-ls`)
      * Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
+     * Ignore subtitled music found in openings/endings manually (`-I`) or by chapter (`-Ic`)  
      * Reinserts natural spacing between sentences that start and end close together (`-t`)
      * Pads subtitles with additional audio (`-p`)
      * Process multiple files with batch mode (`-b`)

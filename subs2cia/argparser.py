@@ -82,9 +82,12 @@ def get_args_subs2cia():
                                  'Use --list-streams for a list of available streams and their indices.')
 
     parent_parser.add_argument('-b', '--batch', action='store_true', dest='batch', default=False,
-                            help='If set, attempts to split input files into groups, one output file per group. '
+                            help='If set, attempts to split input files into groups, one set of outputs per group. '
                                  'Groups are determined by file names. If two files share the same root name, such as '
-                                 '"video0.mkv" and "video0.srt", then they are part of the same group.')
+                                 '"video0.mkv" and "video0.srt", then they are part of the same group. '
+                                 'If file names contain a language code as a suffix, '
+                                 'then the suffix will also be ignored (e.g. "video1.eng.flac" and "video1.ja.srt" '
+                                 'will be grouped together under "video1")')
 
     parent_parser.add_argument('-u', '--dry-run', action='store_true', dest='dry_run', default=False,
                             help="If set, will analyze input files but won't demux or generate any output files")
@@ -105,7 +108,7 @@ def get_args_subs2cia():
     parent_parser.add_argument('-ae', '--audio-extension', metavar='<audio extension>', dest='out_audioext', default='mp3',
                             type=str,
                             help='Output audio extension to save as (without the dot). '
-                                 'Default is mp3, flac has been tested to work.')
+                                 'Default is mp3.')
 
     parent_parser.add_argument('-q', '--bitrate', metavar='<bitrate in kbps>', dest='bitrate', default=320,
                             type=int,
@@ -160,9 +163,12 @@ def get_args_subs2cia():
                                     #     "\t-I -2m +1m30s  # ignore subtitles that exist in the first 1m30s of the last 2 minutes of audio"
                                  "If batch mode is enabled, the same ranges are applied to ALL outputs."
                                  "Multiple ranges can be specified like so: -I 2m 3m30s -I 20m 21m. ")
+
     parent_parser.add_argument('-Ic', '--ignore-chapter', metavar="<chapter name>", dest="ignore_chapters", default=None,
                             type=str, action="append",
-                            help="Chapters to ignore. Can be used in addition to --ignore-range to ignore sections of the stream.")
+                            help="Chapter titles to ignore, case sensitive. Can use -ls to determine chapter titles. "
+                                 "Can be used in addition to --ignore-range to ignore sections of the stream.")
+
     parent_parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                             type=int,
                             help='Adds this many milliseconds of audio before and after every subtitle. '
@@ -174,7 +180,8 @@ def get_args_subs2cia():
                                  'Input should be an ISO 639-3 language code.')
 
     parent_parser.add_argument('-ls', '--list-streams', dest='list_streams', action='store_true', default=False,
-                            help='Lists all audio, subtitle, and video streams found in given input files and exits.')
+                            help='Lists all audio, subtitle, and video streams as well as chapters '
+                                 'found in given input files and exits.')
 
     parent_parser.add_argument('--preset', metavar='preset#', dest='preset', type=int, default=None,
                             help='If set, uses a given preset. User arguments will override presets.')
@@ -232,7 +239,7 @@ def get_args_subs2cia():
                             help="Will only generate from subtitle files that are this fraction long of the selected audio "
                                  "file. Default is 0.2, meaning the output condensed file must be at least 20 percent as long as "
                                  "the chosen audio stream. If the output doesn't reach this minimum, then a different "
-                                 "subtitle file will be chosen, if available. Used for ignoring subtitles that contain only"
+                                 "subtitle file will be chosen, if available. Used for ignoring subtitles that contain only "
                                  "signs and songs.")
 
     args = parser.parse_args()

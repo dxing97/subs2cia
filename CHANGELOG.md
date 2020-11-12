@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2020-11-11
+
+### Added 
+ - Can now ignore chapters `-Ic` in addition to time ranges (`-I`)
+ - `-ls` now also lists chapter start/end times and titles for use with `-Ic`
+ 
+
 ## [0.3.0] - 2020-11-03
 ### Added
  - Export subtitles, audio, screenshots for use in a SRS application

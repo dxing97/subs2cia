@@ -9,9 +9,10 @@ usage: subs2cia condense [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
                          [--overwrite-on-demux] [--keep-temporaries]
                          [--no-overwrite-on-generation] [-ni]
                          [-R <regular expression>]
-                         [-I [prefix]timestamp [prefix]timestamp] [-p msecs]
-                         [-tl ISO_code] [-ls] [--preset preset#] [-lp] [-a]
-                         [-ma] [-t msecs] [-r secs] [-s secs] [-c <ratio>]
+                         [-I [prefix]timestamp [prefix]timestamp]
+                         [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
+                         [--preset preset#] [-lp] [-a] [-ma] [-t msecs]
+                         [-r secs] [-s secs] [-c <ratio>]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -33,10 +34,13 @@ optional arguments:
                         first. Use --list-streams for a list of available
                         streams and their indices.
   -b, --batch           If set, attempts to split input files into groups, one
-                        output file per group. Groups are determined by file
-                        names. If two files share the same root name, such as
-                        "video0.mkv" and "video0.srt", then they are part of
-                        the same group.
+                        set of outputs per group. Groups are determined by
+                        file names. If two files share the same root name,
+                        such as "video0.mkv" and "video0.srt", then they are
+                        part of the same group. If file names contain a
+                        language code as a suffix, then the suffix will also
+                        be ignored (e.g. "video1.eng.flac" and "video1.ja.srt"
+                        will be grouped together under "video1")
   -u, --dry-run         If set, will analyze input files but won't demux or
                         generate any output files
   -o <name>, --output-name <name>
@@ -50,7 +54,7 @@ optional arguments:
                         the input files reside in.
   -ae <audio extension>, --audio-extension <audio extension>
                         Output audio extension to save as (without the dot).
-                        Default is mp3, flac has been tested to work.
+                        Default is mp3.
   -q <bitrate in kbps>, --bitrate <bitrate in kbps>
                         Output audio bitrate in kbps, lower bitrates result in
                         smaller files and lower fidelity. Ignored if the
@@ -91,6 +95,10 @@ optional arguments:
                         prefix). If batch mode is enabled, the same ranges are
                         applied to ALL outputs.Multiple ranges can be
                         specified like so: -I 2m 3m30s -I 20m 21m.
+  -Ic <chapter name>, --ignore-chapter <chapter name>
+                        Chapter titles to ignore, case sensitive. Can use -ls
+                        to determine chapter titles. Can be used in addition
+                        to --ignore-range to ignore sections of the stream.
   -p msecs, --padding msecs
                         Adds this many milliseconds of audio before and after
                         every subtitle. Overlaps with adjacent subtitles are
@@ -99,8 +107,8 @@ optional arguments:
                         If set, attempts to use audio and subtitle files that
                         are in this language first. Input should be an ISO
                         639-3 language code.
-  -ls, --list-streams   Lists all audio, subtitle, and video streams found in
-                        given input files and exits.
+  -ls, --list-streams   Lists all audio, subtitle, and video streams as well
+                        as chapters found in given input files and exits.
   --preset preset#      If set, uses a given preset. User arguments will
                         override presets.
   -lp, --list-presets   Lists all available built-in presets and exits.
@@ -143,8 +151,8 @@ optional arguments:
                         least 20 percent as long as the chosen audio stream.
                         If the output doesn't reach this minimum, then a
                         different subtitle file will be chosen, if available.
-                        Used for ignoring subtitles that contain onlysigns and
-                        songs.
+                        Used for ignoring subtitles that contain only signs
+                        and songs.
 ```
 
 # SRS Export Usage

@@ -120,7 +120,7 @@ class Common:
         self.quality = bitrate
         self.to_mono = mono_channel
 
-        self.export_video = condensed_video
+        self.condensed_video = condensed_video
         self.padding = padding
         self.demux_overwrite_existing = demux_overwrite_existing
         self.overwrite_existing_generated = overwrite_existing_generated

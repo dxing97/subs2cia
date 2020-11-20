@@ -485,8 +485,8 @@ def get_partitioned_and_split_times_duration(sub_times):
 #     return audio_total
 
 
-# todo: check if stream properties exist
-def get_audiofile_duration(audiofile: Path, stream_idx=0):
+def get_audiofile_duration(audiofile: Path):
+    stream_idx = 0
     audio_info = ffmpeg.probe(str(audiofile), cmd='ffprobe')
     sps = int(
         audio_info['streams'][stream_idx]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency

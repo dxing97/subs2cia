@@ -9,7 +9,7 @@ from subs2cia.argparser import get_args_subs2cia
 from subs2cia.sources import AVSFile, group_files
 from subs2cia.condense import Condense
 from subs2cia.CardExport import CardExport
-__version__ = 'v0.3.1'
+__version__ = 'v0.3.2'
 
 from pathlib import Path
 import logging

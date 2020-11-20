@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.2] - 2020-11-19
+
+### Fixed
+- `-m` was raising an error due to an improper refactor
+
 ## [0.3.1] - 2020-11-11
 
 ### Added 

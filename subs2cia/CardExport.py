@@ -81,7 +81,7 @@ class CardExport(Common):
 
     def export(self):
         # expose these as options at some point
-        export_audio = True
+        export_audio = True  # will need to rename these if they are going to become cli switches so they don't conflict
         export_screenshot = True
         export_video = False
         lbda = 0.0

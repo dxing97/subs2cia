@@ -1,7 +1,7 @@
 import os
 import sys
 import shutil
-
+import glob
 # this line is for when main.py is run directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -121,10 +121,13 @@ def start():
         logging.info("No input files given, nothing to do.")
         exit(0)
 
+    infiles = _resolve(args['infiles'])
+
     if args['absolute_paths']:
-        sources = [AVSFile(Path(file).absolute()) for file in args['infiles']]
+        sources = [AVSFile(Path(file).absolute()) for file in infiles]
     else:
-        sources = [AVSFile(Path(file)) for file in args['infiles']]
+        sources = [AVSFile(Path(file)) for file in infiles]
+
 
     for s in sources:
         s.probe()
@@ -149,6 +152,20 @@ def start():
     }
     commands[args['command']](args, groups)
 
+def _resolve(files):
+    resolved = []
+
+    for f in files:
+        if '*' in f or '?' in f:
+            globbed = glob.glob(f)
+            if len(globbed) > 0:
+                resolved += globbed
+            else:
+                resolved.append(f)
+        else:
+            resolved.append(f)
+
+    return resolved
 
 if __name__ == '__main__':
     start()

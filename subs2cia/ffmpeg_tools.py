@@ -75,8 +75,8 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     logging.debug(f"ffmpeg_condense_audio: ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
     args = ffmpeg.get_args(combined)
     if len("ffmpeg " + " ".join(args)) > 32766 and os.name == 'nt':
-        logging.warning("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
-                        "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
+        logging.info("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
+                     "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
         idx = args.index("-filter_complex") + 1
         complex_filter = str(args[idx])
         # write complex_filter to a temporary file
@@ -238,8 +238,40 @@ def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_time
 
     # output = ffmpeg.output(joined[0], joined[1], outfile)
     out = ffmpeg.overwrite_output(out)
-    logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(out)}")
-    ffmpeg.run(out, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
+    logging.debug(f"ffmpeg_condense_video: ffmpeg arguments: {' '.join(ffmpeg.get_args(out))}")
+
+    args = ffmpeg.get_args(out)
+    if len("ffmpeg " + " ".join(args)) > 32766 and os.name == 'nt':
+        logging.info("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
+                     "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
+        idx = args.index("-filter_complex") + 1
+        complex_filter = str(args[idx])
+        # write complex_filter to a temporary file
+        fp = tempfile.NamedTemporaryFile(
+            delete=False)  # don't delete b/c can't open file again when it's already open in windows
+        fp.write(complex_filter.encode(encoding="utf-8"))
+        fp.close()
+        args[idx] = fp.name
+        args[idx - 1] = "-filter_complex_script"
+    args = ["ffmpeg"] + args
+
+    # ffmpeg.run(out, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
+
+    pipe_stdin = False
+    pipe_stdout = False
+    pipe_stderr = False
+    quiet = logging.getLogger().getEffectiveLevel() >= logging.WARNING
+
+    stdin_stream = subprocess.PIPE if pipe_stdin else None
+    stdout_stream = subprocess.PIPE if pipe_stdout or quiet else None
+    stderr_stream = subprocess.PIPE if pipe_stderr or quiet else None
+    process = subprocess.Popen(
+        args, stdin=stdin_stream, stdout=stdout_stream, stderr=stderr_stream
+    )
+    out, err = process.communicate(input)
+    retcode = process.poll()
+    if retcode:
+        raise Error('ffmpeg', out, err)
 
 
 def ffmpeg_get_frames(videofile: Path, timestamps: List[int], outdir: Path, outstem: str, outext: str, w: int, h: int):

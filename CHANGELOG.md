@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+### Added
+ - Option to disable outputting condensed subtitles (`no-gen-subtitle`)
+ - Regex replace/filter: 
+    - remove parts of subtitles with `-RR`
+    - don't keep changes with `-RRnk`
+ - Add support for globbed inputs (esp. useful on Windows) [#11](https://github.com/dxing97/subs2cia/pull/11)
+
+### Fixed 
+ - Added fix for [#1](https://github.com/dxing97/subs2cia/issues/1) to ffmpeg_condense_video 
+
 ## [0.3.2] - 2020-11-19
 
 ### Fixed

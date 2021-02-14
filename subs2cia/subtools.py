@@ -8,6 +8,12 @@ from datetime import timedelta
 import ffmpeg
 import re
 import copy
+import sys
+import unicodedata
+
+codepoints = range(sys.maxunicode + 1)
+punct_tbl = dict.fromkeys(i for i in range(sys.maxunicode)
+                      if unicodedata.category(chr(i)).startswith('P') or unicodedata.category(chr(i)).startswith('S'))
 
 from typing import List, Union
 
@@ -177,7 +183,7 @@ class SubtitleManipulator:
                                          f"({to_append[1]}ms) is before start of range ({to_append[0]}ms)")
                 self.ignore_range.append(to_append)
 
-    def load(self, include_all, regex):
+    def load(self, include_all: bool, regex: str, substrreplace_regex: str, substrreplace_nokeepchanges: bool):
         if not self.subpath.exists():
             logging.warning(f"Subtitle file {self.subpath} does not exist")
             return
@@ -200,12 +206,32 @@ class SubtitleManipulator:
         self.groups = []
         while len(pool) > 0:
             e = pool.pop(0)
+            ignored = False
+            if substrreplace_regex:
+                new_subtitle_line = re.sub(substrreplace_regex, '', e.plaintext)
+                if new_subtitle_line == e.plaintext:
+                    pass
+                else:
+                    logging.debug(f"substrfilter: modified line:\nold line: {e.plaintext}\nnew line: {new_subtitle_line}")
+                    # is the line now empty or contains only spaces or punctuation/symbols
+                    if len(new_subtitle_line) == 0 or \
+                       new_subtitle_line.isspace() or \
+                       len(new_subtitle_line.translate(punct_tbl)) == 0:
+                        if substrreplace_nokeepchanges:
+                            # mark as non-dialogue
+                            ignored = True
+                        else:
+                            # remove entirely
+                            continue
+                    # do we want to use the original e.plaintext or the stripped and non-empty new_subtitle_line?
+                    if not substrreplace_nokeepchanges:
+                        e.plaintext = new_subtitle_line
             if self.ignore_range is not None:
                 if any([overlap_range(ir, [e.start, e.end]) for ir in self.ignore_range]):
                     trimmed = ignore_nibble(self.ignore_range, e)
                     pool = trimmed + pool
                     continue  # trimmed events may still overlap other ranges, will need to retest
-            self.groups.append(SubGroup([e], ephemeral=not is_dialogue(e, include_all, regex),
+            self.groups.append(SubGroup([e], ephemeral=ignored or not is_dialogue(e, include_all, regex),
                                         threshold=self.threshold,
                                         padding=self.padding))
 

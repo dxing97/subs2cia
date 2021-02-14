@@ -42,11 +42,12 @@ def list_presets():
 
 def condense_start(args, groups: List[List[AVSFile]]):
     condense_args = {key: args[key] for key in
-                 ['outdir', 'outstem','condensed_video', 'padding', 'threshold', 'partition', 'split',
+                 ['outdir', 'outstem', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
+                  'subtitle_regex_substrfilter',
                   'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
-                  'bitrate', 'mono_channel', 'interactive']}
+                  'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles']}
 
     condensed_files = [Condense(g, **condense_args) for g in groups]
     for c in condensed_files:

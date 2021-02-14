@@ -2,17 +2,17 @@
 More readable version Coming Soon.
 ```
 $ subs2cia condense -h
-usage: subs2cia condense [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
-                         [-si <index>] [-ai <index>] [-b] [-u] [-o <name>]
-                         [-d /path/to/directory] [-ae <audio extension>]
-                         [-q <bitrate in kbps>] [-M] [-m]
-                         [--overwrite-on-demux] [--keep-temporaries]
-                         [--no-overwrite-on-generation] [-ni]
-                         [-R <regular expression>]
-                         [-I [prefix]timestamp [prefix]timestamp]
-                         [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
-                         [--preset preset#] [-lp] [-a] [-ma] [-t msecs]
-                         [-r secs] [-s secs] [-c <ratio>]
+usage: main.py condense [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
+                        [-si <index>] [-ai <index>] [-b] [-u] [-o <name>]
+                        [-d /path/to/directory] [-ae <audio extension>]
+                        [-q <bitrate in kbps>] [-M] [-m]
+                        [--overwrite-on-demux] [--keep-temporaries]
+                        [--no-overwrite-on-generation] [-ni]
+                        [-R <regular expression>] [-RR <regular expression>]
+                        [-RRnk] [-I [prefix]timestamp [prefix]timestamp]
+                        [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
+                        [--preset preset#] [-lp] [-a] [-ma] [-t msecs]
+                        [-r secs] [-s secs] [-c <ratio>] [--no-gen-subtitle]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -74,7 +74,7 @@ optional arguments:
   -ni, --ignore-none    If set, will not use internal heuristics to remove
                         non-dialogue lines from the subtitle. Ignored if -R is
                         set.
-  -R <regular expression>, --sref <regular expression>
+  -R <regular expression>, --sub-regex-filter <regular expression>
                         For filtering non-dialogue subtitles. Lines that match
                         given regex are IGNORED during subtitle processing and
                         will not influence condensed audio or be included in
@@ -82,6 +82,19 @@ optional arguments:
                         condensed subtitles if they overlap with non-ignored
                         subtitles. This option will override the internal
                         subs2cia non-dialogue filter.
+  -RR <regular expression>, --sub-regex-substrfilter <regular expression>
+                        Searches subtitle lines and removes all substrings
+                        that match this regular expression. If the resulting
+                        subtitle line becomes empty, contains only spaces, or
+                        contains only punctuation as a result, the entire
+                        subtitle line is removed and will not be present in
+                        the output unless -RRnk is set.
+  -RRnk, --sub-regex-substrfilter-nokeepchanges
+                        If set, the modified subtitle text created by -RR will
+                        not be passed to the output subtitles/cards. Any empty
+                        filtered lines will be marked as non-dialogue instead
+                        of being removed entirely from the output. Useful for
+                        implementing custom dialogue-ignoring
   -I [prefix]timestamp [prefix]timestamp, --ignore-range [prefix]timestamp [prefix]timestamp
                         Time range to ignore when condensing, specified using
                         two timestamps. Useful for removing openings and
@@ -153,6 +166,8 @@ optional arguments:
                         different subtitle file will be chosen, if available.
                         Used for ignoring subtitles that contain only signs
                         and songs.
+  --no-gen-subtitle     If set, won't output a condensed subtitle file. Useful
+                        for reducing file clutter.
 ```
 
 # SRS Export Usage
@@ -160,15 +175,15 @@ optional arguments:
 Many options are shared between SRS and Condense.
 ```
 $ subs2cia srs -h
-usage: subs2cia srs [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
-                    [-si <index>] [-ai <index>] [-b] [-u] [-o <name>]
-                    [-d /path/to/directory] [-ae <audio extension>]
-                    [-q <bitrate in kbps>] [-M] [-m] [--overwrite-on-demux]
-                    [--keep-temporaries] [--no-overwrite-on-generation] [-ni]
-                    [-R <regular expression>]
-                    [-I [prefix]timestamp [prefix]timestamp] [-p msecs]
-                    [-tl ISO_code] [-ls] [--preset preset#] [-lp] [-a] [-ma]
-                    [-N]
+usage: main.py srs [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
+                   [-si <index>] [-ai <index>] [-b] [-u] [-o <name>]
+                   [-d /path/to/directory] [-ae <audio extension>]
+                   [-q <bitrate in kbps>] [-M] [-m] [--overwrite-on-demux]
+                   [--keep-temporaries] [--no-overwrite-on-generation] [-ni]
+                   [-R <regular expression>] [-RR <regular expression>]
+                   [-RRnk] [-I [prefix]timestamp [prefix]timestamp]
+                   [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
+                   [--preset preset#] [-lp] [-a] [-ma] [-N]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -190,10 +205,13 @@ optional arguments:
                         first. Use --list-streams for a list of available
                         streams and their indices.
   -b, --batch           If set, attempts to split input files into groups, one
-                        output file per group. Groups are determined by file
-                        names. If two files share the same root name, such as
-                        "video0.mkv" and "video0.srt", then they are part of
-                        the same group.
+                        set of outputs per group. Groups are determined by
+                        file names. If two files share the same root name,
+                        such as "video0.mkv" and "video0.srt", then they are
+                        part of the same group. If file names contain a
+                        language code as a suffix, then the suffix will also
+                        be ignored (e.g. "video1.eng.flac" and "video1.ja.srt"
+                        will be grouped together under "video1")
   -u, --dry-run         If set, will analyze input files but won't demux or
                         generate any output files
   -o <name>, --output-name <name>
@@ -207,7 +225,7 @@ optional arguments:
                         the input files reside in.
   -ae <audio extension>, --audio-extension <audio extension>
                         Output audio extension to save as (without the dot).
-                        Default is mp3, flac has been tested to work.
+                        Default is mp3.
   -q <bitrate in kbps>, --bitrate <bitrate in kbps>
                         Output audio bitrate in kbps, lower bitrates result in
                         smaller files and lower fidelity. Ignored if the
@@ -227,7 +245,7 @@ optional arguments:
   -ni, --ignore-none    If set, will not use internal heuristics to remove
                         non-dialogue lines from the subtitle. Ignored if -R is
                         set.
-  -R <regular expression>, --sref <regular expression>
+  -R <regular expression>, --sub-regex-filter <regular expression>
                         For filtering non-dialogue subtitles. Lines that match
                         given regex are IGNORED during subtitle processing and
                         will not influence condensed audio or be included in
@@ -235,6 +253,19 @@ optional arguments:
                         condensed subtitles if they overlap with non-ignored
                         subtitles. This option will override the internal
                         subs2cia non-dialogue filter.
+  -RR <regular expression>, --sub-regex-substrfilter <regular expression>
+                        Searches subtitle lines and removes all substrings
+                        that match this regular expression. If the resulting
+                        subtitle line becomes empty, contains only spaces, or
+                        contains only punctuation as a result, the entire
+                        subtitle line is removed and will not be present in
+                        the output unless -RRnk is set.
+  -RRnk, --sub-regex-substrfilter-nokeepchanges
+                        If set, the modified subtitle text created by -RR will
+                        not be passed to the output subtitles/cards. Any empty
+                        filtered lines will be marked as non-dialogue instead
+                        of being removed entirely from the output. Useful for
+                        implementing custom dialogue-ignoring
   -I [prefix]timestamp [prefix]timestamp, --ignore-range [prefix]timestamp [prefix]timestamp
                         Time range to ignore when condensing, specified using
                         two timestamps. Useful for removing openings and
@@ -248,6 +279,10 @@ optional arguments:
                         prefix). If batch mode is enabled, the same ranges are
                         applied to ALL outputs.Multiple ranges can be
                         specified like so: -I 2m 3m30s -I 20m 21m.
+  -Ic <chapter name>, --ignore-chapter <chapter name>
+                        Chapter titles to ignore, case sensitive. Can use -ls
+                        to determine chapter titles. Can be used in addition
+                        to --ignore-range to ignore sections of the stream.
   -p msecs, --padding msecs
                         Adds this many milliseconds of audio before and after
                         every subtitle. Overlaps with adjacent subtitles are
@@ -256,8 +291,8 @@ optional arguments:
                         If set, attempts to use audio and subtitle files that
                         are in this language first. Input should be an ISO
                         639-3 language code.
-  -ls, --list-streams   Lists all audio, subtitle, and video streams found in
-                        given input files and exits.
+  -ls, --list-streams   Lists all audio, subtitle, and video streams as well
+                        as chapters found in given input files and exits.
   --preset preset#      If set, uses a given preset. User arguments will
                         override presets.
   -lp, --list-presets   Lists all available built-in presets and exits.

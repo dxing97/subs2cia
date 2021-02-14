@@ -12,13 +12,14 @@ from typing import Union, List
 
 
 class Condense(Common):
+    # todo: shouldn't we just use **kwargs here?
     def __init__(self, sources: [AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool,
-                 threshold: int, padding: int,
-                 partition: int, split: int, demux_overwrite_existing: bool, overwrite_existing_generated: bool,
-                 keep_temporaries: bool, target_lang: str, out_audioext: str, minimum_compression_ratio: float,
-                 use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
-                 ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
-                 bitrate: Union[int, None], mono_channel: bool, interactive: bool):
+                 threshold: int, padding: int, partition: int, split: int, demux_overwrite_existing: bool,
+                 overwrite_existing_generated: bool, keep_temporaries: bool, target_lang: str, out_audioext: str,
+                 minimum_compression_ratio: float, use_all_subs: bool, subtitle_regex_filter: str, subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
+                 audio_stream_index: int, subtitle_stream_index: int, ignore_range: Union[List[List[int]], None],
+                 ignore_chapters: Union[List[str], None], bitrate: Union[int, None], mono_channel: bool,
+                 interactive: bool, no_condensed_subtitles: bool):
         super(Condense, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -32,6 +33,8 @@ class Condense(Common):
             out_audioext=out_audioext,
             use_all_subs=use_all_subs,
             subtitle_regex_filter=subtitle_regex_filter,
+            subtitle_regex_substrfilter=subtitle_regex_substrfilter,
+            subtitle_regex_substrfilter_nokeep=subtitle_regex_substrfilter_nokeep,
             audio_stream_index=audio_stream_index,
             subtitle_stream_index=subtitle_stream_index,
             ignore_range=ignore_range,
@@ -71,7 +74,7 @@ class Condense(Common):
 
         self.condensed_audio = True  # can be exposed later if needed
         self.condensed_video = condensed_video
-        self.condensed_subtitles = True  # can be exposed later if needed
+        self.condensed_subtitles = not no_condensed_subtitles  # can be exposed later if needed
 
         self.subtitle_outfile = None
 
@@ -104,7 +107,8 @@ class Condense(Common):
             subdata = subtools.SubtitleManipulator(subfile.filepath,
                                                    threshold=self.threshold, padding=self.padding,
                                                    ignore_range=ignore_range, audio_length=audiolength)
-            subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter)
+            subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter,
+                         substrreplace_regex=self.subtitle_regex_substrfilter)
             if subdata.ssadata is None:
                 logging.warning(f"Problem loading subtitle data from {self.picked_streams[k]}")
                 self.picked_streams[k] = None

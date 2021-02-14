@@ -28,7 +28,10 @@
  - [ ] (Bug) If file encoding is not utf-8, pysubs2 may error out/produce garbage output
  - [ ] (Windows) glob inputs 
  - [ ] Handle directories as inputs
- - [ ] add more/better documentation, quick start guide
+ - [ ] Add more/better documentation
+   - [ ] Full usage manual
+   - [ ] noob guide 
+ - [ ] Option to point to custom FFmpeg binary not on PATH
  - [ ] ~~Skip intermediate files be default, go directly from video to condensed audio/video~~
     - [ ] ~~try going to intermediate formats if direct method fails (and add a CLI switch for it as well)~~
 
@@ -36,5 +39,5 @@
 ### The neverending future
  - [ ] more testing
     - [ ] more Windows testing
- - [ ] automated test suite
+ - [ ] automated test suite?
  - [ ] bitmapped subtitles and OCR recognition

@@ -3,87 +3,131 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
 
 ## Features
  * Generates _condensed_ media from subtitled media that only contains spoken dialogue (`subs2cia condense`)
-     * No unnatural stutters: simultaneous subtitles lines are merged for seamless listening
-     * Automatically generate condensed subtitle, audio, and video (video must be enabled with `-m`)
-     * Automagically choose input sources from a certain language or manually specify what inputs to condense
+     * No unnatural stutters: simultaneous and overlapping subtitles lines are merged for seamless listening
+     * Automatically generate condensed subtitles, audio, and video from input sources (video must be enabled with `-m`)
+     * Automagically chooses subtitle and audio tracks from a certain language or manually specify what inputs to condense
      (`-tl`, `-si`, `-ai`, `-ls`)
      * Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
+     * Strip text from subtitles before processing them (`-RR`, `-RRnk`)
      * Ignore subtitled music found in openings/endings manually (`-I`) or by chapter (`-Ic`)  
      * Reinserts natural spacing between sentences that start and end close together (`-t`)
-     * Pads subtitles with additional audio (`-p`)
+     * Subtitles not perfectly aligned? Pad subtitles with additional audio (`-p`)
      * Process multiple files with batch mode (`-b`)
- * Export subtitles with screenshots into your SRS of choice (`subs2cia srs`)
+ * **EXPERIMENTAL**: Export subtitles with audio and screenshots into your flashcard SRS of choice (`subs2cia srs`)
 
-## Installation
-#### Dependencies
+## Dependencies
 * Python 3.6 or later
-* FFmpeg binaries (ffmpeg and ffprobe) must be on your PATH (i.e. can execute `ffmpeg` from the command line)
+* FFmpeg executable binaries (ffmpeg and ffprobe) must be on your PATH (i.e. can execute `ffmpeg` and `ffprobe`
+  from the command line)
+* pip packages:
+    * ffmpeg-python
+    * pycountry
+    * pysubs2
+    * setuptools
+    * tqdm
+    * pandas
 
-### (Recommended) pip install:
+## Installation Instructions
+subs2cia is currently a command-line only script. Usage requires interaction with a terminal interface.
+### Windows
+Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
+
+Install Python 3.6 or later. During or after the installation process, make sure you add Python to your PATH and also install pip.
+
+The subs2cia installation process is generally the same as for Linux, although some commands may have different aliases
+(e.g. instead of `pip3`, you may need to run `py -m pip` instead).
+Some useful links on installing `pip` and python packages:
+* https://pip.pypa.io/en/stable/installing/
+* https://docs.python.org/3/installing/index.html
+
+You may need to restart Command Prompt for path changes to take effect when installing `pip`. 
+
+Install
+
+### macOS:
+Install Python and ffmpeg through the method of your choice, e.g. [Homebrew](https://brew.sh/). In Terminal, run:
 ```
+# run this after installing Homebrew
+brew install python ffmpeg
+```
+Homebrew should have also installed `pip` for you, which you can use to install subs2cia from PyPI:
+```
+pip3 install subs2cia
+```
+You should now be able to run the script:
+```
+subs2cia condense -h
+```
+
+### Linux
+On systems with the `apt` package manager (Ubuntu, Debian, etc):
+```
+sudo apt install python3 python3-pip ffmpeg
 pip3 install subs2cia
 subs2cia condense -h
 ```
 
-### Pip install from source (macOS, Linux)
-Git clone or otherwise download the repository and navigate to it:
+### Install from source (not recommended)
+Download or clone the repository and navigate to it:
 ```
 $ git clone "https://github.com/dxing97/subs2cia"
 $ cd subs2cia
 ```
-
 Use pip to install:
 ```
 $ pip3 install .
 ```
 On WSL, you may need to add `~/.local/bin` to your PATH first.
 
-### Run as script
+### Run Without Installing
 If you prefer, you can also run ``subs2cia/main.py`` directly.
 
-### Windows
-Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
-The subs2cia installation process is generally the same as for Linux, although some commands may have different names 
-(e.g. instead of `pip3`, you may need to run `py -m pip` instead).
-Some useful links on installing `pip` and python packages:
-* https://pip.pypa.io/en/stable/installing/
-* https://docs.python.org/3/installing/index.html
 
-You may need to restart command prompt for path changes to take effect when installing `pip`. 
+## Condense Quickstart Usage Examples
+```
+subs2cia condense -i "My Video.mkv"
+```
+* Condense `My Video.mkv` into `My Video.condensed.mp3` and `My Video.condensed.srt` (if embedded subtitles are SRT formatted)
 
-## Condense Quickstart Usage
-Condense `video.mkv` into `video.condensed.mp3` and `video.condensed.srt` (if embedded subtitles are SRT):
-* ```subs2cia condense -i video.mkv```
+```
+subs2cia condense -i video.mkv -p 150 -t 1000 -tl english
+```
+* Condense `video.mkv` into `video.condensed.mp3` and `video.condensed.srt`
+* Prefer english subtitle/audio tracks if they exist. 
+* Pad each subtitle's start/end time by 150ms
+* Merge subtitles that start within 1300ms (1000 + 2x150) of each other (i.e. also add silences shorter than 1300ms)
 
-Condense `video.mkv`, preferring english subtitle/audio tracks if they exist. 
-Additionally, pad each subtitle's start/end time by 150ms, and merge subtitles that start within
-1300ms (1000 + 2x150) of each other (i.e. also add silences shorter than 1300ms):
- * ```subs2cia condense -i video.mkv -p 150 -t 1000 -tl english```
+```
+subs2cia condense -i video.mkv "video subtitles.ass" -ae flac --no-gen-subtitle
+```
 
-Condense `video.mkv` using `video_subtitles.ass` into `video.condensed.flac` and `video.condensed.ass`
-* ```subs2cia condense -i video.mkv video_subtitles.ass -ae flac```
+* Condense `video.mkv` using `video subtitles.ass` into `video.condensed.flac`. 
+    * Note: subs2cia will default to try using external subtitle/audio files first.
+* Don't generate condensed subtitles.
+
 
 Condense `audio.mp3` and `subtitles.srt` into `audio.condensed.mp3` and `audio.condensed.srt`
 * ```subs2cia condense -i audio.mp3 subtitles.ass```
 
-[Linux/macOS] Condense all `.mkv` and `.srt` files in a directory organized according to Plex standards. 
+Condense all `.mkv` and `.srt` files in a directory organized according to Plex standards. 
 Ignore the first 1m30s of subtitles and the 1m30s of subtitles 2 minutes from the end. 
-Prefer japanese audio/subtitles. Set subtitle padding to 100ms and 
+Prefer Japanese audio/subtitles. Set subtitle padding to 100ms and 
 threshold to merge subtitles to 1500ms:
 * ```subs2cia condense -b -i *.mkv *.srt -I 0m 1m30s -I e2m +1m30s -tl ja -t 1500 -p 100``` 
 
 For a full usage guide, run `subs2cia condense -h` or take a look at [USAGE](USAGE.md).
 
-## SRS Export Quickstart
+## SRS Export Quickstart Usage
 ```subs2cia srs -i video.mkv```
 
 ## Limitations and Assumptions
-* Won't work on bitmap subtitles (e.g. PGS), only supports subtitle formats supported by ffmpeg and pysubs2
+* Won't work on bitmap subtitles (e.g. PGS subtitles), only text-based supports subtitle formats supported by ffmpeg and pysubs2 
+  encoded in UTF-8 will work
 * Subtitles must be properly aligned to audio. 
 
 # subzipper
 Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, 
-optionally adding language information. Intended for use with shell wildcards.
+optionally adding language information to the suffix. Intended for use with shell wildcards.
 
 ## Usage
 ```

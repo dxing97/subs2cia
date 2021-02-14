@@ -14,7 +14,8 @@ class CardExport(Common):
     def __init__(self, sources: List[AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool, padding: int,
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
-                 use_all_subs: bool, subtitle_regex_filter: str, audio_stream_index: int, subtitle_stream_index: int,
+                 use_all_subs: bool, subtitle_regex_filter: str, subtitle_regex_substrfilter: str,
+                 subtitle_regex_substrfilter_nokeep: bool, audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
                  bitrate: Union[int, None], mono_channel: bool, interactive: bool, normalize_audio: bool):
         super(CardExport, self).__init__(
@@ -30,6 +31,8 @@ class CardExport(Common):
             out_audioext=out_audioext,
             use_all_subs=use_all_subs,
             subtitle_regex_filter=subtitle_regex_filter,
+            subtitle_regex_substrfilter=subtitle_regex_substrfilter,
+            subtitle_regex_substrfilter_nokeep=subtitle_regex_substrfilter_nokeep,
             audio_stream_index=audio_stream_index,
             subtitle_stream_index=subtitle_stream_index,
             ignore_range=ignore_range,

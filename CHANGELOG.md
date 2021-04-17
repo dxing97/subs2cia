@@ -7,7 +7,8 @@
     - remove parts of subtitles with `-RR`
     - don't keep changes with `-RRnk`
  - Add support for globbed inputs (esp. useful on Windows) [#11](https://github.com/dxing97/subs2cia/pull/11)
-
+ - Change required python version in setup.py to 3.6 (see [#15](https://github.com/dxing97/subs2cia/issues/15))
+ - Fix for VTT subtitles and workaround for subtitle format detection edge case ([#12](https://github.com/dxing97/subs2cia/issues/12))
 ### Fixed 
  - Added fix for [#1](https://github.com/dxing97/subs2cia/issues/1) to ffmpeg_condense_video 
 

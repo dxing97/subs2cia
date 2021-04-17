@@ -45,7 +45,7 @@ def condense_start(args, groups: List[List[AVSFile]]):
                  ['outdir', 'outstem', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
                   'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
-                  'subtitle_regex_substrfilter',
+                  'subtitle_regex_substrfilter', 'subtitle_regex_substrfilter_nokeep',
                   'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
                   'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles']}
 

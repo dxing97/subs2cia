@@ -191,10 +191,23 @@ class SubtitleManipulator:
         logging.debug(f"Loading subtitles at {self.subpath}")
         try:
             self.ssadata = ps2.load(str(self.subpath))
+        except (ps2.FormatAutodetectionError) as e:
+            # retry by forcing format
+            logger = logging.getLogger(__name__)
+            logger.exception(e)
+            logging.warning(f"Subtitle file format not recognized by pysubs2, will try forcing extension {self.subpath.suffix[1:]} as format ({self.subpath})")
+            try:
+                self.ssadata = ps2.load(str(self.subpath), format_=self.subpath.suffix[1:])
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.exception(e)
+                logging.warning(f"pysubs2 enountered error loading subtitle file {self.subpath}")
+                self.ssadata = None
+                return
         except (ValueError, AttributeError) as e:
             logger = logging.getLogger(__name__)
             logger.exception(e)
-            logging.warning(f"pysub2 enountered error loading subtitle file {self.subpath}")
+            logging.warning(f"pysubs2 enountered error loading subtitle file {self.subpath}")
             self.ssadata = None
             return
         logging.debug(f"Loaded {self.ssadata}")

@@ -108,7 +108,7 @@ class Condense(Common):
                                                    threshold=self.threshold, padding=self.padding,
                                                    ignore_range=ignore_range, audio_length=audiolength)
             subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter,
-                         substrreplace_regex=self.subtitle_regex_substrfilter)
+                         substrreplace_regex=self.subtitle_regex_substrfilter, substrreplace_nokeepchanges=self.subtitle_regex_substrfilter_nokeep)
             if subdata.ssadata is None:
                 logging.warning(f"Problem loading subtitle data from {self.picked_streams[k]}")
                 self.picked_streams[k] = None

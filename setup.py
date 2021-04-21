@@ -1,6 +1,6 @@
 import setuptools
 import pathlib
-from subs2cia import __version__
+__version__ = 'v0.3.3'
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent

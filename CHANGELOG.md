@@ -2,15 +2,21 @@
 
 ## [Unreleased]
 ### Added
- - Option to disable outputting condensed subtitles (`no-gen-subtitle`)
  - Regex replace/filter: 
     - remove parts of subtitles with `-RR`
     - don't keep changes with `-RRnk`
- - Add support for globbed inputs (esp. useful on Windows) [#11](https://github.com/dxing97/subs2cia/pull/11)
+    
+
+## [0.3.3] - 2021-04-11
+### Added
+ - Option to disable outputting condensed subtitles (`no-gen-subtitle`)
+ - Add explicit support for globbed inputs (esp. useful on Windows) [#11](https://github.com/dxing97/subs2cia/pull/11)
+### Fixed 
+ - Added fix for [#1](https://github.com/dxing97/subs2cia/issues/1) to ffmpeg_condense_video
  - Change required python version in setup.py to 3.6 (see [#15](https://github.com/dxing97/subs2cia/issues/15))
  - Fix for VTT subtitles and workaround for subtitle format detection edge case ([#12](https://github.com/dxing97/subs2cia/issues/12))
-### Fixed 
- - Added fix for [#1](https://github.com/dxing97/subs2cia/issues/1) to ffmpeg_condense_video 
+
+
 
 ## [0.3.2] - 2020-11-19
 

@@ -150,21 +150,21 @@ def get_args_subs2cia():
                                     'Ignored lines may still be included in condensed subtitles if they overlap with non-ignored subtitles. '
                                     'This option will override the internal subs2cia non-dialogue filter.')
 
-    parent_parser.add_argument('-RR', '--sub-regex-substrfilter', metavar='<regular expression>',
-                               dest='subtitle_regex_substrfilter', default=None,
-                               type=str,
-                               help='Searches subtitle lines and removes all substrings that match this regular '
-                                    'expression. If the resulting subtitle line becomes empty, contains only spaces, '
-                                    'or contains only punctuation as a result, the entire subtitle line is '
-                                    'removed and will not be present in the output unless -RRnk is set. Internal '
-                                    'dialogue detection method is still active unless -ni is set.')
-
-    parent_parser.add_argument('-RRnk', '--sub-regex-substrfilter-nokeepchanges', action='store_true', dest='subtitle_regex_substrfilter_nokeep',
-                               default=False,
-                               help='If set, the modified subtitle text created by -RR will not be passed to the '
-                                    'output subtitles/cards. Any empty filtered lines will be marked as non-dialogue '
-                                    'instead of being removed entirely from the output. '
-                                    'Useful for implementing custom dialogue-ignoring ')
+    # parent_parser.add_argument('-RR', '--sub-regex-substrfilter', metavar='<regular expression>',
+    #                            dest='subtitle_regex_substrfilter', default=None,
+    #                            type=str,
+    #                            help='Searches subtitle lines and removes all substrings that match this regular '
+    #                                 'expression. If the resulting subtitle line becomes empty, contains only spaces, '
+    #                                 'or contains only punctuation as a result, the entire subtitle line is '
+    #                                 'removed and will not be present in the output unless -RRnk is set. Internal '
+    #                                 'dialogue detection method is still active unless -ni is set.')
+    #
+    # parent_parser.add_argument('-RRnk', '--sub-regex-substrfilter-nokeepchanges', action='store_true', dest='subtitle_regex_substrfilter_nokeep',
+    #                            default=False,
+    #                            help='If set, the modified subtitle text created by -RR will not be passed to the '
+    #                                 'output subtitles/cards. Any empty filtered lines will be marked as non-dialogue '
+    #                                 'instead of being removed entirely from the output. '
+    #                                 'Useful for implementing custom dialogue-ignoring ')
 
     parent_parser.add_argument('-I', '--ignore-range', metavar="[prefix]timestamp", dest="ignore_range", default=None,
                                type=time, nargs=2, action="append",

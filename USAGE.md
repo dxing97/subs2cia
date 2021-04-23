@@ -8,8 +8,8 @@ usage: main.py condense [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
                         [-q <bitrate in kbps>] [-M] [-m]
                         [--overwrite-on-demux] [--keep-temporaries]
                         [--no-overwrite-on-generation] [-ni]
-                        [-R <regular expression>] [-RR <regular expression>]
-                        [-RRnk] [-I [prefix]timestamp [prefix]timestamp]
+                        [-R <regular expression>]
+                        [-I [prefix]timestamp [prefix]timestamp]
                         [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
                         [--preset preset#] [-lp] [-a] [-ma] [-t msecs]
                         [-r secs] [-s secs] [-c <ratio>] [--no-gen-subtitle]
@@ -82,19 +82,6 @@ optional arguments:
                         condensed subtitles if they overlap with non-ignored
                         subtitles. This option will override the internal
                         subs2cia non-dialogue filter.
-  -RR <regular expression>, --sub-regex-substrfilter <regular expression>
-                        Searches subtitle lines and removes all substrings
-                        that match this regular expression. If the resulting
-                        subtitle line becomes empty, contains only spaces, or
-                        contains only punctuation as a result, the entire
-                        subtitle line is removed and will not be present in
-                        the output unless -RRnk is set.
-  -RRnk, --sub-regex-substrfilter-nokeepchanges
-                        If set, the modified subtitle text created by -RR will
-                        not be passed to the output subtitles/cards. Any empty
-                        filtered lines will be marked as non-dialogue instead
-                        of being removed entirely from the output. Useful for
-                        implementing custom dialogue-ignoring
   -I [prefix]timestamp [prefix]timestamp, --ignore-range [prefix]timestamp [prefix]timestamp
                         Time range to ignore when condensing, specified using
                         two timestamps. Useful for removing openings and

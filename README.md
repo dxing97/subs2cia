@@ -8,7 +8,6 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
      * Automagically chooses subtitle and audio tracks from a certain language or manually specify what inputs to condense
      (`-tl`, `-si`, `-ai`, `-ls`)
      * Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
-     * Strip text from subtitles before processing them (`-RR`, `-RRnk`)
      * Ignore subtitled music found in openings/endings manually (`-I`) or by chapter (`-Ic`)  
      * Reinserts natural spacing between sentences that start and end close together (`-t`)
      * Subtitles not perfectly aligned? Pad subtitles with additional audio (`-p`)
@@ -30,19 +29,22 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
 ## Installation Instructions
 subs2cia is currently a command-line only script. Usage requires interaction with a terminal interface.
 ### Windows
-Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
-
 Install Python 3.6 or later. During or after the installation process, make sure you add Python to your PATH and also install pip.
 
+Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
+
 The subs2cia installation process is generally the same as for Linux, although some commands may have different aliases
-(e.g. instead of `pip3`, you may need to run `py -m pip` instead).
+(e.g. instead of `pip3`, you may need to run `py -m pip` instead). Running
+```
+py -m pip install subs2cia
+```
+in command prompt should work. 
+
 Some useful links on installing `pip` and python packages:
 * https://pip.pypa.io/en/stable/installing/
 * https://docs.python.org/3/installing/index.html
 
-You may need to restart Command Prompt for path changes to take effect when installing `pip`. 
-
-Install
+You may need to restart Command Prompt for path changes to take effect when installing `pip`.
 
 ### macOS:
 Install Python and ffmpeg through the method of your choice, e.g. [Homebrew](https://brew.sh/). In Terminal, run:

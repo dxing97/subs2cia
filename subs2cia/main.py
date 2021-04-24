@@ -99,6 +99,7 @@ def start():
     elif args['debug']:
         logging.basicConfig(level=logging.DEBUG)
 
+    from subs2cia import __version__
     logging.info(f"subs2cia version {__version__}")
     logging.debug(f"Start arguments: {args}")
 

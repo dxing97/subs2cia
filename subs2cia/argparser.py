@@ -267,6 +267,10 @@ def get_args_subs2cia():
 
     args = parser.parse_args()
 
+    # temporary patch until this feature is ready
+    args.subtitle_regex_substrfilter = None
+    args.subtitle_regex_substrfilter_nokeep = False
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(0)

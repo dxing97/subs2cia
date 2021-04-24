@@ -8,6 +8,11 @@
     - don't keep changes with `-RRnk`
     
 
+## [0.3.5] - 2021-04-24
+### Fixed 
+ - Critical bug related to -RR not being disabled properly
+
+
 ## [0.3.4] - 2021-04-24
 ### Fixed 
  - Critical bug from improperly refactored versioning code 

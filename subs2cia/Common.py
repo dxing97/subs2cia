@@ -89,8 +89,9 @@ class Common:
                  condensed_video: bool, padding: int,
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
-                 use_all_subs: bool, subtitle_regex_filter: str, subtitle_regex_substrfilter: str,
-                 subtitle_regex_substrfilter_nokeep: bool, audio_stream_index: int, subtitle_stream_index: int,
+                 use_all_subs: bool, subtitle_regex_filter: str,
+                 subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
+                 audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
                  bitrate: Union[int, None], mono_channel: bool, interactive: bool):
         if outdir is None:

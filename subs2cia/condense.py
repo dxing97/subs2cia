@@ -16,7 +16,8 @@ class Condense(Common):
     def __init__(self, sources: [AVSFile], outdir: Path, outstem: Union[str, None], condensed_video: bool,
                  threshold: int, padding: int, partition: int, split: int, demux_overwrite_existing: bool,
                  overwrite_existing_generated: bool, keep_temporaries: bool, target_lang: str, out_audioext: str,
-                 minimum_compression_ratio: float, use_all_subs: bool, subtitle_regex_filter: str, subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
+                 minimum_compression_ratio: float, use_all_subs: bool, subtitle_regex_filter: str,
+                 subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
                  audio_stream_index: int, subtitle_stream_index: int, ignore_range: Union[List[List[int]], None],
                  ignore_chapters: Union[List[str], None], bitrate: Union[int, None], mono_channel: bool,
                  interactive: bool, no_condensed_subtitles: bool):

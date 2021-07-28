@@ -93,7 +93,7 @@ class Common:
                  subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
                  audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
-                 bitrate: Union[int, None], mono_channel: bool, interactive: bool):
+                 bitrate: Union[int, None], mono_channel: bool, interactive: bool, out_audiocodec: str):
         if outdir is None:
             self.outdir = sources[0].filepath.parent
         else:
@@ -131,6 +131,7 @@ class Common:
 
         self.out_audioext = out_audioext
         self.out_videoext = '.mp4'
+        self.out_audiocodec = out_audiocodec
 
 
         self.use_all_subs = use_all_subs

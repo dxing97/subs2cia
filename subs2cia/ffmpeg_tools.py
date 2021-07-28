@@ -123,15 +123,15 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
 
 # from ffmpeg-python _run.py
 class Error(Exception):
-    def __init__(self, cmd, stdout, stderr):
+    def __init__(self, cmd, stdout, stderr: bytes):
         super(Error, self).__init__(
-            '{} error (see stderr output for detail)'.format(cmd)
+            f'{cmd} error. {cmd} stderr output: \n{stderr.decode("utf-8")}'
         )
         self.stdout = stdout
         self.stderr = stderr
 
 
-def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mono: bool, outfile=None):
+def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mono: bool, outfile=None, codec=''):
     if outfile is None:
         outfile = "condensed.flac"
     # logging.info(f"saving condensed audio to {outfile}")
@@ -153,7 +153,11 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     combined = ffmpeg.concat(*clips, a=1, v=0)
 
     kwargs = {}
-    if Path(outfile).suffix.lower() == ".mp3":
+
+    if codec:
+        kwargs['acodec'] = codec
+
+    if Path(outfile).suffix.lower() == ".mp3" or codec == 'mp3':
         if quality is None:
             kwargs['audio_bitrate'] = "320k"
         else:
@@ -170,7 +174,8 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     ffmpeg_exec(duration, outfile, combined)
 
 
-def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, None], to_mono: bool, outfile=None, use_absolute_numbering=False):
+def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, None], to_mono: bool, outfile=None,
+                           use_absolute_numbering=False, codec=''):
     # outfile is full path with extension
     audiofile = str(audiofile)
     if outfile is not None:
@@ -204,7 +209,7 @@ def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, N
                                os.path.splitext(outfile)[1]
 
             ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit, quality=quality,
-                                  to_mono=to_mono)
+                                  to_mono=to_mono, codec=codec)
 
 
 def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videofile: Path, outfile=None,

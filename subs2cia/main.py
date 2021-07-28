@@ -63,7 +63,7 @@ def condense_start(args, groups: List[List[AVSFile]]):
                   'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
                   'subtitle_regex_substrfilter', 'subtitle_regex_substrfilter_nokeep',
                   'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
-                  'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles']}
+                  'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles', 'out_audiocodec']}
 
     condensed_files = [Condense(g, **condense_args) for g in groups]
     if logging.root.isEnabledFor(logging.INFO):
@@ -103,7 +103,7 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
                  ['outdir', 'outstem', 'condensed_video', 'padding', 'demux_overwrite_existing',
                   'overwrite_existing_generated', 'keep_temporaries', 'target_lang', 'out_audioext', 'use_all_subs',
                   'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
-                  'bitrate', 'mono_channel', 'interactive', 'normalize_audio']
+                  'bitrate', 'mono_channel', 'interactive', 'normalize_audio', "out_audiocodec"]
                 }
 
     cardexport_group = [CardExport(g, **srs_args) for g in groups]

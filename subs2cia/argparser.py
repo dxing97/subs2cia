@@ -110,11 +110,18 @@ def get_args_subs2cia():
                                help='Output audio extension to save as (without the dot). '
                                     'Default is mp3.')
 
+    parent_parser.add_argument('-ac', '--audio-codec', metavar='<audio codec>', dest='out_audiocodec',
+                               default='',
+                               type=str,
+                               help='Output audio codec to use on export. '
+                                    'Default is to let ffmpeg choose based on the audio file extension.')
+
     parent_parser.add_argument('-q', '--bitrate', metavar='<bitrate in kbps>', dest='bitrate', default=320,
                                type=int,
                                help='Output audio bitrate in kbps, lower bitrates result in smaller files and lower '
-                                    'fidelity. Ignored if the output type is not mp3. Default is 320 kbps. '
-                                    'Bitrates below 64 kbps are not recommended.')
+                                    'fidelity. Ignored if the output audio file extension and audio codec is not mp3. '
+                                    'Default is 320 kbps. '
+                                    'Bitrates below 64 kbps are not recommended. ')
 
     parent_parser.add_argument('-M', '--mono', dest='mono_channel', default=False,
                                action="store_true",
@@ -123,7 +130,7 @@ def get_args_subs2cia():
     parent_parser.add_argument('-m', '--gen-video', action='store_true', dest='condensed_video', default=False,
                                help='If set, generates condensed video along with condensed audio and subtitles. '
                                     'Subtitles are muxed in to video file. '
-                                    'WARNING: VERY CPU INTENSIVE).')
+                                    'WARNING: VERY CPU INTENSIVE AND SLOW.')
 
     parent_parser.add_argument('--overwrite-on-demux', action='store_true', dest='demux_overwrite_existing',
                                default=False,

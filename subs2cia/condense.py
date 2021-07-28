@@ -20,7 +20,7 @@ class Condense(Common):
                  subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
                  audio_stream_index: int, subtitle_stream_index: int, ignore_range: Union[List[List[int]], None],
                  ignore_chapters: Union[List[str], None], bitrate: Union[int, None], mono_channel: bool,
-                 interactive: bool, no_condensed_subtitles: bool):
+                 interactive: bool, no_condensed_subtitles: bool, out_audiocodec: str):
         super(Condense, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -42,7 +42,8 @@ class Condense(Common):
             ignore_chapters=ignore_chapters,
             bitrate=bitrate,
             mono_channel=mono_channel,
-            interactive=interactive
+            interactive=interactive,
+            out_audiocodec=out_audiocodec
         )
         r"""
 
@@ -174,7 +175,7 @@ class Condense(Common):
             logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
             return
         export_condensed_audio(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
-                               outfile=outfile, to_mono=self.to_mono, quality=self.quality)
+                               outfile=outfile, to_mono=self.to_mono, quality=self.quality, codec=self.out_audiocodec)
         logging.info(f"Wrote condensed audio to {outfile}")
 
     def export_video(self):

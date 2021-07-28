@@ -4,10 +4,12 @@
 ## [Unreleased]
 ### Changed
  - subs2cia now prints status information while running by default
+ - Long ffmpeg arguments are now saved to temp files on all platforms, not just windows
 
 ### Added
  - ffmpeg condensed audio and video progress bar (likely unix-like operating systems only)
  - Added quiet mode `-Q`: suppresses all non-warning status outputs
+ - `-ac`: specify output audio codec option
 
 ### Removed
  - Verbose output `-v` 

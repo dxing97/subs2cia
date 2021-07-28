@@ -17,7 +17,7 @@ class CardExport(Common):
                  use_all_subs: bool, subtitle_regex_filter: str, subtitle_regex_substrfilter: str,
                  subtitle_regex_substrfilter_nokeep: bool, audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
-                 bitrate: Union[int, None], mono_channel: bool, interactive: bool, normalize_audio: bool):
+                 bitrate: Union[int, None], mono_channel: bool, interactive: bool, normalize_audio: bool, out_audiocodec: str):
         super(CardExport, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -39,7 +39,8 @@ class CardExport(Common):
             ignore_chapters=ignore_chapters,
             bitrate=bitrate,
             mono_channel=mono_channel,
-            interactive=interactive
+            interactive=interactive,
+            out_audiocodec=out_audiocodec
         )
 
         self.insufficient = False

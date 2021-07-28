@@ -54,8 +54,8 @@ def get_args_subs2cia():
     subparsers = parser.add_subparsers(title='subcommands', help="subcommand help", dest="command")
     parent_parser = argparse.ArgumentParser(add_help=False)
 
-    parent_parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, required=False,
-                               help='Verbose output if set.')
+    parent_parser.add_argument('-Q', '--quiet', action='store_true', dest='quiet', default=False, required=False,
+                               help='Will only report warning and errors if set.')
 
     parent_parser.add_argument('-vv', '--debug', action='store_true', dest='debug', default=False, required=False,
                                help='Verbose and debug output if set')

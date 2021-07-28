@@ -21,12 +21,10 @@
 ### Bucket list 
  - [ ] Multiprocessor acceleration where sensible
  - [ ] clean up dry-run
- - [ ] clean up ~~debug, verbose~~ logging (doesn't need to spit out that much input data)
  - [X] Interactive [Y/n] mode for error handing and action confirmation
  - [ ] Simple CLI to GUI wrapper
     - .app and .exe releases would be nice
  - [ ] (Bug) If file encoding is not utf-8, pysubs2 may error out/produce garbage output
- - [ ] (Windows) glob inputs 
  - [ ] Handle directories as inputs
  - [ ] Add more/better documentation
    - [ ] Full usage manual

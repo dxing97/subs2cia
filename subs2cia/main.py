@@ -14,6 +14,7 @@ from pathlib import Path
 import logging
 from pprint import pprint
 from typing import Union, List
+import tqdm
 
 presets = [
     {  # preset 0
@@ -39,6 +40,22 @@ def list_presets():
         pprint(preset)
 
 
+# https://stackoverflow.com/a/38739634
+class TqdmLoggingHandler(logging.Handler):
+    def __init__(self, level=logging.NOTSET):
+        super().__init__(level)
+
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            tqdm.tqdm.write(msg)
+            self.flush()
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
+
 def condense_start(args, groups: List[List[AVSFile]]):
     condense_args = {key: args[key] for key in
                  ['outdir', 'outstem', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
@@ -49,7 +66,26 @@ def condense_start(args, groups: List[List[AVSFile]]):
                   'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles']}
 
     condensed_files = [Condense(g, **condense_args) for g in groups]
-    for c in condensed_files:
+    if logging.root.isEnabledFor(logging.INFO):
+        logging.info("Input/output file mapping:")
+        for cgroup in condensed_files:
+            logging.info(f"{cgroup.outstem}")
+            for cfile in cgroup.sources:
+                logging.info(f"    {cfile.filepath}")
+
+    # logging.root.addHandler(TqdmLoggingHandler())
+
+    i = condensed_files
+    # if logging.root.level == logging.INFO:
+    #     # logging level of WARNING means quiet output
+    #     # debug is too noisy for a progress bar to be _that_ useful
+    #     i = tqdm.tqdm(condensed_files, position=0)
+
+    for idx, c in enumerate(i):
+        # if logging.root.level == logging.INFO:
+        #     i.set_postfix_str(f"{c.outstem}")
+        #     i.update(0)
+        logging.info(f"({idx+1}/{len(i)}): {c.outstem}")
         c.get_and_partition_streams()
         c.initialize_pickers()
         if args['dry_run']:
@@ -71,6 +107,7 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
                 }
 
     cardexport_group = [CardExport(g, **srs_args) for g in groups]
+
     for c in cardexport_group:
         c.get_and_partition_streams()
         c.initialize_pickers()
@@ -91,21 +128,24 @@ def start():
     args = get_args_subs2cia()
     args = vars(args)
 
-    if args['verbose']:
-        if args['debug']:
-            logging.basicConfig(level=logging.DEBUG)
-        else:
-            logging.basicConfig(level=logging.INFO)
-    elif args['debug']:
-        logging.basicConfig(level=logging.DEBUG)
+    logconfig = False
+
+    if args['debug']:
+        logging.basicConfig(level=logging.DEBUG,
+                            format="subs2cia:%(levelname)s:%(message)s [%(module)s.py:%(funcName)s():%(lineno)d]")
+        logconfig = True
+    if not logconfig and args['quiet']:
+        logging.basicConfig(level=logging.WARNING, format="subs2cia:%(levelname)s:%(message)s")
+        logconfig = True
+    if not logconfig:
+        logging.basicConfig(level=logging.INFO, format="subs2cia:%(levelname)s:%(message)s")
+        logconfig = True
 
     from subs2cia import __version__
     logging.info(f"subs2cia version {__version__}")
     logging.debug(f"Start arguments: {args}")
 
-
-
-    if args['list_presets']:
+    if args['list_presets']:  # todo: user-defined presets
         list_presets()
         return
 
@@ -113,13 +153,13 @@ def start():
         if abs(args['preset']) >= len(presets):
             logging.critical(f"Preset {args['preset']} does not exist")
             exit(0)
-        logging.info(f"using preset {args['preset']}")
+        logging.info(f"Using preset {args['preset']}")
         for key, val in presets[args['preset']].items():
             if key in args.keys() and ((args[key] == False) or (args[key] is None)):  # override presets
                 args[key] = val
 
     if args['infiles'] is None:
-        logging.info("No input files given, nothing to do.")
+        logging.warning("No input files given, nothing to do.")
         exit(0)
 
     infiles = _resolve(args['infiles'])
@@ -136,7 +176,7 @@ def start():
 
     if args['batch']:
         args['outstem'] = None
-        logging.info(f"Running in batch mode, attempting to group input files together.")
+        logging.info(f"Running in batch mode, attempting to group similarly named files together.")
         groups = list(group_files(sources))
     else:
         if len(sources) > 2:
@@ -145,7 +185,7 @@ def start():
                             f"in batch mode. Only one output "
                             f"will be generated. ")
         groups = [list(sources)]
-    logging.info(f"Have {len(groups)} group(s) to process.")
+    logging.debug(f"Have {len(groups)} group(s) to process.")
 
     commands = {
         'condense': condense_start,
@@ -167,6 +207,7 @@ def _resolve(files):
             resolved.append(f)
 
     return resolved
+
 
 if __name__ == '__main__':
     start()

@@ -4,3 +4,6 @@ pysubs2>=1.1.0
 setuptools~=49.1.0
 tqdm>=4.51.0
 pandas>=1.1.4
+tqdm
+gevent
+pandas

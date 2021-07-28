@@ -2,11 +2,15 @@
 
 
 ## [Unreleased]
+### Changed
+ - subs2cia now prints status information while running by default
+
 ### Added
- - Regex replace/filter: 
-    - remove parts of subtitles with `-RR`
-    - don't keep changes with `-RRnk`
-    
+ - ffmpeg condensed audio and video progress bar (likely unix-like operating systems only)
+ - Added quiet mode `-Q`: suppresses all non-warning status outputs
+
+### Removed
+ - Verbose output `-v` 
 
 ## [0.3.5] - 2021-04-24
 ### Fixed 

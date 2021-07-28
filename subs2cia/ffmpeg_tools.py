@@ -1,10 +1,99 @@
-import ffmpeg
+from __future__ import unicode_literals, print_function
 import logging
 from pathlib import Path
-import os
-import tempfile
 import subprocess
 from typing import List, Union
+import gevent, gevent.monkey
+from tqdm import tqdm, TqdmWarning
+
+import warnings
+warnings.filterwarnings("ignore", category=TqdmWarning)
+
+import contextlib
+import ffmpeg
+import gevent
+import gevent.monkey; gevent.monkey.patch_all(thread=False)
+import os
+import shutil
+import socket
+import sys
+import tempfile
+import textwrap
+
+
+@contextlib.contextmanager
+def _tmpdir_scope():
+    tmpdir = tempfile.mkdtemp()
+    try:
+        yield tmpdir
+    finally:
+        shutil.rmtree(tmpdir)
+
+
+def _do_watch_progress(filename, sock, handler):
+    """Function to run in a separate gevent greenlet to read progress
+    events from a unix-domain socket."""
+    connection, client_address = sock.accept()
+    data = b''
+    try:
+        while True:
+            more_data = connection.recv(16)
+            if not more_data:
+                break
+            data += more_data
+            lines = data.split(b'\n')
+            for line in lines[:-1]:
+                line = line.decode()
+                parts = line.split('=')
+                key = parts[0] if len(parts) > 0 else None
+                value = parts[1] if len(parts) > 1 else None
+                handler(key, value)
+            data = lines[-1]
+    finally:
+        connection.close()
+
+
+@contextlib.contextmanager
+def _watch_progress(handler):
+    """Context manager for creating a unix-domain socket and listen for
+    ffmpeg progress events.
+    The socket filename is yielded from the context manager and the
+    socket is closed when the context manager is exited.
+    Args:
+        handler: a function to be called when progress events are
+            received; receives a ``key`` argument and ``value``
+            argument. (The example ``show_progress`` below uses tqdm)
+    Yields:
+        socket_filename: the name of the socket file.
+    """
+    with _tmpdir_scope() as tmpdir:
+        socket_filename = os.path.join(tmpdir, 'sock')
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        with contextlib.closing(sock):
+            sock.bind(socket_filename)
+            sock.listen(1)
+            child = gevent.spawn(_do_watch_progress, socket_filename, sock, handler)
+            try:
+                yield socket_filename
+            except:
+                gevent.kill(child)
+                raise
+
+
+
+@contextlib.contextmanager
+def show_progress(total_duration, desc):
+    """Create a unix-domain socket to watch progress and render tqdm
+    progress bar."""
+    with tqdm(total=round(total_duration, 2), position=0, unit='sec', desc=desc) as bar:
+        def handler(key, value):
+            if key == 'out_time_ms':
+                time = round(float(value) / 1000000., 2)
+                bar.update(time - bar.n)
+            elif key == 'progress' and value == 'end':
+                bar.update(bar.total - bar.n)
+        with _watch_progress(handler) as socket_filename:
+            yield socket_filename
 
 
 # given a stream in the input file, demux the stream and save it into the outfile with some type
@@ -16,8 +105,11 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
     stream = ffmpeg.output(stream, str(outfile))
     stream = ffmpeg.overwrite_output(stream)
     logging.debug(f"ffmpeg arguments: {ffmpeg.get_args(stream)}")
+
+    quiet = not logging.root.isEnabledFor(logging.DEBUG)
+
     try:
-        ffmpeg.run(stream, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)  # verbose only
+        ffmpeg.run(stream, quiet=quiet)  # verbose only
     except ffmpeg.Error as e:
         if e.stderr is None:
             logging.warning(
@@ -70,41 +162,12 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
         kwargs['ac'] = 1
 
     combined = ffmpeg.output(combined, outfile, **kwargs)
-
     combined = ffmpeg.overwrite_output(combined)
+
     logging.debug(f"ffmpeg_condense_audio: ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
-    args = ffmpeg.get_args(combined)
-    if len("ffmpeg " + " ".join(args)) > 32766 and os.name == 'nt':
-        logging.info("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
-                     "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
-        idx = args.index("-filter_complex") + 1
-        complex_filter = str(args[idx])
-        # write complex_filter to a temporary file
-        fp = tempfile.NamedTemporaryFile(
-            delete=False)  # don't delete b/c can't open file again when it's already open in windows
-        fp.write(complex_filter.encode(encoding="utf-8"))
-        fp.close()
-        args[idx] = fp.name
-        args[idx - 1] = "-filter_complex_script"
-    args = ["ffmpeg"] + args
 
-    # ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
-
-    pipe_stdin = False
-    pipe_stdout = False
-    pipe_stderr = False
-    quiet = logging.getLogger().getEffectiveLevel() >= logging.WARNING
-
-    stdin_stream = subprocess.PIPE if pipe_stdin else None
-    stdout_stream = subprocess.PIPE if pipe_stdout or quiet else None
-    stderr_stream = subprocess.PIPE if pipe_stderr or quiet else None
-    process = subprocess.Popen(
-        args, stdin=stdin_stream, stdout=stdout_stream, stderr=stderr_stream
-    )
-    out, err = process.communicate(input)
-    retcode = process.poll()
-    if retcode:
-        raise Error('ffmpeg', out, err)
+    duration = sum([end - start for start, end in sub_times]) / 1000
+    ffmpeg_exec(duration, outfile, combined)
 
 
 def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, None], to_mono: bool, outfile=None, use_absolute_numbering=False):
@@ -201,8 +264,53 @@ def trim(input_path, output_path, start=30, end=60):
     output.run()
 
 
+def ffmpeg_exec(duration: float, outfile: str, combined):
+    def run(combined):
+        args = ffmpeg.get_args(combined)
+
+        if len("ffmpeg " + " ".join(args)) > 30000:
+            # logging.info("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
+            #              "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
+            logging.debug("ffmpeg command length exceeds 30000, will try writing to a temporary file")
+            idx = args.index("-filter_complex") + 1
+            complex_filter = str(args[idx])
+            # write complex_filter to a temporary file
+            fp = tempfile.NamedTemporaryFile(
+                delete=False)  # don't delete b/c can't open file again when it's already open in windows
+            fp.write(complex_filter.encode(encoding="utf-8"))
+            fp.close()
+            args[idx] = fp.name
+            args[idx - 1] = "-filter_complex_script"
+        args = ["ffmpeg"] + args  # + ['-progress', 'unix://{}'.format(socket_filename)]
+
+        # ffmpeg.run(combined, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
+
+        pipe_stdin = False
+        pipe_stdout = True
+        pipe_stderr = True
+        quiet = not logging.root.isEnabledFor(logging.DEBUG)
+
+        stdin_stream = subprocess.PIPE if pipe_stdin else None
+        stdout_stream = subprocess.PIPE if pipe_stdout or quiet else None
+        stderr_stream = subprocess.PIPE if pipe_stderr or quiet else None
+        process = subprocess.Popen(
+            args, stdin=stdin_stream, stdout=stdout_stream, stderr=stderr_stream
+        )
+        out, err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            raise Error('ffmpeg', out, err)
+
+    # if os.name == 'posix':
+    with show_progress(total_duration=duration, desc=outfile) as socket_filename:
+        combined = combined.global_args('-progress', 'unix://{}'.format(socket_filename))
+        run(combined)
+    # else:
+    #     run(combined)
+
+
 def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_times, outfile):
-    logging.info(f"saving condensed video to {outfile}")
+    # logging.info(f"saving condensed video to {outfile}")
 
     # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
@@ -240,38 +348,8 @@ def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_time
     out = ffmpeg.overwrite_output(out)
     logging.debug(f"ffmpeg_condense_video: ffmpeg arguments: {' '.join(ffmpeg.get_args(out))}")
 
-    args = ffmpeg.get_args(out)
-    if len("ffmpeg " + " ".join(args)) > 32766 and os.name == 'nt':
-        logging.info("Arguments passed to ffmpeg exceeds 32767 characters while running on a Windows system. "
-                     "Will try using a temporary file to pass filter_complex arguments to ffmpeg.")
-        idx = args.index("-filter_complex") + 1
-        complex_filter = str(args[idx])
-        # write complex_filter to a temporary file
-        fp = tempfile.NamedTemporaryFile(
-            delete=False)  # don't delete b/c can't open file again when it's already open in windows
-        fp.write(complex_filter.encode(encoding="utf-8"))
-        fp.close()
-        args[idx] = fp.name
-        args[idx - 1] = "-filter_complex_script"
-    args = ["ffmpeg"] + args
-
-    # ffmpeg.run(out, quiet=logging.getLogger().getEffectiveLevel() >= logging.WARNING)
-
-    pipe_stdin = False
-    pipe_stdout = False
-    pipe_stderr = False
-    quiet = logging.getLogger().getEffectiveLevel() >= logging.WARNING
-
-    stdin_stream = subprocess.PIPE if pipe_stdin else None
-    stdout_stream = subprocess.PIPE if pipe_stdout or quiet else None
-    stderr_stream = subprocess.PIPE if pipe_stderr or quiet else None
-    process = subprocess.Popen(
-        args, stdin=stdin_stream, stdout=stdout_stream, stderr=stderr_stream
-    )
-    out, err = process.communicate(input)
-    retcode = process.poll()
-    if retcode:
-        raise Error('ffmpeg', out, err)
+    duration = sum([end - start for start, end in sub_times]) / 1000
+    ffmpeg_exec(duration, outfile, out)
 
 
 def ffmpeg_get_frames(videofile: Path, timestamps: List[int], outdir: Path, outstem: str, outext: str, w: int, h: int):

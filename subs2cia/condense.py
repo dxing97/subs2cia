@@ -63,7 +63,7 @@ class Condense(Common):
 
         self.out_subext = None  # extensions must contain dot
 
-        logging.info(f"Mapping input file(s) {sources} to one output file")
+        logging.debug(f"Mapping input file(s) {sources} to one output file")
 
         self.threshold = threshold
         self.partition = partition
@@ -153,7 +153,7 @@ class Condense(Common):
 
     def export_subtitles(self):
         if self.picked_streams['subtitle'] is None:
-            logging.info(f'No subtitle stream to process for output stem {self.outstem}')
+            logging.info(f'No subtitles to process for output {self.outstem}')
             return
         subpath = self.picked_streams['subtitle'].get_data_path()
         subext = subpath.suffix
@@ -162,6 +162,7 @@ class Condense(Common):
         self.subtitle_outfile = Path(self.outdir) / (
                     self.outstem + f'.condensed{self.out_subext if self.out_subext is not None else subext}')
         self.subdata.condensed_ssadata.save(self.subtitle_outfile, encoding=u'utf-8')
+        logging.info(f"Wrote condensed subtitles to {self.subtitle_outfile}")
 
     def export_audio(self):
         if self.picked_streams['audio'] is None:
@@ -174,6 +175,7 @@ class Condense(Common):
             return
         export_condensed_audio(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
                                outfile=outfile, to_mono=self.to_mono, quality=self.quality)
+        logging.info(f"Wrote condensed audio to {outfile}")
 
     def export_video(self):
         if self.picked_streams['video'] is None:
@@ -181,7 +183,7 @@ class Condense(Common):
             return
 
         outfile = Path(self.outdir) / (self.outstem + '.mkv')
-        logging.info(f"exporting condensed video to {outfile}")
+        # logging.info(f"exporting condensed video to {outfile}")
         if outfile.exists() and not self.overwrite_existing_generated:
             logging.warning(f"Can't write to {outfile}: file exists and not set to overwrite")
             return
@@ -189,6 +191,7 @@ class Condense(Common):
                                subfile=self.subtitle_outfile,
                                videofile=self.picked_streams['video'].get_data_path(),
                                outfile=outfile)
+        logging.info(f"Wrote condensed video to {outfile}")
         return
 
     def export(self):

@@ -46,7 +46,7 @@ class AVSFile:
             return
         stream = self.info['streams'][0]
         if stream['codec_type'] == 'video':
-            logging.info(f"File {str(self.filepath)} contains no audio or subtitle tracks!")
+            logging.warning(f"File {str(self.filepath)} contains no audio or subtitle tracks!")
         self.type = stream['codec_type']
 
     def __str__(self):
@@ -80,7 +80,7 @@ class Stream:
         if self.is_standalone():
             return f"standalone {self.stream_info['codec_name']} {self.type} at {str(self.file)}"
         else:
-            return f"stream {self.index} ({self.type}, {self.stream_info['codec_name']}) in {self.file}"
+            return f"stream {self.index} ({self.type}, {f'{self.lang.name}, ' if self.lang != 'unknownlang' else ''}{self.stream_info['codec_name']}) in {self.file}"
 
     def __repr__(self):
         return f"Stream(file={self.file.__repr__()}, type={self.type}, index={self.index})"
@@ -242,6 +242,6 @@ def get_and_partition_streams(sources: List[AVSFile]):
                                                                 index=None))
         # for stream in sourcefile
     for k in partitioned_streams:
-        logging.info(f"Found {len(partitioned_streams[k])} {k} input streams")
-        # logging.debug(f"Streams found: {self.partitioned_streams[k]}")
+        # logging.debug(f"Found {len(partitioned_streams[k])} {k} input streams")
+        logging.debug(f"{k} streams found: {partitioned_streams[k]}")
     return partitioned_streams

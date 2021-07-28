@@ -139,8 +139,9 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     # get samples in audio file
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
     sps = int(
-        audio_info['streams'][0]['time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
+        audio_info['streams'][0]['codec_time_base'].split('/')[1])  # audio samples per second, inverse of sampling frequency
     # samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
+    # duration_ts uses time_base, not codec_time_bnase
 
     stream = ffmpeg.input(audiofile)
 

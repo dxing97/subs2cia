@@ -7,3 +7,4 @@ pandas>=1.1.4
 tqdm
 gevent
 pandas
+colorlog

@@ -24,13 +24,14 @@ class AVSFile:
     # determining type may just be as simple as reading the extension
     # but sometimes its better to use a parser and make sure the extension is correct
     def probe(self):
+        logging.debug(f"Probing {self.filepath}")
         try:
             self.info = ffmpeg.probe(self.filepath, 'ffprobe', **{'show_chapters': None})
         except ffmpeg.Error as e:
             logging.warning(
                 f"Couldn't probe file, skipping {str(self.filepath)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))
 
-        logging.debug(f"ffmpeg probe results: {self.info}")
+        logging.debug(f"ffprobe results: {self.info}")
 
     def get_type(self):
         if self.info is None:  # ffprobe probably failed for some reason

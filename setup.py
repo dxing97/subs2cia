@@ -52,7 +52,7 @@ setuptools.setup(
         "pycountry",
         "pysubs2",
         "tqdm",
-        "pandas", "tqdm", "gevent"
+        "pandas", "tqdm", "gevent", "colorlog"
     ],
     entry_points={
         # create a cli command called 'subs2cia' which runs the main() function in subs2cia.cli

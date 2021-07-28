@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 import glob
+
 # this line is for when main.py is run directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -12,6 +13,7 @@ from subs2cia.CardExport import CardExport
 
 from pathlib import Path
 import logging
+from colorlog import ColoredFormatter
 from pprint import pprint
 from typing import Union, List
 import tqdm
@@ -58,12 +60,13 @@ class TqdmLoggingHandler(logging.Handler):
 
 def condense_start(args, groups: List[List[AVSFile]]):
     condense_args = {key: args[key] for key in
-                 ['outdir', 'outstem', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
-                  'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
-                  'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs', 'subtitle_regex_filter',
-                  'subtitle_regex_substrfilter', 'subtitle_regex_substrfilter_nokeep',
-                  'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
-                  'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles', 'out_audiocodec']}
+                     ['outdir', 'outstem', 'condensed_video', 'padding', 'threshold', 'partition', 'split',
+                      'demux_overwrite_existing', 'overwrite_existing_generated', 'keep_temporaries',
+                      'target_lang', 'out_audioext', 'minimum_compression_ratio', 'use_all_subs',
+                      'subtitle_regex_filter',
+                      'subtitle_regex_substrfilter', 'subtitle_regex_substrfilter_nokeep',
+                      'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
+                      'bitrate', 'mono_channel', 'interactive', 'no_condensed_subtitles', 'out_audiocodec']}
 
     condensed_files = [Condense(g, **condense_args) for g in groups]
     if logging.root.isEnabledFor(logging.INFO):
@@ -85,7 +88,7 @@ def condense_start(args, groups: List[List[AVSFile]]):
         # if logging.root.level == logging.INFO:
         #     i.set_postfix_str(f"{c.outstem}")
         #     i.update(0)
-        logging.info(f"({idx+1}/{len(i)}): {c.outstem}")
+        logging.info(f"({idx + 1}/{len(i)}): {c.outstem}")
         c.get_and_partition_streams()
         c.initialize_pickers()
         if args['dry_run']:
@@ -100,10 +103,11 @@ def condense_start(args, groups: List[List[AVSFile]]):
 
 def srs_export_start(args, groups: List[List[AVSFile]]):
     srs_args = {key: args[key] for key in
-                 ['outdir', 'outstem', 'condensed_video', 'padding', 'demux_overwrite_existing',
-                  'overwrite_existing_generated', 'keep_temporaries', 'target_lang', 'out_audioext', 'use_all_subs',
-                  'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range', 'ignore_chapters',
-                  'bitrate', 'mono_channel', 'interactive', 'normalize_audio', "out_audiocodec"]
+                ['outdir', 'outstem', 'condensed_video', 'padding', 'demux_overwrite_existing',
+                 'overwrite_existing_generated', 'keep_temporaries', 'target_lang', 'out_audioext', 'use_all_subs',
+                 'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range',
+                 'ignore_chapters',
+                 'bitrate', 'mono_channel', 'interactive', 'normalize_audio', "out_audiocodec"]
                 }
 
     cardexport_group = [CardExport(g, **srs_args) for g in groups]
@@ -129,17 +133,38 @@ def start():
     args = vars(args)
 
     logconfig = False
-
+    ch = logging.StreamHandler()
+    level = logging.NOTSET
     if args['debug']:
-        logging.basicConfig(level=logging.DEBUG,
-                            format="subs2cia:%(levelname)s:%(message)s [%(module)s.py:%(funcName)s():%(lineno)d]")
+        level = logging.DEBUG
         logconfig = True
     if not logconfig and args['quiet']:
-        logging.basicConfig(level=logging.WARNING, format="subs2cia:%(levelname)s:%(message)s")
+        level = logging.WARNING
         logconfig = True
     if not logconfig:
-        logging.basicConfig(level=logging.INFO, format="subs2cia:%(levelname)s:%(message)s")
+        level = logging.INFO
         logconfig = True
+
+    if level == logging.DEBUG:
+        format = "subs2cia:%(log_color)s%(levelname)s%(reset)s:%(message_log_color)s%(message)s [%(module)s.py:%(funcName)s():%(lineno)d]"
+    else:
+        format = "subs2cia:%(log_color)s%(levelname)s%(reset)s:%(message_log_color)s%(message)s"
+
+    ch.setLevel(level)
+    ch.setFormatter(ColoredFormatter(format, log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'green',
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red,bg_white',
+    }, secondary_log_colors={
+        'message': {
+            'ERROR': 'red',
+            'CRITICAL': 'bold_red'
+        }
+    }))
+    logging.root.setLevel(level)
+    logging.root.addHandler(ch)
 
     from subs2cia import __version__
     logging.info(f"subs2cia version {__version__}")
@@ -169,7 +194,6 @@ def start():
     else:
         sources = [AVSFile(Path(file)) for file in infiles]
 
-
     for s in sources:
         s.probe()
         s.get_type()
@@ -192,6 +216,7 @@ def start():
         'srs': srs_export_start
     }
     commands[args['command']](args, groups)
+
 
 def _resolve(files):
     resolved = []

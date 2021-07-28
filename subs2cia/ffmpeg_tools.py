@@ -125,7 +125,7 @@ def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
 class Error(Exception):
     def __init__(self, cmd, stdout, stderr: bytes):
         super(Error, self).__init__(
-            f'{cmd} error. {cmd} stderr output: \n{stderr.decode("utf-8")}'
+            '{} error (see stderr output for detail)'.format(cmd)
         )
         self.stdout = stdout
         self.stderr = stderr
@@ -168,7 +168,8 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     combined = ffmpeg.output(combined, outfile, **kwargs)
     combined = ffmpeg.overwrite_output(combined)
 
-    logging.debug(f"ffmpeg_condense_audio: ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
+    if logging.root.isEnabledFor(logging.DEBUG):
+        logging.debug(f"ffmpeg_condense_audio: ffmpeg arguments: {' '.join(ffmpeg.get_args(combined))}")
 
     duration = sum([end - start for start, end in sub_times]) / 1000
     ffmpeg_exec(duration, outfile, combined)
@@ -207,9 +208,12 @@ def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, N
                                (f".s{s + 1}" if len(partition) != 1 else "") + \
                                ".condensed" + \
                                os.path.splitext(outfile)[1]
-
-            ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit, quality=quality,
-                                  to_mono=to_mono, codec=codec)
+            try:
+                ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit, quality=quality,
+                                      to_mono=to_mono, codec=codec)
+            except Error as e:
+                logging.error(
+                    f"ffmpeg couldn't export audio. ffmpeg output: \n" + e.stderr.decode("utf-8"))
 
 
 def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videofile: Path, outfile=None,
@@ -246,8 +250,12 @@ def export_condensed_video(divided_times, audiofile: Path, subfile: Path, videof
                                ".condensed" + \
                                os.path.splitext(outfile)[1]
             # todo: need to split subfiles with partition, split options
-            ffmpeg_condense_video(audiofile=audiofile, videofile=str(videofile), subfile=str(subfile),
-                                  sub_times=split, outfile=outfilesplit)
+            try:
+                ffmpeg_condense_video(audiofile=audiofile, videofile=str(videofile), subfile=str(subfile),
+                                      sub_times=split, outfile=outfilesplit)
+            except Error as e:
+                logging.error(
+                    f"ffmpeg couldn't export video. ffmpeg output: \n" + e.stderr.decode("utf-8"))
 
 
 def trim(input_path, output_path, start=30, end=60):
@@ -307,11 +315,12 @@ def ffmpeg_exec(duration: float, outfile: str, combined):
             raise Error('ffmpeg', out, err)
 
     # if os.name == 'posix':
-    with show_progress(total_duration=duration, desc=outfile) as socket_filename:
-        combined = combined.global_args('-progress', 'unix://{}'.format(socket_filename))
+    if hasattr(socket, 'AF_UNIX') and logging.root.level <= logging.INFO:
+        with show_progress(total_duration=duration, desc=outfile) as socket_filename:
+            combined = combined.global_args('-progress', 'unix://{}'.format(socket_filename))
+            run(combined)
+    else:
         run(combined)
-    # else:
-    #     run(combined)
 
 
 def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_times, outfile):
@@ -351,7 +360,8 @@ def ffmpeg_condense_video(audiofile: str, videofile: str, subfile: str, sub_time
 
     # output = ffmpeg.output(joined[0], joined[1], outfile)
     out = ffmpeg.overwrite_output(out)
-    logging.debug(f"ffmpeg_condense_video: ffmpeg arguments: {' '.join(ffmpeg.get_args(out))}")
+    if logging.root.isEnabledFor(logging.DEBUG):
+        logging.debug(f"ffmpeg_condense_video: ffmpeg arguments: {' '.join(ffmpeg.get_args(out))}")
 
     duration = sum([end - start for start, end in sub_times]) / 1000
     ffmpeg_exec(duration, outfile, out)

@@ -176,7 +176,7 @@ class Condense(Common):
             return
         export_condensed_audio(self.dialogue_times, audiofile=self.picked_streams['audio'].get_data_path(),
                                outfile=outfile, to_mono=self.to_mono, quality=self.quality, codec=self.out_audiocodec)
-        logging.info(f"Wrote condensed audio to {outfile}")
+        # logging.info(f"Wrote condensed audio to {outfile}")
 
     def export_video(self):
         if self.picked_streams['video'] is None:

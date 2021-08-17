@@ -11,8 +11,15 @@
  - Added quiet mode `-Q`: suppresses all non-warning status outputs
  - `-ac`: specify output audio codec option
 
+### Fixed
+ - fix for when outdir doesn't exist
+ - SRS export: fix for missing arguments error
+ - SRS export: lots of fixes
+
 ### Removed
- - Verbose output `-v` 
+ - Verbose output `-v`
+
+
 
 ## [0.3.5] - 2021-04-24
 ### Fixed 

@@ -516,8 +516,13 @@ def ffmpeg_trim_audio_clip_atrim_encode(input_file: Path, stream_index: int, tim
     input_stream = ffmpeg.overwrite_output(input_stream)
     args = input_stream.get_args()
     # logging.debug(f"ffmpeg_trim_audio_clip: args: {args}")
-    stdout, stderr = ffmpeg.run(input_stream, capture_stdout=capture_stdout, capture_stderr=silent)
-    return stdout
+    try:
+        stdout, stderr = ffmpeg.run(input_stream, capture_stdout=capture_stdout, capture_stderr=silent)
+    except Exception as e:
+        logging.error(
+            f"ffmpeg couldn't trim audio clip. ffmpeg output: \n" + e.stderr.decode("utf-8"))
+        raise e
+    # return stdout
 
 
 # buggy, dont use

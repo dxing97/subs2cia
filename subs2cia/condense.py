@@ -34,8 +34,8 @@ class Condense(Common):
             out_audioext=out_audioext,
             use_all_subs=use_all_subs,
             subtitle_regex_filter=subtitle_regex_filter,
-            subtitle_regex_substrfilter=subtitle_regex_substrfilter,
-            subtitle_regex_substrfilter_nokeep=subtitle_regex_substrfilter_nokeep,
+            # subtitle_regex_substrfilter=subtitle_regex_substrfilter,
+            # subtitle_regex_substrfilter_nokeep=subtitle_regex_substrfilter_nokeep,
             audio_stream_index=audio_stream_index,
             subtitle_stream_index=subtitle_stream_index,
             ignore_range=ignore_range,
@@ -110,7 +110,9 @@ class Condense(Common):
                                                    threshold=self.threshold, padding=self.padding,
                                                    ignore_range=ignore_range, audio_length=audiolength)
             subdata.load(include_all=self.use_all_subs, regex=self.subtitle_regex_filter,
-                         substrreplace_regex=self.subtitle_regex_substrfilter, substrreplace_nokeepchanges=self.subtitle_regex_substrfilter_nokeep)
+                         substrreplace_regex='',
+                         substrreplace_nokeepchanges=False)
+                         # substrreplace_regex=self.subtitle_regex_substrfilter, substrreplace_nokeepchanges=self.subtitle_regex_substrfilter_nokeep)
             if subdata.ssadata is None:
                 logging.warning(f"Problem loading subtitle data from {self.picked_streams[k]}")
                 self.picked_streams[k] = None

@@ -90,14 +90,16 @@ class Common:
                  demux_overwrite_existing: bool, overwrite_existing_generated: bool,
                  keep_temporaries: bool, target_lang: str, out_audioext: str,
                  use_all_subs: bool, subtitle_regex_filter: str,
-                 subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
+                 # subtitle_regex_substrfilter: str, subtitle_regex_substrfilter_nokeep: bool,
                  audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
                  bitrate: Union[int, None], mono_channel: bool, interactive: bool, out_audiocodec: str):
         if outdir is None:
             self.outdir = sources[0].filepath.parent
         else:
-            self.outdir = outdir
+            self.outdir = Path(outdir)
+            if not self.outdir.exists():
+                self.outdir.mkdir()
 
         self.sources = sources
         if outstem is not None:
@@ -136,8 +138,8 @@ class Common:
 
         self.use_all_subs = use_all_subs
         self.subtitle_regex_filter = subtitle_regex_filter
-        self.subtitle_regex_substrfilter = subtitle_regex_substrfilter
-        self.subtitle_regex_substrfilter_nokeep = subtitle_regex_substrfilter_nokeep
+        # self.subtitle_regex_substrfilter = subtitle_regex_substrfilter
+        # self.subtitle_regex_substrfilter_nokeep = subtitle_regex_substrfilter_nokeep
         self.audio_stream_index = audio_stream_index
         self.subtitle_stream_index = subtitle_stream_index
         # todo: verify ignore_range, make sure start is after end

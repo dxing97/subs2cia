@@ -227,7 +227,8 @@ def get_args_subs2cia():
     cia_parser = subparsers.add_parser('condense', parents=[parent_parser],
                                        help="Condense input audio into a single audio file")
     srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
-                                       help="Snip input media for import into spaced-repetition software")
+                                       help="Snip input media for import into spaced-repetition software. Exported "
+                                            "sentences are stored in a TSV file.")
 
     srs_parser.add_argument('-N', '--normalize', action='store_true', dest='normalize_audio', default=False,
                             help="If set, normalizes volume of audio clips to the same loudness. YMMV.")

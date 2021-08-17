@@ -194,7 +194,9 @@ def get_args_subs2cia():
                                default=None,
                                type=str, action="append",
                                help="Chapter titles to ignore, case sensitive. Can use -ls to determine chapter titles. "
-                                    "Can be used in addition to --ignore-range to ignore sections of the stream.")
+                                    "Can be used in addition to --ignore-range to ignore sections of the stream. "
+                                    "Useful for ignoring chaptered intros and endings. "
+                                    "Use --list-streams to get a list of chapter titles.")
 
     parent_parser.add_argument('-p', '--padding', metavar='msecs', dest='padding', default=0,
                                type=int,

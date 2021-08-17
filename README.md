@@ -13,7 +13,7 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
      * Subtitles not perfectly aligned? Pad subtitles with additional audio (`-p`)
      * Process multiple files with batch mode (`-b`)
  * **EXPERIMENTAL**: Export subtitles with audio and screenshots into your flashcard SRS of choice (`subs2cia srs`)
-
+    * [SRS export guide](SRS_Export.md)
 ## Dependencies
 * Python 3.6 or later
 * FFmpeg executable binaries (ffmpeg and ffprobe) must be on your PATH (i.e. can execute `ffmpeg` and `ffprobe`

@@ -173,7 +173,7 @@ def get_args_subs2cia():
     #                                 'instead of being removed entirely from the output. '
     #                                 'Useful for implementing custom dialogue-ignoring ')
 
-    parent_parser.add_argument('-I', '--ignore-range', metavar="[prefix]timestamp", dest="ignore_range", default=None,
+    parent_parser.add_argument('-I', '--ignore-range', metavar="<prefix>timestamp", dest="ignore_range", default=None,
                                type=time, nargs=2, action="append",
                                help="Time range to ignore when condensing, specified using two timestamps. "
                                     "Useful for removing openings and endings of shows. \n"

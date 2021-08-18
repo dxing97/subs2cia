@@ -2,21 +2,21 @@
 More readable version Coming Soon.
 ```
 $ subs2cia condense -h
-usage: main.py condense [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
+usage: main.py condense [-h] [-Q] [-vv] [-i <input files> [<input files> ...]]
                         [-si <index>] [-ai <index>] [-b] [-u] [-o <name>]
                         [-d /path/to/directory] [-ae <audio extension>]
-                        [-q <bitrate in kbps>] [-M] [-m]
+                        [-ac <audio codec>] [-q <bitrate in kbps>] [-M] [-m]
                         [--overwrite-on-demux] [--keep-temporaries]
                         [--no-overwrite-on-generation] [-ni]
                         [-R <regular expression>]
-                        [-I [prefix]timestamp [prefix]timestamp]
+                        [-I <prefix>timestamp <prefix>timestamp]
                         [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
                         [--preset preset#] [-lp] [-a] [-ma] [-t msecs]
                         [-r secs] [-s secs] [-c <ratio>] [--no-gen-subtitle]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v, --verbose         Verbose output if set.
+  -Q, --quiet           Will only report warning and errors if set.
   -vv, --debug          Verbose and debug output if set
   -i <input files> [<input files> ...], --inputs <input files> [<input files> ...]
                         Paths to input files or a single path to a directory
@@ -55,16 +55,20 @@ optional arguments:
   -ae <audio extension>, --audio-extension <audio extension>
                         Output audio extension to save as (without the dot).
                         Default is mp3.
+  -ac <audio codec>, --audio-codec <audio codec>
+                        Output audio codec to use on export. Default is to let
+                        ffmpeg choose based on the audio file extension.
   -q <bitrate in kbps>, --bitrate <bitrate in kbps>
                         Output audio bitrate in kbps, lower bitrates result in
                         smaller files and lower fidelity. Ignored if the
-                        output type is not mp3. Default is 320 kbps. Bitrates
-                        below 64 kbps are not recommended.
+                        output audio file extension and audio codec is not
+                        mp3. Default is 320 kbps. Bitrates below 64 kbps are
+                        not recommended.
   -M, --mono            If set, mixes audio channels to a single channel,
                         primarily to save space.
   -m, --gen-video       If set, generates condensed video along with condensed
                         audio and subtitles. Subtitles are muxed in to video
-                        file. WARNING: VERY CPU INTENSIVE).
+                        file. WARNING: VERY CPU INTENSIVE AND SLOW.
   --overwrite-on-demux  If set, will overwrite existing files when demuxing
                         temporary files.
   --keep-temporaries    If set, will not delete any demuxed temporary files.
@@ -82,7 +86,7 @@ optional arguments:
                         condensed subtitles if they overlap with non-ignored
                         subtitles. This option will override the internal
                         subs2cia non-dialogue filter.
-  -I [prefix]timestamp [prefix]timestamp, --ignore-range [prefix]timestamp [prefix]timestamp
+  -I <prefix>timestamp <prefix>timestamp, --ignore-range <prefix>timestamp <prefix>timestamp
                         Time range to ignore when condensing, specified using
                         two timestamps. Useful for removing openings and
                         endings of shows. Time formatting example:
@@ -99,6 +103,8 @@ optional arguments:
                         Chapter titles to ignore, case sensitive. Can use -ls
                         to determine chapter titles. Can be used in addition
                         to --ignore-range to ignore sections of the stream.
+                        Useful for ignoring chaptered intros and endings. Use
+                        --list-streams to get a list of chapter titles.
   -p msecs, --padding msecs
                         Adds this many milliseconds of audio before and after
                         every subtitle. Overlaps with adjacent subtitles are
@@ -162,19 +168,20 @@ optional arguments:
 Many options are shared between SRS and Condense.
 ```
 $ subs2cia srs -h
-usage: main.py srs [-h] [-v] [-vv] [-i <input files> [<input files> ...]]
+usage: main.py srs [-h] [-Q] [-vv] [-i <input files> [<input files> ...]]
                    [-si <index>] [-ai <index>] [-b] [-u] [-o <name>]
                    [-d /path/to/directory] [-ae <audio extension>]
-                   [-q <bitrate in kbps>] [-M] [-m] [--overwrite-on-demux]
-                   [--keep-temporaries] [--no-overwrite-on-generation] [-ni]
-                   [-R <regular expression>] [-RR <regular expression>]
-                   [-RRnk] [-I [prefix]timestamp [prefix]timestamp]
+                   [-ac <audio codec>] [-q <bitrate in kbps>] [-M] [-m]
+                   [--overwrite-on-demux] [--keep-temporaries]
+                   [--no-overwrite-on-generation] [-ni]
+                   [-R <regular expression>]
+                   [-I <prefix>timestamp <prefix>timestamp]
                    [-Ic <chapter name>] [-p msecs] [-tl ISO_code] [-ls]
                    [--preset preset#] [-lp] [-a] [-ma] [-N]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v, --verbose         Verbose output if set.
+  -Q, --quiet           Will only report warning and errors if set.
   -vv, --debug          Verbose and debug output if set
   -i <input files> [<input files> ...], --inputs <input files> [<input files> ...]
                         Paths to input files or a single path to a directory
@@ -213,16 +220,20 @@ optional arguments:
   -ae <audio extension>, --audio-extension <audio extension>
                         Output audio extension to save as (without the dot).
                         Default is mp3.
+  -ac <audio codec>, --audio-codec <audio codec>
+                        Output audio codec to use on export. Default is to let
+                        ffmpeg choose based on the audio file extension.
   -q <bitrate in kbps>, --bitrate <bitrate in kbps>
                         Output audio bitrate in kbps, lower bitrates result in
                         smaller files and lower fidelity. Ignored if the
-                        output type is not mp3. Default is 320 kbps. Bitrates
-                        below 64 kbps are not recommended.
+                        output audio file extension and audio codec is not
+                        mp3. Default is 320 kbps. Bitrates below 64 kbps are
+                        not recommended.
   -M, --mono            If set, mixes audio channels to a single channel,
                         primarily to save space.
   -m, --gen-video       If set, generates condensed video along with condensed
                         audio and subtitles. Subtitles are muxed in to video
-                        file. WARNING: VERY CPU INTENSIVE).
+                        file. WARNING: VERY CPU INTENSIVE AND SLOW.
   --overwrite-on-demux  If set, will overwrite existing files when demuxing
                         temporary files.
   --keep-temporaries    If set, will not delete any demuxed temporary files.
@@ -240,20 +251,7 @@ optional arguments:
                         condensed subtitles if they overlap with non-ignored
                         subtitles. This option will override the internal
                         subs2cia non-dialogue filter.
-  -RR <regular expression>, --sub-regex-substrfilter <regular expression>
-                        Searches subtitle lines and removes all substrings
-                        that match this regular expression. If the resulting
-                        subtitle line becomes empty, contains only spaces, or
-                        contains only punctuation as a result, the entire
-                        subtitle line is removed and will not be present in
-                        the output unless -RRnk is set.
-  -RRnk, --sub-regex-substrfilter-nokeepchanges
-                        If set, the modified subtitle text created by -RR will
-                        not be passed to the output subtitles/cards. Any empty
-                        filtered lines will be marked as non-dialogue instead
-                        of being removed entirely from the output. Useful for
-                        implementing custom dialogue-ignoring
-  -I [prefix]timestamp [prefix]timestamp, --ignore-range [prefix]timestamp [prefix]timestamp
+  -I <prefix>timestamp <prefix>timestamp, --ignore-range <prefix>timestamp <prefix>timestamp
                         Time range to ignore when condensing, specified using
                         two timestamps. Useful for removing openings and
                         endings of shows. Time formatting example:
@@ -270,6 +268,8 @@ optional arguments:
                         Chapter titles to ignore, case sensitive. Can use -ls
                         to determine chapter titles. Can be used in addition
                         to --ignore-range to ignore sections of the stream.
+                        Useful for ignoring chaptered intros and endings. Use
+                        --list-streams to get a list of chapter titles.
   -p msecs, --padding msecs
                         Adds this many milliseconds of audio before and after
                         every subtitle. Overlaps with adjacent subtitles are

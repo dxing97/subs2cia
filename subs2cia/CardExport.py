@@ -56,18 +56,23 @@ class CardExport(Common):
         if len(self.partitioned_streams['subtitle']) == 0:
             logging.warning(f"Couldn't find audio streams in input files")
             return
-        if interactive and len(self.partitioned_streams['subtitle']) > 1:
-            self.picked_streams['subtitle'] = interactive_picker(self.sources, self.partitioned_streams, 'subtitle')
-            return
+        # if interactive and len(self.partitioned_streams['subtitle']) > 1:
+        #     while self.picked_streams['subtitle'] is None:
+        #         self.picked_streams['subtitle'] = interactive_picker(self.sources, self.partitioned_streams, 'subtitle')
+        #     return
 
         k = 'subtitle'
         while self.picked_streams[k] is None:
-            try:
-                self.picked_streams[k] = next(self.pickers[k])
-            except StopIteration as s:
-                logging.critical(f"Input files {self.sources} don't contain usable subtitles")
-                self.insufficient = True
-                return
+            if interactive and len(self.partitioned_streams['subtitle']) > 1:
+                self.picked_streams['subtitle'] = interactive_picker(self.sources, self.partitioned_streams,
+                                                                     'subtitle')
+            else:
+                try:
+                    self.picked_streams[k] = next(self.pickers[k])
+                except StopIteration as s:
+                    logging.critical(f"Input files {self.sources} don't contain usable subtitles")
+                    self.insufficient = True
+                    return
             subfile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
             ignore_range = (self.ignore_range or []) + chapter_timestamps(self.picked_streams[k].file, self.ignore_chapters or [])
             if subfile is None:

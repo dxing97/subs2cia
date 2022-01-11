@@ -48,7 +48,8 @@ def time(s):
 
 
 def get_args_subs2cia():
-    parser = argparse.ArgumentParser(description=f'subs2cia: Extract subtitled dialogue from audiovisual media for use '
+    from subs2cia import __version__
+    parser = argparse.ArgumentParser(description=f'subs2cia {__version__}: Extract subtitled dialogue from audiovisual media for use '
                                                  f'in language acquisition')
 
     subparsers = parser.add_subparsers(title='subcommands', help="subcommand help", dest="command")
@@ -193,7 +194,7 @@ def get_args_subs2cia():
     parent_parser.add_argument('-Ic', '--ignore-chapter', metavar="<chapter name>", dest="ignore_chapters",
                                default=None,
                                type=str, action="append",
-                               help="Chapter titles to ignore, case sensitive. Can use -ls to determine chapter titles. "
+                               help="Chapter titles to ignore, case sensitive. Use -ls to get chapter titles. "
                                     "Can be used in addition to --ignore-range to ignore sections of the stream. "
                                     "Useful for ignoring chaptered intros and endings. "
                                     "Use --list-streams to get a list of chapter titles.")
@@ -223,14 +224,23 @@ def get_args_subs2cia():
                                help='Prints absolute paths from the root directory instead of given paths.')
 
     parent_parser.add_argument('-ma', '--interactive', action='store_true', dest='interactive', default=False,
-                               help='If set, will enable interactive stream picking. Overrides -ai, -si, -tl. '
-                                    'Also overrides -c in ')
+                               help='If set, will enable interactive stream picking. Overrides -ai, -si, -tl.')
 
     cia_parser = subparsers.add_parser('condense', parents=[parent_parser],
-                                       help="Condense input audio into a single audio file")
+                                       help="Compress input audio/video into a shorter file",
+                                       description="Compress input audio/video into a shorter file")
     srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
-                                       help="Snip input media for import into spaced-repetition software. Exported "
-                                            "sentences are stored in a TSV file.")
+                                       help="(Experimental) Snip input media and import into spaced-repetition software via a TSV file.",
+                                       description="(Experimental) Snip input media line by line and export to a Anki-compatible "
+                                                   "TSV file. The output TSV columns are:"+ """
+
+1:\tSubtitle text;
+2:\tTime range of subtitle in milliseconds, formatted as start-end;
+3:\tAudio, formatted as [sound:media_start-end.mp3];
+4:\tScreenshot, HTML formatted as <img src='media_start-end.jpg'>;
+5:\tVideo clip (currently disabled);
+6:\tComma-seperated list of input files used
+""" )
 
     srs_parser.add_argument('-N', '--normalize', action='store_true', dest='normalize_audio', default=False,
                             help="If set, normalizes volume of audio clips to the same loudness. YMMV.")

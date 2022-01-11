@@ -1,25 +1,27 @@
 # Changelog
 
-
-## [Unreleased]
-### Changed
- - subs2cia now prints status information while running by default
- - Long ffmpeg arguments are now saved to temp files on all platforms, not just windows
+## [0.4.0]
 
 ### Added
  - ffmpeg condensed audio and video progress bar (unix-like operating systems only)
  - Added quiet mode `-Q`: suppresses all non-warning status outputs
  - `-ac`: specify output audio codec option
 
+### Changed
+ - subs2cia now prints status information while running by default
+ - Long ffmpeg arguments are now saved to temp files on all platforms, not just windows
+ - Update help text
+
 ### Fixed
  - fix for when outdir doesn't exist
  - SRS export: fix for missing arguments error
  - SRS export: miscellaneous bug fixes
  - fix passing PosixPath path to ffmpeg.probe() instead of a str path [#22](https://github.com/dxing97/subs2cia/issues/22)
+ - fix incorrect output path being logged
+ - fix interactive stream selector `-ma` not demuxing selected streams
 
 ### Removed
  - Verbose output `-v`
-
 
 
 ## [0.3.5] - 2021-04-24

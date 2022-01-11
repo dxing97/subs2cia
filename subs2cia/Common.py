@@ -66,7 +66,7 @@ def interactive_picker(sources: List[AVSFile], partitioned_streams: Dict[str, St
         if media_type == 'video':
             if 'width' in stream.stream_info and 'height' in stream.stream_info:
                 desc_str = desc_str + f"{stream.stream_info['width']}x{stream.stream_info['height']}, "
-        if media_type == 'audio':
+        if (media_type == 'audio') or (media_type == 'subtitle'):
             if "tags" in stream.stream_info:
                 tags = stream.stream_info['tags']
                 if "language" in tags:
@@ -80,7 +80,7 @@ def interactive_picker(sources: List[AVSFile], partitioned_streams: Dict[str, St
         desc_str += f"file: {str(stream.file)}"
         print(desc_str)
     print("")
-    idx = int(input("Which stream to use?"))
+    idx = int(input(f"Which {media_type} stream to use?"))
     return partitioned_streams[media_type][idx]
 
 
@@ -228,18 +228,21 @@ class Common:
         if len(self.partitioned_streams['audio']) == 0:
             logging.warning(f"Couldn't find audio streams in input files")
             return
-        if interactive and len(self.partitioned_streams['audio']) > 1:
-            self.picked_streams['audio'] = interactive_picker(self.sources, self.partitioned_streams, 'audio')
-            return
+        # if interactive and len(self.partitioned_streams['audio']) > 1:
+        #     while self.picked_streams['audio'] is None:
+        #         self.picked_streams['audio'] = interactive_picker(self.sources, self.partitioned_streams, 'audio')
 
         k = 'audio'
         while self.picked_streams[k] is None:
-            try:
-                self.picked_streams[k] = next(self.pickers[k])
-            except StopIteration as s:
-                logging.critical("Inputs don't contain usable audio")
-                self.insufficient = True
-                return
+            if interactive and len(self.partitioned_streams['audio']) > 1:
+                self.picked_streams['audio'] = interactive_picker(self.sources, self.partitioned_streams, 'audio')
+            else:
+                try:
+                    self.picked_streams[k] = next(self.pickers[k])
+                except StopIteration as s:
+                    logging.critical("Inputs don't contain usable audio")
+                    self.insufficient = True
+                    return
             afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
             if afile is None:
                 logging.warning(f"Error while demuxing {self.picked_streams[k]}")
@@ -253,17 +256,20 @@ class Common:
         if len(self.partitioned_streams['video']) == 0:
             logging.info(f"Couldn't find video streams in input files")
             return
-        if interactive and len(self.partitioned_streams['audio']) > 1:
-            self.picked_streams['audio'] = interactive_picker(self.sources, self.partitioned_streams, 'video')
-            return
+        # if interactive and len(self.partitioned_streams['video']) > 1:
+        #     self.picked_streams['video'] = interactive_picker(self.sources, self.partitioned_streams, 'video')
+        #     return
         k = 'video'
         while self.picked_streams[k] is None:
-            try:
-                self.picked_streams[k] = next(self.pickers[k])
-            except StopIteration as s:
-                logging.critical("Inputs don't contain usable audio")
-                self.insufficient = True
-                return
+            if interactive and len(self.partitioned_streams['video']) > 1:
+                self.picked_streams['video'] = interactive_picker(self.sources, self.partitioned_streams, 'video')
+            else:
+                try:
+                    self.picked_streams[k] = next(self.pickers[k])
+                except StopIteration as s:
+                    logging.critical("Inputs don't contain usable audio")
+                    self.insufficient = True
+                    return
             # afile = self.picked_streams[k].demux(overwrite_existing=self.demux_overwrite_existing)
             # if afile is None:
             #     logging.warning(f"Error while demuxing {self.picked_streams[k]}")

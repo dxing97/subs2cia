@@ -16,6 +16,7 @@ class AVSFile:
     def __init__(self, filepath: Path):
         if not filepath.exists():
             raise AssertionError(f"File {filepath} does not exist")
+        # don't handle directories here
         self.filepath = filepath
         self.info = None
         self.type = None
@@ -237,6 +238,10 @@ def get_and_partition_streams(sources: List[AVSFile]):
                 stype = stream_info['codec_type']
                 partitioned_streams[stype].append(Stream(file=sourcefile, type=stype,
                                                               index=idx, stream_info=stream_info))
+            continue
+        if sourcefile.info is None:
+            # ffmpeg couldn't probe this, so skip it
+            logging.info(f'Skipping input file "{sourcefile.filepath}": ffmpeg couldn\'t probe')
             continue
         partitioned_streams[sourcefile.type].append(Stream(file=sourcefile, type=sourcefile.type,
                                                                 stream_info=sourcefile.info['streams'][0],

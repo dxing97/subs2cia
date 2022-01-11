@@ -189,6 +189,16 @@ def start():
 
     infiles = _resolve(args['infiles'])
 
+    # convert to Path objects and see if any input files are actually directories
+    # for the moment, don't support processing entire directories.
+    # point users to globbing and asterisks if they want to process an entire directory
+    infiles = [Path(file) for file in infiles]
+    for file in infiles:
+        if file.is_dir():
+            logging.error(f'Input file "{file}" is actually a directory, aborting.\n'
+                          f'If you want to process all files in this directory, use "{file}/*" instead.')
+            exit(2)
+
     if args['absolute_paths']:
         sources = [AVSFile(Path(file).absolute()) for file in infiles]
     else:

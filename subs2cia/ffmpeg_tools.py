@@ -227,7 +227,7 @@ def export_condensed_audio(divided_times, audiofile: Path, quality: Union[int, N
             try:
                 ffmpeg_condense_audio(audiofile=audiofile, sub_times=split, outfile=outfilesplit, quality=quality,
                                       to_mono=to_mono, codec=codec)
-                logging.info(f"Wrote condensed audio to {outfile}")
+                logging.info(f"Wrote condensed audio to {outfilesplit}")
             except Error as e:
                 logging.error(
                     f"ffmpeg couldn't export audio. ffmpeg output: \n" + e.stderr.decode("utf-8"))
@@ -309,6 +309,7 @@ def ffmpeg_exec(duration: float, outfile: str, combined):
                 delete=False)  # don't delete b/c can't open file again when it's already open in windows
             fp.write(complex_filter.encode(encoding="utf-8"))
             fp.close()
+            logging.debug(f"using temporary file {fp.name}")
             args[idx] = fp.name
             args[idx - 1] = "-filter_complex_script"
         args = ["ffmpeg"] + args  # + ['-progress', 'unix://{}'.format(socket_filename)]

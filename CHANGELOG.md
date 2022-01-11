@@ -7,14 +7,15 @@
  - Long ffmpeg arguments are now saved to temp files on all platforms, not just windows
 
 ### Added
- - ffmpeg condensed audio and video progress bar (likely unix-like operating systems only)
+ - ffmpeg condensed audio and video progress bar (unix-like operating systems only)
  - Added quiet mode `-Q`: suppresses all non-warning status outputs
  - `-ac`: specify output audio codec option
 
 ### Fixed
  - fix for when outdir doesn't exist
  - SRS export: fix for missing arguments error
- - SRS export: lots of fixes
+ - SRS export: miscellaneous bug fixes
+ - fix passing PosixPath path to ffmpeg.probe() instead of a str path [#22](https://github.com/dxing97/subs2cia/issues/22)
 
 ### Removed
  - Verbose output `-v`

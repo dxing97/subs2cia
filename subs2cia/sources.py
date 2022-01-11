@@ -26,7 +26,7 @@ class AVSFile:
     def probe(self):
         logging.debug(f"Probing {self.filepath}")
         try:
-            self.info = ffmpeg.probe(self.filepath, 'ffprobe', **{'show_chapters': None})
+            self.info = ffmpeg.probe(str(self.filepath), 'ffprobe', **{'show_chapters': None})
         except ffmpeg.Error as e:
             logging.warning(
                 f"Couldn't probe file, skipping {str(self.filepath)}. ffmpeg output: \n" + e.stderr.decode("utf-8"))

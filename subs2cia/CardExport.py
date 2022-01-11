@@ -133,8 +133,8 @@ class CardExport(Common):
                                                   timestamp_start=group.group_range[0],
                                                     timestamp_end=group.group_range[1], quality=None, outpath=outpath)
             exported = exported.append([row], ignore_index=True)
-            if exported.shape[0] > 10:  # DEBUG ONLY
-                break
+            # if exported.shape[0] > 10:  # DEBUG ONLY
+            #     break
         # print(exported)
         outpath = self.outdir / (self.outstem + ".tsv")
         exported.to_csv(outpath, sep='\t', index=False, header=False)

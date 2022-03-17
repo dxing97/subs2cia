@@ -102,7 +102,7 @@ def show_progress(total_duration, desc):
 def ffmpeg_demux(infile: Path, stream_idx: int, outfile: Path):
     # output format is specified via extention on outfile
     logging.debug(f"demuxing stream {stream_idx} from file {infile} to {outfile}")
-    video = ffmpeg.input(infile)
+    video = ffmpeg.input(str(infile))
     stream = video[str(stream_idx)]  # don't need 0
     stream = ffmpeg.output(stream, str(outfile))
     stream = ffmpeg.overwrite_output(stream)

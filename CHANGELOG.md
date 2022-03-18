@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.1]
+
+### Fixed
+ - fix passing PosixPath path to ffmpeg_demux(), ssadata.save() instead of a str path [#22](https://github.com/dxing97/subs2cia/issues/22) [#24](https://github.com/dxing97/subs2cia/pull/24)
+
 ## [0.4.0]
 
 ### Added

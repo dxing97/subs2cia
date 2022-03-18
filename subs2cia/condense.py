@@ -164,7 +164,7 @@ class Condense(Common):
 
         self.subtitle_outfile = Path(self.outdir) / (
                     self.outstem + f'.condensed{self.out_subext if self.out_subext is not None else subext}')
-        self.subdata.condensed_ssadata.save(self.subtitle_outfile, encoding=u'utf-8')
+        self.subdata.condensed_ssadata.save(str(self.subtitle_outfile), encoding=u'utf-8')
         logging.info(f"Wrote condensed subtitles to {self.subtitle_outfile}")
 
     def export_audio(self):

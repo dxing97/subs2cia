@@ -431,6 +431,7 @@ def merge_times(times: [], threshold=0, padding=0):
     logging.debug(f"Merged times: {times}")
     return times
 
+_alignment_re = re.compile(r"{\\an?\d+?}")
 
 # examine a subtitle's text and determine if it contains text or just signs/song styling
 # could be much more robust, by including regexes
@@ -445,19 +446,21 @@ def is_dialogue(line, include_all=False, regex=None):
         return True
     if include_all:  # ignore filtering
         return True
-    if line.type != "Dialogue":
-        return False
-    if len(line.text) == 0:
-        return False
-    if '{' == line.text[0]:
-        return False
-    if '（' == line.text[0] and '）' == line.text[-1]:
-        return False
 
     # list of characters that, if present anywhere in the subtitle text, means that the subtitle is not dialogue
     globally_invalid = ["♪", "♪"]
     if any(invalid in line.text for invalid in globally_invalid):
         return False
+
+    if line.type != "Dialogue":
+        return False
+    if len(line.text) == 0:
+        return False
+    if '{' == line.text[0]:
+        return bool(_alignment_re.search(line.text))
+    if '（' == line.text[0] and '）' == line.text[-1]:
+        return False
+
     return True
 
 

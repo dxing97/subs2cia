@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.2]
+### Added
+ - add numpy to requirements.txt (required by pandas, needed for condensing)
+### Changed
+ - tweak internal subtitle filtering heuristic: SSA alignment tags will not automatically cause a line to be ignored
+
 ## [0.4.1]
 
 ### Fixed

@@ -8,3 +8,4 @@ tqdm
 gevent
 pandas
 colorlog
+numpy

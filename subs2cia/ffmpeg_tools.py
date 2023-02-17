@@ -139,21 +139,13 @@ def ffmpeg_condense_audio(audiofile, sub_times, quality: Union[int, None], to_mo
     # logging.info(f"saving condensed audio to {outfile}")
 
     # get samples in audio file
-    # prefer codec_time_base because some files will have different values for each, and codec_time_base seems to be the
-    #  most accurate
     audio_info = ffmpeg.probe(audiofile, cmd='ffprobe')
-    if 'codec_time_base' in audio_info['streams'][0]:
-        # audio samples per second, inverse of sampling frequency
+    if 'sample_rate' in audio_info['streams'][0]:
         sps = int(
-            audio_info['streams'][0]['codec_time_base'].split('/')[1])
-    elif 'time_base' in audio_info['streams'][0]:
-        # audio samples per second, inverse of sampling frequency
-        sps = int(
-            audio_info['streams'][0]['time_base'].split('/')[
-                1])
+            audio_info['streams'][0]['sample_rate'])
     else:
         info = json.dumps(audio_info['streams'][0])
-        logging.error("ffprobe couldn't determine audio time_base, can't condense")
+        logging.error("ffprobe couldn't determine audio sample_rate, can't condense")
         raise Error("", '', info.encode('utf-8'))
     # samples = audio_info['streams'][0]['duration_ts']  # total samples in audio track
     # duration_ts uses time_base, not codec_time_base

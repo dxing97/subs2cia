@@ -229,6 +229,7 @@ def get_args_subs2cia():
     cia_parser = subparsers.add_parser('condense', parents=[parent_parser],
                                        help="Compress input audio/video into a shorter file",
                                        description="Compress input audio/video into a shorter file")
+
     srs_parser = subparsers.add_parser('srs', parents=[parent_parser],
                                        help="(Experimental) Snip input media and import into spaced-repetition software via a TSV file.",
                                        description="(Experimental) Snip input media line by line and export to a Anki-compatible "
@@ -244,6 +245,26 @@ def get_args_subs2cia():
 
     srs_parser.add_argument('-N', '--normalize', action='store_true', dest='normalize_audio', default=False,
                             help="If set, normalizes volume of audio clips to the same loudness. YMMV.")
+
+    srs_parser.add_argument('--media-dir', metavar='/path/to/directory', dest='media_dir', default=None,
+                            type=str,
+                            help="Directory to save media files to. Defaults to the same as --output-dir. You might "
+                                 "set this to your Anki instance's media directory if your Anki doesn't automagically "
+                                 "import the media files alongside the TSV file.")
+
+    srs_parser.add_argument('--no-export-screenshot', action='store_true', dest='no_export_screenshot', default=False,
+                            help="If set, won't output screenshot files into the media folder.")
+
+    srs_parser.add_argument('--no-export-audio', action='store_true', dest='no_export_audio', default=False,
+                            help="If set, won't output audio files into the media folder.")
+
+    srs_parser.add_argument('--export-video', action='store_true', dest='export_video', default=False,
+                            help="If set, will output video files into the media folder.")
+
+    srs_parser.add_argument('--export-header-row', action='store_true', dest='export_header_row', default=False,
+                            help="If set, the resulting TSV file will have a header row which contains the column names. "
+                                 "This will make the file easier to read or reason about in a spreadsheet application, but "
+                                 "Anki will import the header row as a useless card.")
 
     cia_parser.add_argument('-t', '--threshold', metavar='msecs', dest='threshold', default=0,
                             type=int,

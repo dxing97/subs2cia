@@ -24,7 +24,6 @@ subs2cia - Extract subtitled dialogue from audiovisual media for use in language
     * pysubs2
     * setuptools
     * tqdm
-    * pandas
     * gevent
     * colorlog
 
@@ -167,7 +166,12 @@ directory with `-d` in order to avoid cluttering your filesystem.
 4. Verify audio and screenshots were automagically imported as well. If audio and/or screenshots are missing, they may 
     need to be manually moved into your collections folder. If the .tsv file isn't in the same directory as the generated
     audio clips and images, Anki won't copy them for you. 
-    
+
+The Anki manual has two pages that may be relevant for manually working with media files:
+
+- Info about how to find your media folder - [File Locations (docs.ankiweb.net)](https://docs.ankiweb.net/files.html#file-locations)
+- Info about media files - [Media (docs.ankiweb.net)](https://docs.ankiweb.net/media.html)
+
 ## Limitations and Assumptions
 * Won't work on bitmap subtitles (e.g. PGS subtitles), only text-based supports subtitle formats supported by ffmpeg and pysubs2 
   encoded in UTF-8 will work

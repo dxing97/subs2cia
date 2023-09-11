@@ -5,9 +5,9 @@ from subs2cia.ffmpeg_tools import ffmpeg_trim_audio_clip_atrim_encode, ffmpeg_ge
 
 from typing import List, Union
 from pathlib import Path
+import csv
 import logging
 import tqdm
-import pandas as pd
 import unicodedata as ud
 from collections import defaultdict
 
@@ -20,7 +20,23 @@ class CardExport(Common):
                  # subtitle_regex_substrfilter_nokeep: bool,
                  audio_stream_index: int, subtitle_stream_index: int,
                  ignore_range: Union[List[List[int]], None], ignore_chapters: Union[List[str], None],
-                 bitrate: Union[int, None], mono_channel: bool, interactive: bool, normalize_audio: bool, out_audiocodec: str):
+                 bitrate: Union[int, None], mono_channel: bool, interactive: bool, out_audiocodec: str,
+                 
+                 # special arguments, unique to SRS card export (not part of Common)
+
+                 normalize_audio: bool,
+
+                 # Flags to disable screenshot/audio/video output.
+                 #   If False, then screenshot/audio/video will NOT be exported.
+                 #   If True, then they may be exported (depending on if there is a video/audio stream)
+                 #   If there is no video/audio stream, then these flags are silently ignored
+                 media_dir: str,
+                 no_export_screenshot: bool,
+                 no_export_audio: bool,
+                 export_video: bool,
+                 export_header_row: bool,
+
+                 ):
         super(CardExport, self).__init__(
             sources=sources,
             outdir=outdir,
@@ -46,11 +62,20 @@ class CardExport(Common):
             out_audiocodec=out_audiocodec
         )
 
+        # init special arguments (not part of Common)
+        self.normalize_audio = normalize_audio
+        self.media_dir = media_dir
+        self.export_screenshot = not no_export_screenshot
+        self.export_audio = not no_export_audio 
+        self.export_video = export_video
+        self.export_header_row = export_header_row
+        # end of special arguments
+
+        # This is set to True later if there aren't any usable subtitles
         self.insufficient = False
 
-        self.normalize_audio = normalize_audio
-
         self.subdata = None
+
 
     def choose_subtitle(self, interactive):
         if len(self.partitioned_streams['subtitle']) == 0:
@@ -92,54 +117,107 @@ class CardExport(Common):
 
             self.subdata = subdata
 
-    def export(self):
-        # expose these as options at some point
-        # will need to rename these if they are going to become cli switches so they don't conflict
-        forbidden_chars = ['[' , ']' , '<' , '>' , ':' , '"' , '/' , '?' , '*' , '^' , '\\' , '|']  # see fn disallowed_char in https://github.com/ankitects/anki/blob/main/rslib/src/media/files.rs
-        forbidden_chars = {ord(c): '' for c in forbidden_chars}
-        export_audio = True if self.picked_streams['audio'] is not None else False
-        export_screenshot = True if self.picked_streams['video'] is not None else False
-        export_video = False
-        lbda = 0.0  # where to get screenshot. 0=start, 1=end, 0.5=middle
-        w = -1
-        h = -1
-        columns = ['text', 'timestamps', 'audioclip', 'screenclip', 'videoclip', 'sources']
-        exported = pd.DataFrame(columns=columns)
-        for group in tqdm.tqdm(self.subdata.groups):
-            # since subdata.merge_groups hasn't been called, each group only contains one SSAevent
 
-            if group.contains_only_ephemeral:
-                continue
-            row = {'text': group.events[0].plaintext,
-                   'timestamps': f"{group.group_range[0]}-{group.group_range[1]}",
-                   'audioclip': None,
-                   'screenclip': None,
-                   'videoclip': None,
-                   'sources': ",".join([s.filepath.name for s in self.sources])}
-            if export_audio:
-                outpath = self.outdir / (ud.normalize('NFC', self.outstem).translate(forbidden_chars) + f"_{group.group_range[0]}-{group.group_range[1]}.mp3")
-                row['audioclip'] = f"[sound:{outpath.name}]"
-                ffmpeg_trim_audio_clip_atrim_encode(input_file=self.picked_streams['audio'].demux_file.filepath,
-                                                    stream_index=0,
-                                                    timestamp_start=group.group_range[0],
-                                                    timestamp_end=group.group_range[1], quality=self.quality,
-                                                    to_mono=self.to_mono, normalize_audio=self.normalize_audio,
-                                                    outpath=outpath)
-            if export_screenshot:
-                outpath = self.outdir / (ud.normalize('NFC', self.outstem).translate(forbidden_chars) + f"_{group.group_range[0]}-{group.group_range[1]}.jpg")
-                row['screenclip'] = f"<img src='{outpath.name}'>"
-                timestamp = (1-lbda) * group.group_range[0] + lbda * group.group_range[1]
-                ffmpeg_get_frame_fast(self.picked_streams['video'].file.filepath,
-                                      timestamp=timestamp, outpath=outpath, w=w, h=h)
-            if export_video:
-                outpath = self.outdir / (ud.normalize('NFC', self.outstem).translate(forbidden_chars) + f"_{group.group_range[0]}-{group.group_range[1]}.mp4")
-                row['videoclip'] = f"[sound:{outpath.name}]"
-                ffmpeg_trim_video_clip_directcopy(self.picked_streams['video'].file.filepath,
-                                                  timestamp_start=group.group_range[0],
-                                                    timestamp_end=group.group_range[1], quality=None, outpath=outpath)
-            exported = exported.append([row], ignore_index=True)
-            # if exported.shape[0] > 10:  # DEBUG ONLY
-            #     break
-        # print(exported)
-        outpath = self.outdir / (self.outstem + ".tsv")
-        exported.to_csv(outpath, sep='\t', index=False, header=False)
+    def export(self):
+
+        # see fn disallowed_char in https://github.com/ankitects/anki/blob/main/rslib/src/media/files.rs
+        forbidden_chars = ['[' , ']' , '<' , '>' , ':' , '"' , '/' , '?' , '*' , '^' , '\\' , '|']  
+        forbidden_chars = {ord(c): '' for c in forbidden_chars}
+
+        csv_columns = ['text', 'timestamps', 'audioclip', 'screenclip', 'videoclip', 'sources']
+
+        export_audio = self.export_audio and self.picked_streams['audio'] is not None
+        export_screenshot = self.export_screenshot and self.picked_streams['video'] is not None
+        export_video = self.export_video and self.picked_streams['video'] is not None
+
+        # path to write the csv (or tsv) file to
+        csv_outpath = self.outdir / (self.outstem + ".tsv")
+        
+        # path to write media files to (exported screenshots, audio clips, video clips)
+        if self.media_dir is not None:
+            media_dir = Path(self.media_dir)
+        else:
+            media_dir = self.outdir
+
+        # where to get screenshot. 0=start, 1=end, 0.5=middle
+        lbda = 0.0  
+
+        # we only need to worry about creating the media dir if we are exporting any media
+        if export_audio or export_screenshot or export_video:
+            if not media_dir.exists():
+                media_dir.mkdir(exist_ok=True)
+            if not media_dir.is_dir():
+                raise RuntimeError(f"Not a directory: {media_dir}")
+
+
+        # for each group, write a row to the csv (tsv) file.
+        # as we go, export media files (screenshots, clips) as needed
+
+        with open(csv_outpath, 'w', encoding='utf-8', newline='') as f:
+
+            csvw = csv.writer(f, delimiter='\t')
+            
+            if self.export_header_row:
+                csvw.writerow(csv_columns)
+            
+            for group in tqdm.tqdm(self.subdata.groups):
+                # since subdata.merge_groups hasn't been called, each group only contains one SSAevent
+
+                if group.contains_only_ephemeral:
+                    continue
+
+                row = {
+                    'text': group.events[0].plaintext,
+                    'timestamps': f"{group.group_range[0]}-{group.group_range[1]}",
+                    'sources': ",".join([s.filepath.name for s in self.sources])
+                }
+                
+                media_file_stem = media_dir / (ud.normalize('NFC', self.outstem).translate(forbidden_chars) + f"_{group.group_range[0]}-{group.group_range[1]}")
+
+                if export_audio:
+                    outpath = media_file_stem.with_suffix('.mp3')
+                    row['audioclip'] = f"[sound:{outpath.name}]"
+
+                    if outpath.exists():
+                        logging.warning(f"Already exists: {outpath}")
+                    else:
+                        ffmpeg_trim_audio_clip_atrim_encode(
+                            input_file=self.picked_streams['audio'].demux_file.filepath,
+                            stream_index=0,
+                            timestamp_start=group.group_range[0],
+                            timestamp_end=group.group_range[1],
+                            quality=self.quality,
+                            to_mono=self.to_mono,
+                            normalize_audio=self.normalize_audio,
+                            outpath=outpath
+                        )
+
+                if export_screenshot:
+                    outpath = media_file_stem.with_suffix('.jpg')
+                    row['screenclip'] = f"<img src='{outpath.name}'>"
+
+                    if outpath.exists():
+                        logging.info(f"Already exists: {outpath}")
+                    else:
+                        ffmpeg_get_frame_fast(
+                            self.picked_streams['video'].file.filepath,
+                            timestamp=(1-lbda) * group.group_range[0] + lbda * group.group_range[1],
+                            outpath=outpath,
+                            w=-1,
+                            h=-1
+                        )
+
+                if export_video:
+                    outpath = media_file_stem.with_suffix('.mp4')
+                    row['videoclip'] = f"[sound:{outpath.name}]"
+
+                    if outpath.exists():
+                        logging.info(f"Already exists: {outpath}")
+                    else:
+                        ffmpeg_trim_video_clip_directcopy(
+                            self.picked_streams['video'].file.filepath,
+                            timestamp_start=group.group_range[0],
+                            timestamp_end=group.group_range[1], quality=None, outpath=outpath
+                        )
+                
+                csvw.writerow([row.get(col, '') for col in csv_columns])

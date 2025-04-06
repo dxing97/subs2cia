@@ -1,92 +1,49 @@
-subs2cia - Extract subtitled dialogue from audiovisual media for use in language acquisition 
+# subs2cia
+
+Extract subtitled dialogue from videos for use in language learning.
 
 
 ## Features
- * Generates _condensed_ media from subtitled media that only contains spoken dialogue (`subs2cia condense`)
-     * No unnatural stutters: simultaneous and overlapping subtitles lines are merged for seamless listening
-     * Automatically generate condensed subtitles, audio, and video from input sources (video must be enabled with `-m`)
-     * Automagically chooses subtitle and audio tracks from a certain language or manually specify what inputs to condense
-     (`-tl`, `-si`, `-ai`, `-ls`)
-     * Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
-     * Ignore subtitled music found in openings/endings manually (`-I`) or by chapter (`-Ic`)  
-     * Reinserts natural spacing between sentences that start and end close together (`-t`)
-     * Subtitles not perfectly aligned? Pad subtitles with additional audio (`-p`)
-     * Process multiple files with batch mode (`-b`)
- * **EXPERIMENTAL**: Export subtitles with audio and screenshots into your flashcard SRS of choice (`subs2cia srs`)
 
-## Dependencies
-* Python 3.6 or later
-* ffmpeg
-    * `ffmpeg` and `ffprobe` must be on your PATH (i.e. can execute `ffmpeg` and `ffprobe` from the command line)
-* pip packages:
-    * ffmpeg-python
-    * pycountry
-    * pysubs2
-    * setuptools
-    * tqdm
-    * gevent
-    * colorlog
+- Generates _condensed_ media from subtitled media that only contains spoken dialogue (`subs2cia condense`)
+    - No unnatural stutters: simultaneous and overlapping subtitles lines are merged for seamless listening
+    - Automatically generate condensed subtitles, audio, and video from input sources (video must be enabled with `-m`)
+    - Automatically chooses subtitle and audio tracks from a certain language or manually specify what inputs to condense (`-tl`, `-si`, `-ai`, `-ls`)
+    - Automatically filter out subtitles that don't contain dialogue using built in heuristics or user-defined regexes (`-ni`, `-R`)
+    - Ignore subtitled music found in openings/endings manually (`-I`) or by chapter (`-Ic`)  
+    - Reinserts natural spacing between sentences that start and end close together (`-t`)
+    - Subtitles not perfectly aligned? Pad subtitles with additional audio (`-p`)
+    - Process multiple files with batch mode (`-b`)
+- **EXPERIMENTAL**: Export subtitles with audio and screenshots into your flashcard SRS of choice (`subs2cia srs`)
 
-## Installation Instructions
-subs2cia is currently a command-line script. Usage requires interaction with a terminal interface.
-### Windows
-Install Python 3.6 or later. During or after the installation process, make sure you add Python to your PATH and also install pip.
 
-Instructions for installing and adding ffmpeg to your path can be found [here](http://blog.gregzaal.com/how-to-install-ffmpeg-on-windows/).
+## Installation
 
-The subs2cia installation process is generally the same as for Linux, although some commands may have different aliases
-(e.g. instead of `pip3`, you may need to run `py -m pip` instead). Running
-```
-py -m pip install subs2cia
-```
-in command prompt should work. 
+Make sure you have installed [ffmpeg](https://ffmpeg.org/). Mac users may install it using [Homebrew](https://brew.sh/).
 
-Some useful links on installing `pip` and python packages:
-* https://pip.pypa.io/en/stable/installing/
-* https://docs.python.org/3/installing/index.html
+Then, you may install or run `subs2cia` from source as though it were any other Python package.
 
-You may need to restart Command Prompt for path changes to take effect when installing `pip`.
+Running from source:
 
-### macOS:
-Install Python and ffmpeg through the method of your choice, e.g. [Homebrew](https://brew.sh/). In Terminal, run:
 ```
-# run this after installing Homebrew
-brew install python ffmpeg
-```
-Homebrew should have also installed `pip` for you, which you can use to install subs2cia from PyPI:
-```
-pip3 install subs2cia
-```
-You should now be able to run the script:
-```
-subs2cia condense -h
+# Clone this repository and run from the root of this directory
+python3 -m subs2cia
 ```
 
-### Linux
-On systems with the `apt` package manager (Ubuntu, Debian, etc):
+Installing from source:
+
 ```
-sudo apt install python3 python3-pip ffmpeg
-pip3 install subs2cia
-subs2cia condense -h
+# Clone this repository and run from the root of this directory
+python3 -m pip install -e .
 ```
 
-### Install from source
-Download or clone the repository and navigate to it:
-```
-$ git clone "https://github.com/dxing97/subs2cia"
-$ cd subs2cia
-```
-Use pip to install:
-```
-$ pip3 install .
-```
-On WSL, you may need to add `~/.local/bin` to your PATH first.
+See these links for help with using pip or installing Python packages:
 
-### Run Without Installing
-If you prefer, you can also download the repository and run ``subs2cia/main.py`` directly.
+- https://pip.pypa.io/en/stable/installing/
 
 
 ## Condense Quickstart and Examples
+
 ```
 subs2cia condense -i "My Video.mkv"
 ```
@@ -120,8 +77,11 @@ subs2cia condense -i video.mkv "video subtitles.ass" -ae flac --no-gen-subtitle
 For a more complete usage guide, run `subs2cia condense -h` or take a look at [USAGE](USAGE.md).
 
 ## SRS Export Quickstart and Examples
+
 Most options are shared with `condense`. See `subs2cia srs -h` for a full list of options. 
+
 ### Example commands
+
 ```subs2cia srs -i video.mkv```
 * extract the first audio and first subtitle track in `video.mkv`  and generate `video.tsv` and a lotta `.mp3` and `.jpg` files
 
@@ -155,6 +115,7 @@ Since there could be hundreds output files, it's highly recommended to specify a
 directory with `-d` in order to avoid cluttering your filesystem. 
 
 ### Anki Import Instructions
+
 1. In the main screen, click on `File->Import...`
 2. Select the .tsv file you would like to import
 3. In the Import dialog box:
@@ -173,46 +134,42 @@ The Anki manual has two pages that may be relevant for manually working with med
 - Info about media files - [Media (docs.ankiweb.net)](https://docs.ankiweb.net/media.html)
 
 ## Limitations and Assumptions
-* Won't work on bitmap subtitles (e.g. PGS subtitles), only text-based supports subtitle formats supported by ffmpeg and pysubs2 
-  encoded in UTF-8 will work
-* Subtitles must be properly aligned to audio. No attempt is made by subs2cia to align subtitles. 
+
+- Won't work on bitmap subtitles (e.g. PGS subtitles), only text-based supports subtitle formats supported by ffmpeg and pysubs2 encoded in UTF-8 will work
+- Subtitles must be properly aligned to audio. No attempt is made by subs2cia to align subtitles. 
+
 
 # subzipper
-Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, 
-optionally adding language information to the suffix. Intended for use with shell wildcards.
+
+Renames subtitle files to match a reference (video) file to conform with Plex-style naming standards, optionally adding language information to the suffix. Intended for use with shell wildcards.
 
 ## Usage
-```
-$ subzipper -h
-usage: subzipper.py [-h] -s <input files> [<input files> ...] -r <input files>
-                    [<input files> ...] [-l ISO_LANG_CODE] [-ns] [-d] [-v]
 
-SubZipper: Map video files to subtitle files
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -s <input files> [<input files> ...], --subtitle <input files> [<input files> ...]
-                        List of subtitle files. Number of subtitle files
-                        should equal number of reference files.
-  -r <input files> [<input files> ...], --reference <input files> [<input files> ...]
-                        List of reference files, typically video files. Number
-                        of subtitle files should equal number of reference
-                        files.
-  -l ISO_LANG_CODE, --language ISO_LANG_CODE
-                        Language code to append to end of subtitle file.
-                        Optional. If set, will be checked for validity.
-  -ns, --no-sort        If set, will not sort input files alphabetically.
-  -d, --dry-run         If set, will print out mappings but will not write any
-                        changes to disk.
-  -v, --verbose         Verbose output if set.
-```
+Use `subzipper -h` to view a list of arguments and features.
 
 ## Examples
+
 Rename ``episode01.ass`` to ``MyShow_S01E01.ja.ass`` and ``episode02.ass`` to ``MyShow_S01E02.ja.ass``, 
+
 ```
 subzipper -s "episode01.ass" "episode02.ass" -r "MyShow_S01E01.mkv" "MyShow_S01E02.mkv" -l ja
 ```
+
 Map all subtitles to all video files,
+
 ```
 subzipper -s *.ass -r *.mkv -l ja
 ```
+
+
+# Future Work
+
+- [ ] (Bug) If file encoding is not utf-8, pysubs2 may error out/produce garbage output
+- [ ] Automated test suite
+- [ ] Multiprocessor acceleration where sensible
+- [ ] clean up dry-run
+- [ ] Handle directories as inputs
+- [ ] Add more/better documentation
+- [ ] Option to point to custom FFmpeg binary not on PATH
+- [ ] Bitmapped subtitles and OCR recognition
+

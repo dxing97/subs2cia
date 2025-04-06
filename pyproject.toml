@@ -1,0 +1,30 @@
+[project]
+name = "subs2cia"
+description = "A subtitle-based multimedia extractor and compressor"
+license = "MIT"
+license-files = ["LICENSE.md"]
+version = "0.4.2"
+dependencies = [
+	"ffmpeg-python>=0.2.0",
+	"pycountry>=2.1",
+	"pysubs2>=0.5",
+	"tqdm>=4.62",
+	"gevent>=1.5",
+	"colorlog>=6.0",
+]
+authors = [
+	{name = "Benjamin Hottell", email = "benjaminhottell@gmail.com"},
+	{name = "Daniel Xing", email = "danielxing97@gmail.com"},
+]
+classifiers = [
+	"Development Status :: 4 - Beta",
+	"Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Repository = "https://github.com/benjaminhottell/subs2cia"
+
+[tool.poetry.scripts]
+subs2cia = "subs2cia:main"
+subzipper = "subs2cia.cli:subzipper_main"
+

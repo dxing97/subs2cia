@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 import subprocess
 from typing import List, Union
-import gevent, gevent.monkey
 from tqdm import tqdm, TqdmWarning
 
 import warnings
@@ -11,8 +10,6 @@ warnings.filterwarnings("ignore", category=TqdmWarning)
 
 import contextlib
 import ffmpeg
-import gevent
-import gevent.monkey; gevent.monkey.patch_all(thread=False)
 import os
 import shutil
 import socket
@@ -21,6 +18,14 @@ import tempfile
 import textwrap
 
 import json
+
+try:
+    import gevent
+    import gevent.monkey; gevent.monkey.patch_all(thread=False)
+    _GEVENT_AVAILABLE = False
+except ImportError:
+    gevent = None
+    _GEVENT_AVAILABLE = True
 
 
 @contextlib.contextmanager
@@ -68,6 +73,11 @@ def _watch_progress(handler):
     Yields:
         socket_filename: the name of the socket file.
     """
+
+    # Hope this doesn't break anything :)
+    if not _GEVENT_AVAILABLE:
+        return
+
     with _tmpdir_scope() as tmpdir:
         socket_filename = os.path.join(tmpdir, 'sock')
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

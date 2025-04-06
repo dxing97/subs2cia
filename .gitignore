@@ -1,5 +1,12 @@
-/build
-/*.egg-info
-/test
-/dist
 __pycache__
+*.pyc
+
+/build
+/test
+
+/*.egg-info
+/dist
+
+venv/
+.venv/
+

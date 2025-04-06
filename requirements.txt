@@ -1,8 +1,0 @@
-ffmpeg-python>=0.2.0
-pycountry>=19.8.18
-pysubs2>=1.1.0
-setuptools~=49.1.0
-tqdm>=4.51.0
-tqdm
-gevent
-colorlog

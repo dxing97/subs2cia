@@ -1,5 +1,6 @@
 /build
-#/dist
 /*.egg-info
 /test
 /dist
+__pycache__
+

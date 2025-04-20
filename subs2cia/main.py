@@ -108,7 +108,16 @@ def srs_export_start(args, groups: List[List[AVSFile]]):
                  'overwrite_existing_generated', 'keep_temporaries', 'target_lang', 'out_audioext', 'use_all_subs',
                  'subtitle_regex_filter', 'audio_stream_index', 'subtitle_stream_index', 'ignore_range',
                  'ignore_chapters',
-                 'bitrate', 'mono_channel', 'interactive', 'normalize_audio', "out_audiocodec"]
+                 'bitrate', 'mono_channel', 'interactive', "out_audiocodec",
+
+                 'normalize_audio', 
+                 'media_dir',
+                 'no_export_screenshot',
+                 'no_export_audio',
+                 'export_video',
+                 'export_header_row',
+
+                 ]
                 }
 
     cardexport_group = [CardExport(g, **srs_args) for g in groups]

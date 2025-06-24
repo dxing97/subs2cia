@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.0]
+### Added
+ - Rewrite of SRS export to support additional config switches and removes Pandas dependency (#42)
+### Changed
+ - Update built-in subtitle filter heuristic for common sound effect symbols (#37)
+ - Batch mode now groups by filename instead of path (#38)
+ - Add __pychache__ to .gitignore (#39)
+ - Import error fix for systems that don't support gevent (#40)
+
+
 ## [0.4.2]
 ### Added
  - add numpy to requirements.txt (required by pandas, needed for condensing)

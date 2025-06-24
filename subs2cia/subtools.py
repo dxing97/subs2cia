@@ -458,7 +458,8 @@ def is_dialogue(line, include_all=False, regex=None):
         return False
     if '{' == line.text[0]:
         return bool(_alignment_re.search(line.text))
-    if '（' == line.text[0] and '）' == line.text[-1]:
+    if ((line.text[0] == '（' and line.text[-1] == '）')
+            or (line.text[0] == "[" and line.text[-1] == "]")):
         return False
 
     return True

@@ -3,16 +3,22 @@ import logging
 from pathlib import Path
 import subprocess
 from typing import List, Union
-import gevent, gevent.monkey
 from tqdm import tqdm, TqdmWarning
+
+try:
+    import gevent
+    import gevent.monkey
+    gevent.monkey.patch_all(thread=False)
+except ImportError:
+    gevent = None
+    pass
+
 
 import warnings
 warnings.filterwarnings("ignore", category=TqdmWarning)
 
 import contextlib
 import ffmpeg
-import gevent
-import gevent.monkey; gevent.monkey.patch_all(thread=False)
 import os
 import shutil
 import socket
@@ -68,6 +74,9 @@ def _watch_progress(handler):
     Yields:
         socket_filename: the name of the socket file.
     """
+    if gevent is None:
+        raise RuntimeError('Package `gevent` is not available')
+
     with _tmpdir_scope() as tmpdir:
         socket_filename = os.path.join(tmpdir, 'sock')
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -333,7 +342,7 @@ def ffmpeg_exec(duration: float, outfile: str, combined):
             raise Error('ffmpeg', out, err)
 
     # if os.name == 'posix':
-    if hasattr(socket, 'AF_UNIX') and logging.root.level <= logging.INFO:
+    if gevent is not None and hasattr(socket, 'AF_UNIX') and logging.root.level <= logging.INFO:
         with show_progress(total_duration=duration, desc=outfile) as socket_filename:
             combined = combined.global_args('-progress', 'unix://{}'.format(socket_filename))
             run(combined)

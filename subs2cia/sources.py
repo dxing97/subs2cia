@@ -214,7 +214,7 @@ def group_names_better(sources: List[AVSFile]) -> List[List[AVSFile]]:
         group = [sources.pop(0)]
         to_remove = []
         for f in sources:
-            if strip_extensions(f.filepath) == strip_extensions(group[0].filepath):
+            if strip_extensions(f.filepath).name == strip_extensions(group[0].filepath).name:
                 group.append(f)
                 to_remove.append(f)
         for f in to_remove:

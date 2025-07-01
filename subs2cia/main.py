@@ -36,11 +36,26 @@ presets = [
     },
 ]
 
-
+# Adds user read preset to list of presets
 def list_presets():
-    for idx, preset in enumerate(presets):
-        print(f"Preset {idx}")
-        pprint(preset)
+    preset_folder = input("Enter the path to the file containing a preset")
+    if not os.path.exists(preset_folder):
+        print("File path does not exist");
+    else:
+        new_preset = {}
+        with open(preset_folder, "r") as file:
+            for line in file:
+                key, value = line.strip().split("=")
+                new_preset[key] = value
+        presets.append(new_preset)
+    if abs(args['preset']) >= len(presets):
+        logging.critical(f"Preset {args['preset']} does not exist")
+        exit(0)
+    logging.info(f"Using preset {args['preset']}")
+    for key, val in presets[args['preset']].items():
+        if key in args.keys() and ((args[key] == False) or (args[key] is None)):  # override presets
+            args[key] = val
+
 
 
 # https://stackoverflow.com/a/38739634
